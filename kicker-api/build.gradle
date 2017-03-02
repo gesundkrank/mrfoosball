@@ -1,0 +1,20 @@
+plugins {
+    id "com.github.johnrengelman.shadow" version "1.2.3"
+}
+
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'eu.m6r.kicker.Main'
+    }
+}
+
+dependencies {
+    compile 'org.glassfish.jersey.containers:jersey-container-grizzly2-http:2.25.1',
+            'org.glassfish.jersey.media:jersey-media-moxy:2.25.1'
+}

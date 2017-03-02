@@ -1,0 +1,56 @@
+<ion-header>
+
+  <ion-navbar>
+    <ion-title>Match</ion-title>
+  </ion-navbar>
+
+</ion-header>
+
+
+<ion-content padding class="vertical-align-content">
+  <ion-grid>
+    <ion-row>
+      <ion-col width-33>
+        <ion-list>
+          <ion-item
+            *ngFor="let player of teamA?.players"
+          >
+            <button
+              ion-button
+              large
+              block
+              (tap)="addGoal('teamA')"
+            >
+              {{ player.name }}
+            </button>
+          </ion-item>
+        </ion-list>
+      </ion-col>
+      <ion-col width-33>
+        <ion-list>
+          <ion-item>
+            <ion-card>
+              {{ match?.teamA }} : {{ match?.teamB }}
+            </ion-card>
+          </ion-item>
+        </ion-list>
+      </ion-col>
+      <ion-col width-33>
+        <ion-list>
+          <ion-item
+            *ngFor="let player of teamB?.players"
+          >
+            <button
+              ion-button
+              large
+              block
+              (tap)="addGoal('teamB')"
+            >
+              {{ player.name }}
+            </button>
+          </ion-item>
+        </ion-list>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

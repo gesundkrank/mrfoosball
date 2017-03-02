@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import * as screenfull from 'screenfull';
 
+import { StatsPage } from '../../pages/stats/stats';
 
 @Component({
   selector: 'page-start',
@@ -17,6 +18,7 @@ export class StartPage {
 
   start() {
     screenfull.request();
+    this.navCtrl.push(StatsPage);
   }
 
 }

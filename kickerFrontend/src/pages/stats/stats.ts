@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 
 import { MatchPage } from '../../pages/match/match';
+import { Tournament } from '../../providers/tournament';
 
 @Component({
   selector: 'page-stats',
@@ -10,9 +11,19 @@ import { MatchPage } from '../../pages/match/match';
 export class StatsPage {
 
   constructor(
-    public navCtrl: NavController,
+    private readonly navCtrl: NavController,
+    private readonly tournament: Tournament,
   ) {
     //
+  }
+
+  ionViewDidEnter() {
+    this.tournament.getRunningMatch()
+      .then((match) => {
+        if (match) {
+          this.newMatch();
+        }
+      })
   }
 
   newMatch() {

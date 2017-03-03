@@ -14,8 +14,8 @@ import { Match } from '../../providers/tournament';
 })
 export class MatchPage {
 
-  teamA: Team;
-  teamB: Team;
+  teamGrey: Team;
+  teamBlack: Team;
   match: Match;
   alert: any;
   wins: any;
@@ -77,8 +77,8 @@ export class MatchPage {
   private update() {
     return this.tournament.getTeams()
       .then(([teamA, teamB]) => {
-        this.teamA = teamA;
-        this.teamB = teamB;
+        this.teamGrey = teamA;
+        this.teamBlack = teamB;
       })
       .then(() => this.getRunning())
       .then((running) => this.tournament.getWinner(running))

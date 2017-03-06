@@ -1,10 +1,10 @@
 package eu.m6r.kicker;
 
-import org.glassfish.grizzly.http.server.HttpHandler;
 import eu.m6r.kicker.slack.Bot;
 
+import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
+import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
@@ -25,7 +25,7 @@ public class Main {
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
      * @return Grizzly HTTP server.
      */
-    public static HttpServer startServer(int port, String assetDir) {
+    public static HttpServer startServer(int port) {
         // create a resource config that scans for JAX-RS resources and providers
         // in com.example package
         final ResourceConfig rc = new ResourceConfig().packages("eu.m6r.kicker.api");
@@ -35,9 +35,9 @@ public class Main {
         // exposing the Jersey application at BASE_URI
         URI uri = URI.create(String.format(BASE_URI, port));
         HttpServer httpServer = GrizzlyHttpServerFactory.createHttpServer(uri, rc);
-        HttpHandler httpHandler = new StaticHttpHandler(assetDir);
+        HttpHandler httpHandler = new CLStaticHttpHandler(Main.class.getClassLoader(), "www/");
 
-        httpServer.getServerConfiguration().addHttpHandler(httpHandler, "/static");
+        httpServer.getServerConfiguration().addHttpHandler(httpHandler, "/frontend");
         return httpServer;
     }
 
@@ -47,20 +47,13 @@ public class Main {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException, JAXBException {
-        // TODO remove after slack connection works
         try {
-//            Controller.INSTANCE.createTestTournament();
             int port = 8080;
             if (args.length >= 1) {
                 port = Integer.parseInt(args[0]);
             }
 
-            String assetDir = "/";
-            if (args.length >= 2) {
-                assetDir = args[1];
-            }
-
-            final HttpServer server = startServer(port, assetDir);
+            final HttpServer server = startServer(port);
             new Bot("xoxb-147993519888-On7vrmgxLoviTGYXrSl0hLnZ");
             System.out.println(String.format("Jersey app started with WADL available at "
                                              + "%sapplication.wadl\nHit enter to stop it...",

@@ -3,7 +3,7 @@
 ## Run API
 
 ```bash
-kicker-api/gradlew -p kicker-api clean shadowJar
-java -jar kicker-api/build/libs/kicker-api-all.jar
+./gradlew buildApp
+java -jar build/libs/kicker-all.jar <port>
 ```
 

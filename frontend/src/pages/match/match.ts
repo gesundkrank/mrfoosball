@@ -76,9 +76,9 @@ export class MatchPage {
 
   private update() {
     return this.tournament.getTeams()
-      .then(([teamA, teamB]) => {
-        this.teamGrey = teamA;
-        this.teamBlack = teamB;
+      .then(([teamGrey, teamBlack]) => {
+        this.teamGrey = teamGrey;
+        this.teamBlack = teamBlack;
       })
       .then(() => this.getRunning())
       .then((running) => this.tournament.getWinner(running))

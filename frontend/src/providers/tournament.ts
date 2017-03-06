@@ -7,7 +7,7 @@ import { RequestOptions } from '@angular/http';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/toPromise';
 
-const TOURNAMENT_URL = 'http://192.168.42.97:8000/api/tournament';
+const TOURNAMENT_URL = '/api/tournament';
 
 export enum MatchState {
   RUNNING,
@@ -29,8 +29,8 @@ export class Player {
 }
 
 enum TeamName {
-  teamA,
-  teamB,
+  teamGrey,
+  teamBlack,
 }
 
 export class Team {
@@ -45,15 +45,15 @@ export class Team {
 }
 
 export class Match {
-  teamA: number;
-  teamB: number;
+  teamGrey: number;
+  teamBlack: number;
   state: string;
 
   constructor(
     data: any,
   ) {
-    this.teamA = data.teamA;
-    this.teamB = data.teamB;
+    this.teamGrey = data.teamGrey;
+    this.teamBlack = data.teamBlack;
     this.state = data.state;
   }
 }
@@ -96,19 +96,19 @@ export class Tournament {
     if (!match) {
       return;
     }
-    if (match.teamA >= 6) {
-      return new Team(TeamName.teamA, this.tournament.teamA);
+    if (match.teamGrey >= 6) {
+      return new Team(TeamName.teamGrey, this.tournament.teamGrey);
     }
-    if (match.teamB >= 6) {
-      return new Team(TeamName.teamB, this.tournament.teamB);
+    if (match.teamBlack >= 6) {
+      return new Team(TeamName.teamBlack, this.tournament.teamBlack);
     }
   }
 
   getTeams(): Promise<Team[]> {
     return this.get()
       .then(tournament => [
-        new Team(TeamName.teamA, tournament.teamA),
-        new Team(TeamName.teamB, tournament.teamB),
+        new Team(TeamName.teamGrey, tournament.teamGrey),
+        new Team(TeamName.teamBlack, tournament.teamBlack),
       ]);
   }
 
@@ -148,7 +148,7 @@ export class Tournament {
       const winner = this.getWinner(new Match(match));
       memo[TeamName[winner.name]] += 1;
       return memo;
-    }, {teamA: 0, teamB: 0});
+    }, {teamGrey: 0, teamBlack: 0});
   }
 
   finishMatch() {

@@ -11,6 +11,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Path("/api/tournament")
 public class TournamentAPI {
@@ -19,8 +20,12 @@ public class TournamentAPI {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Tournament getTournament() {
-        return controller.getTournaments().get(0);
+    public Response getTournament() {
+        if (controller.hasRunningTournament()) {
+            return Response.ok(controller.getRunningTournament()).build();
+        }
+
+        return Response.noContent().build();
     }
 
     @PUT

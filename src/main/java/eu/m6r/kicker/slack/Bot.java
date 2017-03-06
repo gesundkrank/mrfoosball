@@ -175,6 +175,7 @@ public class Bot {
             User user = new User();
             user.id = slackUser.user.id;
             user.name = slackUser.user.name;
+            user.avatarImage = slackUser.user.profile.image_192;
             return user;
         } catch (ResponseProcessingException | IOException e) {
             throw new UserExtractionFailedException(userId, e);

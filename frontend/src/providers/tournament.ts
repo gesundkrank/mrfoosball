@@ -84,6 +84,9 @@ export class Tournament {
   getRunningMatch(): Promise<Match> {
     return this.get()
       .then(tournament => {
+        if (!tournament) {
+          return;
+        }
         const running = this.findRunning(tournament.matches);
         if (!running) {
           return;

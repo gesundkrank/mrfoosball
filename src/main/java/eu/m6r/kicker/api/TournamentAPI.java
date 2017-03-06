@@ -2,6 +2,9 @@ package eu.m6r.kicker.api;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.models.User;
+
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -38,5 +41,11 @@ public class TournamentAPI {
     @Path("{tournamentId}")
     public void newMatch(@PathParam("tournamentId") final int tournamentId) {
         controller.newMatch(tournamentId);
+    }
+
+    @GET
+    @Path("queue")
+    public List<User> getPlayersInQueue() {
+        return controller.getPlayersInQueue();
     }
 }

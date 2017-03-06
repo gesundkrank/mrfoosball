@@ -1,16 +1,19 @@
 <ion-header>
 
   <ion-navbar>
-    <ion-title>Stats</ion-title>
+    <ion-title>Waiting for a new game...</ion-title>
   </ion-navbar>
 
 </ion-header>
 
 <ion-content padding>
-  <button
-    ion-button
-    (tap)="newMatch()"
-  >
-    New Match
-  </button>
+  <ion-item>Players in the queue:</ion-item>
+  <ion-list>
+    <ion-item *ngFor="let player of queue">
+      <ion-avatar item-left>
+        <img src="{{ player?.avatarImage }}">
+      </ion-avatar>
+      {{ player?.name }}
+    </ion-item>
+  </ion-list>
 </ion-content>

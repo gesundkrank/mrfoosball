@@ -4,7 +4,6 @@ import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { MyApp } from './app.component';
 import { MatchPage } from '../pages/match/match';
 import { Tournament } from '../providers/tournament';
-import { StartPage } from '../pages/start/start';
 import { StatsPage } from '../pages/stats/stats';
 
 
@@ -12,7 +11,6 @@ import { StatsPage } from '../pages/stats/stats';
   declarations: [
     MyApp,
     MatchPage,
-    StartPage,
     StatsPage,
   ],
   imports: [
@@ -22,7 +20,6 @@ import { StatsPage } from '../pages/stats/stats';
   entryComponents: [
     MyApp,
     MatchPage,
-    StartPage,
     StatsPage,
   ],
   providers: [

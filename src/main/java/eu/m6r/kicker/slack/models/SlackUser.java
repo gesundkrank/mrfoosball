@@ -14,6 +14,13 @@ public class SlackUser {
     public static class User {
         public String id;
         public String name;
+        public Profile profile;
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class Profile {
+            public String real_name;
+            public String image_192;
+        }
     }
 
     @Override

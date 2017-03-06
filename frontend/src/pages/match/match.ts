@@ -49,7 +49,7 @@ export class MatchPage {
     return this.tournament.finishMatch()
       .then((args) => {
         const match = args[0] as Match;
-        const tournamentFinished = args[1]
+        const tournamentFinished = args[1];
         this.match = match;
         this.navCtrl.pop();
         if (tournamentFinished) {

@@ -5,13 +5,15 @@ plugins {
 
 apply plugin: 'java'
 
+def mainClass = 'eu.m6r.kicker.Main'
+
 repositories {
     mavenCentral()
 }
 
 jar {
     manifest {
-        attributes 'Main-Class': 'eu.m6r.kicker.Main'
+        attributes 'Main-Class': mainClass
     }
 }
 
@@ -49,3 +51,9 @@ task copyFrontend(type: Copy, dependsOn: 'buildFrontend') {
 }
 
 task buildApp(dependsOn: ['shadowJar', 'copyFrontend'])
+
+task runApp(type: JavaExec, dependsOn: 'buildApp') {
+    classpath = files('build/libs/kicker-all.jar')
+    main = mainClass
+    standardInput = System.in
+}

@@ -1,9 +1,14 @@
 # Kicker
 
-## Run API
+## Build App
+This creates a fat jar (`build/lib/kicker-all.jar`) containing the Java backend and the compiled fronted
+```
+./gradlew buildApp
+```
+
+## Run App
 
 ```bash
-./gradlew buildApp
-java -jar build/libs/kicker-all.jar <port>
+./gradlew runApp
 ```
 

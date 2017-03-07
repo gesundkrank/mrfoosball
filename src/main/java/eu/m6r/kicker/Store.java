@@ -63,14 +63,14 @@ public class Store implements Closeable {
             teamGrey.player1 = players.get(0);
             teamGrey.player2 = players.get(1);
 
-            session.save(teamGrey);
+            session.saveOrUpdate(teamGrey);
             tournament.teamGrey = teamGrey;
 
             Team teamBlack = new Team();
             teamBlack.player1 = players.get(2);
             teamBlack.player2 = players.get(3);
 
-            session.save(teamBlack);
+            session.saveOrUpdate(teamBlack);
             tournament.teamBlack = teamBlack;
 
             tournament.id = (int) session.save(tournament);

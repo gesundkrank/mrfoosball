@@ -12,3 +12,10 @@ This creates a fat jar (`build/lib/kicker-all.jar`) containing the Java backend 
 ./gradlew runApp
 ```
 
+## Debianize
+```bash
+./gradlew debianizeApp
+```
+
+Creates the `.deb` package in `build/distributions/`.
+

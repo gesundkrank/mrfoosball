@@ -19,7 +19,7 @@ import javax.xml.bind.JAXBException;
  */
 public class Main {
     // Base URI the Grizzly HTTP server will listen on
-    public static final String BASE_URI = "http://localhost:%d/";
+    public static final String BASE_URI = "http://0.0.0.0:%d/";
 
     /**
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.

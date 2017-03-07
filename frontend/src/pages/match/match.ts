@@ -21,13 +21,14 @@ export class MatchPage {
   wins: any;
 
   constructor(
-    private readonly navCtrl: NavController,
+    readonly navCtrl: NavController,
     private readonly alertCtrl: AlertController,
     private readonly toastCtrl: ToastController,
     private readonly tournament: Tournament,
   ) {
     //
   }
+
   ionViewDidEnter() {
     this.update();
   }
@@ -65,6 +66,23 @@ export class MatchPage {
     return this.wins[this.getTeamNameForColor(color)];
   }
 
+  cancelMatch() {
+    let oldState: string;
+    this.tournament.cancelMatch()
+      .then((state) => {
+        this.navCtrl.pop();
+        oldState = state
+      })
+      .then(() => this.showToast('Match canceled!', 'UNDO'))
+      .then((undone) => {
+        if (undone) {
+          this.tournament.reset(oldState);
+          this.navCtrl.push(MatchPage);
+        }
+      })
+      .then(() => this.update());
+  }
+
   private finishMatch(matchWinner: Team) {
     const [playerA, playerB] = matchWinner.players;
     return this.tournament.finishMatch()
@@ -74,9 +92,12 @@ export class MatchPage {
         this.match = match;
         this.navCtrl.pop();
         if (tournamentFinished) {
+          const message = [
+            'Tournament ended,', playerA.name, 'and', playerB.name, 'won!',
+          ].join(' ');
           return this.tournament.getBestOfN()
             .then((bestOfN) => this.showToast(
-              'Tournament ended, ' + playerA + ' and ' + playerB + 'have won!',
+              message,
               'Play best of ' + bestOfN + '?',
             ));
         }
@@ -84,8 +105,8 @@ export class MatchPage {
       })
       .then((newMatch) => {
         if (newMatch) {
-          this.tournament.newMatch()
-            .then(() =>this.navCtrl.push(MatchPage));
+          this.tournament.newMatch();
+//            .then(() =>this.navCtrl.push(MatchPage));
         }
       });
   }

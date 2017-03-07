@@ -178,6 +178,10 @@ export class Tournament {
       });
   }
 
+  cancelMatch(): Promise<string> {
+    return Promise.resolve(JSON.stringify(this.tournament));
+  }
+
   private findRunning(matches) {
     return _.find(matches, {state: MatchState[MatchState.RUNNING]});
   }

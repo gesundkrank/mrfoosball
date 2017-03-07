@@ -43,10 +43,10 @@ public class Tournament {
     public int bestOfN = 1;
 
     @ManyToOne(cascade = CascadeType.ALL)
-    public Team teamA;
+    public Team teamGrey;
 
     @ManyToOne(cascade = CascadeType.ALL)
-    public Team teamB;
+    public Team teamBlack;
 
     @Enumerated(EnumType.STRING)
     public State state = State.RUNNING;
@@ -56,7 +56,8 @@ public class Tournament {
 
     @Override
     public String toString() {
-        return String.format("id=%d, teamA=%s, teamB=%s, state=%s, matches=%s", id, teamA, teamB,
+        return String.format("id=%d, teamGrey=%s, teamBlack=%s, state=%s, matches=%s", id, teamGrey,
+                             teamBlack,
                              state, matches);
     }
 }

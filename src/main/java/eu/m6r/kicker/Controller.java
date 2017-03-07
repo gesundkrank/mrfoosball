@@ -105,6 +105,10 @@ public enum Controller implements Closeable {
         players.remove(user);
     }
 
+    public List<User> getPlayersInQueue() {
+        return new ArrayList<>(players);
+    }
+
     public String getListOfPlayers() {
         List<String> playerNames = players.stream().map(player -> player.name)
                 .collect(Collectors.toList());

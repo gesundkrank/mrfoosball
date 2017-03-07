@@ -13,6 +13,9 @@ import org.hibernate.cfg.Configuration;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,10 +24,22 @@ import javax.persistence.TypedQuery;
 
 public class Store implements Closeable {
 
+    private static final Path PRODUCTION_CONF_PATH =
+            Paths.get("/opt/kicker/conf/hibernate.cfg.xml");
+
     private final SessionFactory sessionFactory;
 
+
     public Store() {
-        this.sessionFactory = new Configuration().configure().buildSessionFactory();
+        final Configuration configuration = new Configuration();
+
+        if (Files.exists(PRODUCTION_CONF_PATH)) {
+            configuration.configure(PRODUCTION_CONF_PATH.toFile());
+        } else {
+            configuration.configure();
+        }
+
+        this.sessionFactory = configuration.buildSessionFactory();
     }
 
     private Session newSession() {
@@ -44,19 +59,19 @@ public class Store implements Closeable {
             Collections.shuffle(players);
             Tournament tournament = new Tournament();
             tournament.state = State.RUNNING;
-            Team teamA = new Team();
-            teamA.player1 = players.get(0);
-            teamA.player2 = players.get(1);
+            Team teamGrey = new Team();
+            teamGrey.player1 = players.get(0);
+            teamGrey.player2 = players.get(1);
 
-            session.save(teamA);
-            tournament.teamA = teamA;
+            session.save(teamGrey);
+            tournament.teamGrey = teamGrey;
 
-            Team teamB = new Team();
-            teamB.player1 = players.get(2);
-            teamB.player2 = players.get(3);
+            Team teamBlack = new Team();
+            teamBlack.player1 = players.get(2);
+            teamBlack.player2 = players.get(3);
 
-            session.save(teamB);
-            tournament.teamB = teamB;
+            session.save(teamBlack);
+            tournament.teamBlack = teamBlack;
 
             tournament.id = (int) session.save(tournament);
             addMatch(tournament);

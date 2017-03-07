@@ -1,9 +1,21 @@
 # Kicker
 
-## Run API
+## Build App
+This creates a fat jar (`build/lib/kicker-all.jar`) containing the Java backend and the compiled fronted
+```
+./gradlew buildApp
+```
+
+## Run App
 
 ```bash
-kicker-api/gradlew -p kicker-api clean shadowJar
-java -jar kicker-api/build/libs/kicker-api-all.jar
+./gradlew runApp
 ```
+
+## Debianize
+```bash
+./gradlew debianizeApp
+```
+
+Creates the `.deb` package in `build/distributions/`.
 

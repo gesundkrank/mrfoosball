@@ -13,8 +13,8 @@
     <property name="connection.password"/>
     <!-- DB schema will be updated if needed -->
     <property name="hbm2ddl.auto">create-drop</property>
-    <property name="show_sql">true</property>
-    <property name="format_sql">true</property>
+    <property name="show_sql">false</property>
+    <property name="format_sql">false</property>
 
     <mapping class="eu.m6r.kicker.models.Tournament"/>
     <mapping class="eu.m6r.kicker.models.Match"/>

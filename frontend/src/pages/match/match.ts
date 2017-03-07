@@ -124,7 +124,7 @@ export class MatchPage {
   private showToast(message: string, text: string) {
     let toast = this.toastCtrl.create({
       message,
-      duration: 3000,
+      duration: 6000,
       position: 'top',
       showCloseButton: true,
       closeButtonText: text,

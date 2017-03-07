@@ -16,8 +16,8 @@ public class Match {
 
 
     public Date date = new Date();
-    public int teamGrey = 0;
-    public int teamBlack = 0;
+    public int teamA = 0;
+    public int teamB = 0;
 
     @Enumerated(EnumType.STRING)
     public State state = State.RUNNING;
@@ -27,8 +27,8 @@ public class Match {
         return "Match{" +
                "id=" + id +
                ", date=" + date +
-               ", teamGrey=" + teamGrey +
-               ", teamBlack=" + teamBlack +
+               ", teamA=" + teamA +
+               ", teamB=" + teamB +
                ", state=" + state +
                '}';
     }

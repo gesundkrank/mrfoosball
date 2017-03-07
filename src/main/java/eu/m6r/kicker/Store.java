@@ -13,6 +13,9 @@ import org.hibernate.cfg.Configuration;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,10 +24,22 @@ import javax.persistence.TypedQuery;
 
 public class Store implements Closeable {
 
+    private static final Path PRODUCTION_CONF_PATH =
+            Paths.get("/opt/kicker/conf/hibernate.cfg.xml");
+
     private final SessionFactory sessionFactory;
 
+
     public Store() {
-        this.sessionFactory = new Configuration().configure().buildSessionFactory();
+        final Configuration configuration = new Configuration();
+
+        if (Files.exists(PRODUCTION_CONF_PATH)) {
+            configuration.configure(PRODUCTION_CONF_PATH.toFile());
+        } else {
+            configuration.configure();
+        }
+
+        this.sessionFactory = configuration.buildSessionFactory();
     }
 
     private Session newSession() {

@@ -36,7 +36,6 @@ public class Main {
         URI uri = URI.create(String.format(BASE_URI, port));
         HttpServer httpServer = GrizzlyHttpServerFactory.createHttpServer(uri, rc);
         HttpHandler httpHandler = new CLStaticHttpHandler(Main.class.getClassLoader(), "www/");
-
         httpServer.getServerConfiguration().addHttpHandler(httpHandler, "/frontend");
         return httpServer;
     }

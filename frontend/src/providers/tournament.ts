@@ -29,8 +29,8 @@ export class Player {
 }
 
 enum TeamName {
-  teamGrey,
-  teamBlack,
+  teamA,
+  teamB,
 }
 
 export class Team {
@@ -45,15 +45,15 @@ export class Team {
 }
 
 export class Match {
-  teamGrey: number;
-  teamBlack: number;
+  teamA: number;
+  teamB: number;
   state: string;
 
   constructor(
     data: any,
   ) {
-    this.teamGrey = data.teamGrey;
-    this.teamBlack = data.teamBlack;
+    this.teamA = data.teamA;
+    this.teamB = data.teamB;
     this.state = data.state;
   }
 }
@@ -99,19 +99,19 @@ export class Tournament {
     if (!match) {
       return;
     }
-    if (match.teamGrey >= 6) {
-      return new Team(TeamName.teamGrey, this.tournament.teamGrey);
+    if (match.teamA >= 6) {
+      return new Team(TeamName.teamA, this.tournament.teamA);
     }
-    if (match.teamBlack >= 6) {
-      return new Team(TeamName.teamBlack, this.tournament.teamBlack);
+    if (match.teamB >= 6) {
+      return new Team(TeamName.teamB, this.tournament.teamB);
     }
   }
 
   getTeams(): Promise<Team[]> {
     return this.get()
       .then(tournament => [
-        new Team(TeamName.teamGrey, tournament.teamGrey),
-        new Team(TeamName.teamBlack, tournament.teamBlack),
+        new Team(TeamName.teamA, tournament.teamA),
+        new Team(TeamName.teamB, tournament.teamB),
       ]);
   }
 
@@ -151,7 +151,7 @@ export class Tournament {
       const winner = this.getWinner(new Match(match));
       memo[TeamName[winner.name]] += 1;
       return memo;
-    }, {teamGrey: 0, teamBlack: 0});
+    }, {teamA: 0, teamB: 0});
   }
 
   finishMatch() {

@@ -14,8 +14,8 @@ import { Match } from '../../providers/tournament';
 })
 export class MatchPage {
 
-  teamGrey: Team;
-  teamBlack: Team;
+  teamA: Team;
+  teamB: Team;
   match: Match;
   alert: any;
   wins: any;
@@ -32,16 +32,37 @@ export class MatchPage {
     this.update();
   }
 
-  addGoal(team: string) {
+  addGoal(color: string) {
     let oldState: string;
-    this.tournament.addGoal(team)
+    this.tournament.addGoal(this.getTeamNameForColor(color))
       .then((state) => {
         oldState = state;
         return this.update();
       })
-      .then(() => this.showToast('Team: ' + team + ' scored!', 'UNDO'))
+      .then(() => this.showToast('Team: ' + color + ' scored!', 'UNDO'))
       .then((undone) => undone ? this.tournament.reset(oldState) : null)
       .then(() => this.update());
+  }
+
+  getPlayers(color: string) {
+    if (this.teamA === undefined && this.teamB === undefined) {
+      return [];
+    }
+    return this[this.getTeamNameForColor(color)].players;
+  }
+
+  getScore(color: string) {
+    if (this.match === undefined) {
+      return 0;
+    }
+    return this.match[this.getTeamNameForColor(color)];
+  }
+
+  getWins(color: string) {
+    if (this.wins === undefined) {
+      return 0;
+    }
+    return this.wins[this.getTeamNameForColor(color)];
   }
 
   private finishMatch(matchWinner: Team) {
@@ -74,12 +95,23 @@ export class MatchPage {
       .then(running => this.match = running);
   }
 
+  private getTeamNameForColor(color: string) {
+    const matchCount = this.wins ? this.wins.teamA + this.wins.teamB : 0;
+    if (matchCount % 2 == 0) {
+      return {
+        grey: 'teamA',
+        black: 'teamB',
+      }[color];
+    }
+    return {
+      grey: 'teamB',
+      black: 'teamA',
+    }[color];
+  }
+
   private update() {
     return this.tournament.getTeams()
-      .then(([teamGrey, teamBlack]) => {
-        this.teamGrey = teamGrey;
-        this.teamBlack = teamBlack;
-      })
+      .then(([teamA, teamB]) => [this.teamA, this.teamB] = [teamA, teamB])
       .then(() => this.getRunning())
       .then((running) => this.tournament.getWinner(running))
       .then((winner) => winner ? this.finishMatch(winner) : null)

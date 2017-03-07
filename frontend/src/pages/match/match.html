@@ -1,51 +1,51 @@
+<ion-header>
+
+  <ion-navbar hideBackButton>
+    <ion-buttons left>
+      <button ion-button (click)="cancelMatch()">
+        <ion-icon name="md-close"></ion-icon>
+      </button>
+    </ion-buttons>
+    <ion-title>Match</ion-title>
+  </ion-navbar>
+
+</ion-header>
+
+
 <ion-content padding class="vertical-align-content">
   <ion-grid>
     <ion-row>
-      Tournament
+      <h1>
+        Tournament
+      </h1>
     </ion-row>
     <ion-row>
-    <ion-col width-33>
-      <ion-list>
-        <ion-item>
-          <ion-card>
-            GREY
-          </ion-card>
-        </ion-item>
-      </ion-list>
-    </ion-col>
-    <ion-col width-33>
-      <ion-list>
-        <ion-item>
-          <ion-card>
-            {{ wins?.teamGrey }} : {{ wins?.teamBlack }}
-          </ion-card>
-        </ion-item>
-      </ion-list>
-    </ion-col>
-    <ion-col width-33>
-      <ion-list>
-        <ion-item>
-          <ion-card>
-            BLACK
-          </ion-card>
-        </ion-item>
-      </ion-list>
+      <ion-col offset-33 width-33>
+        <ion-list>
+          <ion-item>
+            <ion-card>
+              {{ getWins('grey') }} : {{ getWins('black') }}
+            </ion-card>
+          </ion-item>
+        </ion-list>
       </ion-col>
     </ion-row>
     <ion-row>
-      Match
+      <h1>
+        Match
+      </h1>
     </ion-row>
     <ion-row>
       <ion-col width-33>
         <ion-row
-          *ngFor="let player of teamGrey?.players"
+          *ngFor="let player of getPlayers('grey')"
         >
           <ion-col>
             <button
               ion-button
               large
               block
-              (tap)="addGoal('teamGrey')"
+              (tap)="addGoal('grey')"
             >
               {{ player.name }}
             </button>
@@ -56,21 +56,21 @@
         <ion-row>
           <ion-col>
             <ion-card>
-              {{ match?.teamGrey }} : {{ match?.teamBlack }}
+              {{ getScore('grey') }} : {{ getScore('black') }}
             </ion-card>
           </ion-col>
         </ion-row>
       </ion-col>
       <ion-col width-33>
         <ion-row
-          *ngFor="let player of teamBlack?.players"
+          *ngFor="let player of getPlayers('black')"
         >
           <ion-col>
             <button
               ion-button
               large
               block
-              (tap)="addGoal('teamBlack')"
+              (tap)="addGoal('black')"
             >
               {{ player.name }}
             </button>

@@ -59,19 +59,24 @@ public class Store implements Closeable {
             Collections.shuffle(players);
             Tournament tournament = new Tournament();
             tournament.state = State.RUNNING;
-            Team teamGrey = new Team();
-            teamGrey.player1 = players.get(0);
-            teamGrey.player2 = players.get(1);
 
-            session.saveOrUpdate(teamGrey);
-            tournament.teamGrey = teamGrey;
+            Team teamA = new Team();
+            List<User> team1 = players.subList(0, 1);
+            team1.sort(User::compareTo);
+            teamA.player1 = team1.get(0);
+            teamA.player2 = team1.get(1);
 
-            Team teamBlack = new Team();
-            teamBlack.player1 = players.get(2);
-            teamBlack.player2 = players.get(3);
+            session.save(teamA);
+            tournament.teamA = teamA;
 
-            session.saveOrUpdate(teamBlack);
-            tournament.teamBlack = teamBlack;
+            Team teamB = new Team();
+            List<User> team2 = players.subList(2, 3);
+            team2.sort(User::compareTo);
+            teamB.player1 = team2.get(2);
+            teamB.player2 = team2.get(3);
+
+            session.save(teamB);
+            tournament.teamB = teamB;
 
             tournament.id = (int) session.save(tournament);
             addMatch(tournament);

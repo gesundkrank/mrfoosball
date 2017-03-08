@@ -22,8 +22,6 @@ public class Team implements Serializable{
     @ManyToOne(cascade = CascadeType.PERSIST)
     public User player2;
 
-    public String name;
-
     @Override
     public String toString() {
         return String.format("player1=%s, player2=%s", player1, player2);

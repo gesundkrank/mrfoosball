@@ -119,12 +119,6 @@ public class Store implements Closeable {
     public void updateTournament(final Tournament tournament) {
         try (final Session session = newSession()) {
             Transaction tx = session.beginTransaction();
-            for (Match match : tournament.matches) {
-                System.out.println(match);
-                //session.saveOrUpdate(match);
-            }
-
-            System.out.println(tournament);
             session.saveOrUpdate(tournament);
             tx.commit();
         }

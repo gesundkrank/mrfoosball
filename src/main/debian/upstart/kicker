@@ -6,13 +6,13 @@ PIDFILE=/var/run/$NAME.pid
 RUN_AS=kicker
 WORK_DIR=/opt/kicker
 DAEMON=/usr/bin/java
-OPTS="-jar /opt/kicker/lib/kicker-all.jar"
+OPTS="-jar -Dlog4j.configurationFile=/opt/kicker/conf/log4j2.xml /opt/kicker/lib/kicker-all.jar"
 
 do_start() {
     start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE \
         --background --chdir $WORK_DIR \
         --user $RUN_AS \
-        --exec /bin/bash -- -c "$DAEMON $OPTS > /var/log/kicker.log 2>&1"
+        --exec $DAEMON -- -c $OPTS
 }
 
 do_stop() {

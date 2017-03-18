@@ -75,11 +75,17 @@ task debianizeApp(type: Deb, dependsOn: 'buildApp') {
     version = "${df.format(new Date())}.git${grgit.head().abbreviatedId}"
 
     preInstall file('src/main/debian/preInstall.sh')
+    postInstall file('src/main/debian/postInstall.sh')
 
     into '/opt/kicker'
 
     from('build/libs/kicker-all.jar') {
         into 'lib'
+        user 'kicker'
+    }
+
+    from('src/main/debian/conf') {
+        into 'conf'
         user 'kicker'
     }
 

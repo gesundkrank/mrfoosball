@@ -1,6 +1,7 @@
 package eu.m6r.kicker;
 
 import eu.m6r.kicker.slack.Bot;
+import eu.m6r.kicker.utils.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,10 +13,6 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Properties;
 
 import javax.xml.bind.JAXBException;
 
@@ -26,23 +23,9 @@ public class Main {
 
     // Base URI the Grizzly HTTP server will listen on
     private static final String BASE_URI = "http://0.0.0.0:%d/";
-    private static final Path GLOBAL_PROPERTIES_PATH =
-            Paths.get("/opt/kicker/conf/kicker.properties");
-    private static final Path PROJECT_PROPERTIES_PATH = Paths.get("./kicker.properties");
+
 
     private static final Logger LOGGER = LogManager.getLogger();
-
-
-    public static Properties readProperties() throws IOException {
-        Properties properties = new Properties();
-        if (Files.exists(GLOBAL_PROPERTIES_PATH)) {
-            properties.load(Files.newInputStream(GLOBAL_PROPERTIES_PATH));
-        } else if (Files.exists(PROJECT_PROPERTIES_PATH)) {
-            properties.load(Files.newInputStream(PROJECT_PROPERTIES_PATH));
-        }
-
-        return properties;
-    }
 
     /**
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
@@ -71,14 +54,13 @@ public class Main {
     public static void main(String[] args) throws InterruptedException, IOException {
 
         try {
-            final Properties properties = readProperties();
+            final Properties properties = Properties.getInstance();
 
-            int port = Integer.parseInt(properties.getProperty("port", "8080"));
-            String slackToken = properties.getProperty("slackToken");
+            int port = properties.getPort();
 
             startServer(port);
 
-            new Bot(slackToken);
+            new Bot(properties.getSlackToken());
             //Keeps process running
             Thread.currentThread().join();
         } catch (IOException | JAXBException e) {

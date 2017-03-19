@@ -5,6 +5,7 @@ import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.models.User;
+import eu.m6r.kicker.utils.Properties;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -13,9 +14,6 @@ import org.hibernate.cfg.Configuration;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,20 +22,23 @@ import javax.persistence.TypedQuery;
 
 public class Store implements Closeable {
 
-    private static final Path PRODUCTION_CONF_PATH =
-            Paths.get("/opt/kicker/conf/hibernate.cfg.xml");
-
     private final SessionFactory sessionFactory;
 
 
     public Store() {
         final Configuration configuration = new Configuration();
 
-        if (Files.exists(PRODUCTION_CONF_PATH)) {
-            configuration.configure(PRODUCTION_CONF_PATH.toFile());
-        } else {
-            configuration.configure();
-        }
+        final Properties properties = Properties.getInstance();
+        configuration.configure();
+
+        configuration.setProperty("hibernate.connection.url", properties.getConnectionUrl());
+        configuration.setProperty("hibernate.connection.driver_class",
+                                  properties.getConnectionDriverClass());
+        configuration.setProperty("hibernate.dialect", properties.getConnectionDialect());
+        configuration.setProperty("hibernate.connection.username",
+                                  properties.getConnectionUsername());
+        configuration.setProperty("hibernate.connection.password",
+                                  properties.getConnectionPassword());
 
         this.sessionFactory = configuration.buildSessionFactory();
     }

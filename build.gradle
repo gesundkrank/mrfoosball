@@ -74,6 +74,7 @@ task debianizeApp(type: Deb, dependsOn: 'buildApp') {
     packageName = 'kicker'
     version = "${df.format(new Date())}.git${grgit.head().abbreviatedId}"
 
+    preUninstall file('src/main/debian/preUninstall.sh')
     preInstall file('src/main/debian/preInstall.sh')
     postInstall file('src/main/debian/postInstall.sh')
 

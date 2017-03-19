@@ -12,7 +12,7 @@ do_start() {
     start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE \
         --background --chdir $WORK_DIR \
         --user $RUN_AS \
-        --exec $DAEMON -- -c $OPTS
+        --exec $DAEMON -- $OPTS
 }
 
 do_stop() {
@@ -41,6 +41,7 @@ case "$1" in
     echo "."
     ;;
     status)
+    . /lib/lsb/init-functions
     status_of_proc -p $PIDFILE "$DAEMON" "$NAME" && exit 0 || exit $?
     ;;
     *)

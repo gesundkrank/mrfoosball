@@ -4,7 +4,7 @@ import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
-import eu.m6r.kicker.models.User;
+import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.utils.Properties;
 
 import org.hibernate.Session;
@@ -47,12 +47,12 @@ public class Store implements Closeable {
         return sessionFactory.openSession();
     }
 
-    public void newTournament(final List<User> players) {
+    public void newTournament(final List<Player> players) {
         try (final Session session = newSession()) {
 
             Transaction tx = session.beginTransaction();
 
-            for (User player : players) {
+            for (Player player : players) {
                 session.saveOrUpdate(player);
             }
 
@@ -62,8 +62,8 @@ public class Store implements Closeable {
             tournament.state = State.RUNNING;
 
             Team teamA = new Team();
-            List<User> team1 = players.subList(0, 2);
-            team1.sort(User::compareTo);
+            List<Player> team1 = players.subList(0, 2);
+            team1.sort(Player::compareTo);
             teamA.player1 = team1.get(0);
             teamA.player2 = team1.get(1);
 
@@ -71,8 +71,8 @@ public class Store implements Closeable {
             tournament.teamA = teamA;
 
             Team teamB = new Team();
-            List<User> team2 = players.subList(2, 4);
-            team2.sort(User::compareTo);
+            List<Player> team2 = players.subList(2, 4);
+            team2.sort(Player::compareTo);
             teamB.player1 = team2.get(0);
             teamB.player2 = team2.get(1);
 

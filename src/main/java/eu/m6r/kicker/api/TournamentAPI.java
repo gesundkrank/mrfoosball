@@ -2,7 +2,7 @@ package eu.m6r.kicker.api;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Tournament;
-import eu.m6r.kicker.models.User;
+import eu.m6r.kicker.models.Player;
 
 import java.util.List;
 
@@ -45,7 +45,7 @@ public class TournamentAPI {
 
     @GET
     @Path("queue")
-    public List<User> getPlayersInQueue() {
+    public List<Player> getPlayersInQueue() {
         return controller.getPlayersInQueue();
     }
 }

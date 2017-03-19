@@ -10,7 +10,7 @@
 
     <mapping class="eu.m6r.kicker.models.Tournament"/>
     <mapping class="eu.m6r.kicker.models.Match"/>
-    <mapping class="eu.m6r.kicker.models.User"/>
+    <mapping class="eu.m6r.kicker.models.Player"/>
     <mapping class="eu.m6r.kicker.models.Team"/>
   </session-factory>
 </hibernate-configuration>

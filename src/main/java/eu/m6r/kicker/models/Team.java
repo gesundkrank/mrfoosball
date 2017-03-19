@@ -16,11 +16,11 @@ public class Team implements Serializable{
 
     @Id
     @ManyToOne(cascade = CascadeType.PERSIST)
-    public User player1;
+    public Player player1;
 
     @Id
     @ManyToOne(cascade = CascadeType.PERSIST)
-    public User player2;
+    public Player player2;
 
     @Override
     public String toString() {

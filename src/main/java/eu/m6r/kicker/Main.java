@@ -11,10 +11,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
-import java.io.IOException;
 import java.net.URI;
-
-import javax.xml.bind.JAXBException;
 
 /**
  * Main class.
@@ -51,22 +48,27 @@ public class Main {
     /**
      * Main method.
      */
-    public static void main(String[] args) throws InterruptedException, IOException {
-
+    public static void main(String[] args) throws InterruptedException {
+        LOGGER.info("Starting kicker app.");
         try {
-            final Properties properties = Properties.getInstance();
+            try {
+                final Properties properties = Properties.getInstance();
 
-            int port = properties.getPort();
+                final Bot bot = new Bot(properties.getSlackToken());
+                bot.startNewSession();
 
-            startServer(port);
+                final int port = properties.getPort();
 
-            new Bot(properties.getSlackToken());
-            //Keeps process running
-            Thread.currentThread().join();
-        } catch (IOException | JAXBException e) {
-            LOGGER.error("Application failed: ", e);
-        } finally {
-            Controller.INSTANCE.close();
+                startServer(port);
+
+                //Keeps process running
+                Thread.currentThread().join();
+            } finally {
+                LOGGER.info("Shutting down kicker app.");
+                Controller.INSTANCE.close();
+            }
+        } catch (Throwable e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 }

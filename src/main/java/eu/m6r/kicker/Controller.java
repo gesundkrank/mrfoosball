@@ -1,7 +1,7 @@
 package eu.m6r.kicker;
 
+import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.Tournament;
-import eu.m6r.kicker.models.User;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +19,7 @@ public enum Controller implements Closeable {
 
     private final Logger logger;
     private final Store store;
-    private final Set<User> players;
+    private final Set<Player> players;
 
     Controller() {
         this.logger = LogManager.getLogger();
@@ -28,24 +28,24 @@ public enum Controller implements Closeable {
     }
 
     public void createTestTournament() {
-        List<User> players = new ArrayList<>();
+        List<Player> players = new ArrayList<>();
 
-        User heye = new User();
+        Player heye = new Player();
         heye.id = "dfafsd";
         heye.name = "Heye";
         players.add(heye);
 
-        User jan = new User();
+        Player jan = new Player();
         jan.id = "dfasdfsd";
         jan.name = "Jan";
         players.add(jan);
 
-        User thomas = new User();
+        Player thomas = new Player();
         thomas.id = "dfaffdfsd";
         thomas.name = "Thomas";
         players.add(thomas);
 
-        User niklas = new User();
+        Player niklas = new Player();
         niklas.id = "dfafvvvsd";
         niklas.name = "Niklas";
         players.add(niklas);
@@ -79,18 +79,18 @@ public enum Controller implements Closeable {
         store.addMatch(tournamentId);
     }
 
-    public String addPlayer(User user) throws TooManyUsersException, PlayerAlreadyInQueueException {
-        if (players.contains(user)) {
-            throw new PlayerAlreadyInQueueException(user);
+    public String addPlayer(Player player) throws TooManyUsersException, PlayerAlreadyInQueueException {
+        if (players.contains(player)) {
+            throw new PlayerAlreadyInQueueException(player);
         }
 
         if (players.size() == 4) {
-            throw new TooManyUsersException(user);
+            throw new TooManyUsersException(player);
         }
 
-        players.add(user);
+        players.add(player);
 
-        String playersString = players.stream().map(player -> String.format("<@%s>", player.id))
+        String playersString = players.stream().map(p -> String.format("<@%s>", p.id))
                 .collect(Collectors.joining(", "));
 
         if (players.size() == 4) {
@@ -98,18 +98,18 @@ public enum Controller implements Closeable {
             return String.format("%s a new game started!", playersString);
         }
 
-        return String.format("Added %s to the queue. Current queue: %s.", user.name, playersString);
+        return String.format("Added %s to the queue. Current queue: %s.", player.name, playersString);
     }
 
     public void resetPlayers() {
         players.clear();
     }
 
-    public void removePlayer(User user) {
-        players.remove(user);
+    public void removePlayer(Player player) {
+        players.remove(player);
     }
 
-    public List<User> getPlayersInQueue() {
+    public List<Player> getPlayersInQueue() {
         return new ArrayList<>(players);
     }
 
@@ -127,17 +127,17 @@ public enum Controller implements Closeable {
 
     public static class TooManyUsersException extends Exception {
 
-        public TooManyUsersException(final User user) {
+        public TooManyUsersException(final Player player) {
             super(String.format("Unable to add %s to the game. Too many users in the queue. "
                                 + "Please remove users from the queue or start a game.",
-                                user.name));
+                                player.name));
         }
     }
 
     public static class PlayerAlreadyInQueueException extends Exception {
 
-        public PlayerAlreadyInQueueException(final User user) {
-            super(String.format("%s is already in the queue!", user.name));
+        public PlayerAlreadyInQueueException(final Player player) {
+            super(String.format("%s is already in the queue!", player.name));
         }
     }
 

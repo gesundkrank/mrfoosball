@@ -6,7 +6,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table
-public class User implements Comparable<User> {
+public class Player implements Comparable<Player> {
 
     @Id
     public String id;
@@ -21,7 +21,7 @@ public class User implements Comparable<User> {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof User && ((User) obj).id.equals(id);
+        return obj instanceof Player && ((Player) obj).id.equals(id);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class User implements Comparable<User> {
     }
 
     @Override
-    public int compareTo(User o) {
+    public int compareTo(Player o) {
         return id.compareTo(o.id);
     }
 }

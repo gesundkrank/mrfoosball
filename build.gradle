@@ -38,6 +38,10 @@ dependencies {
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.7'
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     compile group: 'org.postgresql', name: 'postgresql', version: '9.4.1212'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.8.1'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.8.1'
+    // https://mvnrepository.com/artifact/org.postgresql/postgresql
+    compile group: 'org.postgresql', name: 'postgresql', version: '9.4.1212'
 }
 
 node {
@@ -72,12 +76,19 @@ task debianizeApp(type: Deb, dependsOn: 'buildApp') {
     packageName = 'kicker'
     version = "${df.format(new Date())}.git${grgit.head().abbreviatedId}"
 
+    preUninstall file('src/main/debian/preUninstall.sh')
     preInstall file('src/main/debian/preInstall.sh')
+    postInstall file('src/main/debian/postInstall.sh')
 
     into '/opt/kicker'
 
     from('build/libs/kicker-all.jar') {
         into 'lib'
+        user 'kicker'
+    }
+
+    from('src/main/debian/conf') {
+        into 'conf'
         user 'kicker'
     }
 

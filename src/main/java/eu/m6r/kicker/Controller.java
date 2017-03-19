@@ -3,6 +3,9 @@ package eu.m6r.kicker;
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.models.User;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,10 +17,12 @@ import java.util.stream.Collectors;
 public enum Controller implements Closeable {
     INSTANCE;
 
+    private final Logger logger;
     private final Store store;
     private final Set<User> players;
 
     Controller() {
+        this.logger = LogManager.getLogger();
         this.store = new Store();
         this.players = new HashSet<>(6);
     }
@@ -46,7 +51,6 @@ public enum Controller implements Closeable {
         players.add(niklas);
 
         store.newTournament(players);
-        System.out.println(store.getTournaments());
     }
 
     public void startTournament() {
@@ -67,7 +71,7 @@ public enum Controller implements Closeable {
     }
 
     public void updateTournament(final Tournament tournament) {
-        System.out.println("Updating tournament");
+        logger.debug("Updating tournament");
         store.updateTournament(tournament);
     }
 

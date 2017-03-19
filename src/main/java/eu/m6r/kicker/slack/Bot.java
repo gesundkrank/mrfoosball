@@ -9,6 +9,9 @@ import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.regex.Matcher;
@@ -35,21 +38,24 @@ public class Bot {
 
     private final static Pattern COMMAND_PATTERN = Pattern.compile("(\\w+)( ?<@([^>]*)>)*");
 
+    private final Logger logger;
+    private final String token;
+    private final ObjectMapper objectMapper;
+    private final Controller controller;
+
     private Session socketSession;
-    private String token;
     private String botUserId;
     private Pattern botUserIdPattern;
-    private ObjectMapper objectMapper;
-    private Controller controller;
 
     public Bot(final String token) throws IOException, JAXBException {
+        this.logger = LogManager.getLogger();
         this.token = token;
         this.objectMapper = new ObjectMapper();
         this.controller = Controller.INSTANCE;
-        this.socketSession = openSession();
+        openSession();
     }
 
-    private Session openSession() throws IOException {
+    private void openSession() throws IOException {
         Client client = ClientBuilder.newClient();
         WebTarget target = client.target("https://slack.com").path("/api/rtm.start")
                 .queryParam("token", token);
@@ -61,7 +67,7 @@ public class Bot {
         }
 
         if (response.warning != null) {
-            System.out.println(response.warning);
+            logger.warn(response.warning);
         }
 
         String botMention = String.format("<@%s>", response.self.id);
@@ -70,7 +76,7 @@ public class Bot {
 
         WebSocketContainer socketClient = ContainerProvider.getWebSocketContainer();
         try {
-            return socketClient.connectToServer(this, URI.create(response.url));
+            this.socketSession = socketClient.connectToServer(this, URI.create(response.url));
         } catch (DeploymentException e) {
             throw new IOException(e);
         }
@@ -101,9 +107,9 @@ public class Bot {
 
     @OnClose
     public void onClose(Session session, CloseReason closeReason) {
-        System.out.println("Session closed: " + closeReason);
+        logger.warn("Session closed: {}", closeReason);
         try {
-            this.socketSession = openSession();
+            openSession();
         } catch (IOException e) {
             e.printStackTrace();
         }

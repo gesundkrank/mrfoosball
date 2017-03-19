@@ -27,32 +27,6 @@ public enum Controller implements Closeable {
         this.players = new HashSet<>(6);
     }
 
-    public void createTestTournament() {
-        List<Player> players = new ArrayList<>();
-
-        Player heye = new Player();
-        heye.id = "dfafsd";
-        heye.name = "Heye";
-        players.add(heye);
-
-        Player jan = new Player();
-        jan.id = "dfasdfsd";
-        jan.name = "Jan";
-        players.add(jan);
-
-        Player thomas = new Player();
-        thomas.id = "dfaffdfsd";
-        thomas.name = "Thomas";
-        players.add(thomas);
-
-        Player niklas = new Player();
-        niklas.id = "dfafvvvsd";
-        niklas.name = "Niklas";
-        players.add(niklas);
-
-        store.newTournament(players);
-    }
-
     public void startTournament() {
         store.newTournament(new ArrayList<>(players));
         players.clear();

@@ -4,13 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.m6r.kicker.Controller;
-import eu.m6r.kicker.models.User;
+import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.jersey.client.ClientProperties;
 
 import java.io.IOException;
 import java.net.URI;
@@ -31,7 +32,6 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.xml.bind.JAXBException;
 
 @ClientEndpoint
 public class Bot {
@@ -47,38 +47,47 @@ public class Bot {
     private String botUserId;
     private Pattern botUserIdPattern;
 
-    public Bot(final String token) throws IOException, JAXBException {
+    public Bot(final String token) {
         this.logger = LogManager.getLogger();
+
+        if (token == null) {
+            logger.error("Slack token is not set.");
+            throw new RuntimeException("Slack token cannot be null");
+        }
+
         this.token = token;
         this.objectMapper = new ObjectMapper();
         this.controller = Controller.INSTANCE;
-        openSession();
     }
 
-    private void openSession() throws IOException {
-        Client client = ClientBuilder.newClient();
-        WebTarget target = client.target("https://slack.com").path("/api/rtm.start")
+    public void startNewSession() throws StartSocketSessionException {
+        final Client client = ClientBuilder.newClient();
+        client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
+        client.property(ClientProperties.READ_TIMEOUT, 1000);
+
+        final WebTarget target = client.target("https://slack.com").path("/api/rtm.start")
                 .queryParam("token", token);
         final RtmInitResponse response =
                 target.request(MediaType.APPLICATION_JSON).get(RtmInitResponse.class);
 
         if (!response.ok) {
-            throw new RuntimeException(response.error);
+            throw new StartSocketSessionException(response.error);
         }
 
         if (response.warning != null) {
             logger.warn(response.warning);
         }
 
-        String botMention = String.format("<@%s>", response.self.id);
+        final String botMention = String.format("<@%s>", response.self.id);
         this.botUserIdPattern = Pattern.compile(botMention);
         this.botUserId = response.self.id;
 
-        WebSocketContainer socketClient = ContainerProvider.getWebSocketContainer();
+        final WebSocketContainer socketClient = ContainerProvider.getWebSocketContainer();
         try {
+            logger.info("Starting new web socket session with {}", response.url);
             this.socketSession = socketClient.connectToServer(this, URI.create(response.url));
-        } catch (DeploymentException e) {
-            throw new IOException(e);
+        } catch (final DeploymentException | IOException e) {
+            throw new StartSocketSessionException(e);
         }
     }
 
@@ -92,7 +101,7 @@ public class Bot {
             return;
         }
 
-        Message message = objectMapper.readValue(messageString, Message.class);
+        final Message message = objectMapper.readValue(messageString, Message.class);
 
         if (message.text == null) {
             return;
@@ -106,19 +115,19 @@ public class Bot {
     }
 
     @OnClose
-    public void onClose(Session session, CloseReason closeReason) {
+    public void onClose(final Session session, final CloseReason closeReason) {
         logger.warn("Session closed: {}", closeReason);
         try {
-            openSession();
-        } catch (IOException e) {
-            e.printStackTrace();
+            startNewSession();
+        } catch (final StartSocketSessionException e) {
+            logger.error("Reopening closed session failed.", e);
         }
     }
 
-    private void onCommand(String command, String channel, String sender) {
-        Matcher matcher = COMMAND_PATTERN.matcher(command);
+    private void onCommand(final String command, final String channel, final String sender) {
+        final Matcher matcher = COMMAND_PATTERN.matcher(command);
         if (matcher.find()) {
-            String action = matcher.group(1);
+            final String action = matcher.group(1);
             String userId = matcher.group(3);
 
             if (userId == null) {
@@ -129,8 +138,8 @@ public class Bot {
                 switch (action) {
                     case "add":
                     case "play":
-                        User user = getUser(userId);
-                        String message = controller.addPlayer(user);
+                        final Player player = getUser(userId);
+                        final String message = controller.addPlayer(player);
                         sendMessage(message, channel);
                         break;
                     case "reset":
@@ -138,9 +147,9 @@ public class Bot {
                         sendMessage("Cleared queue.", channel);
                         break;
                     case "remove":
-                        User userToRemove = getUser(userId);
-                        controller.removePlayer(userToRemove);
-                        sendMessage(String.format("Removed %s from the queue", userToRemove.name),
+                        final Player playerToRemove = getUser(userId);
+                        controller.removePlayer(playerToRemove);
+                        sendMessage(String.format("Removed %s from the queue", playerToRemove.name),
                                     channel);
                         break;
                     case "queue":
@@ -148,7 +157,7 @@ public class Bot {
                     case "stats":
                         break;
                 }
-            } catch (Controller.TooManyUsersException |
+            } catch (final Controller.TooManyUsersException |
                     Controller.PlayerAlreadyInQueueException |
                     UserExtractionFailedException e) {
                 sendMessage(e.getMessage(), channel);
@@ -158,39 +167,50 @@ public class Bot {
         }
     }
 
-    private void sendMessage(String text, String channel) {
-        Message message = new Message(channel, text, botUserId);
+    private void sendMessage(final String text, final String channel) {
+        final Message message = new Message(channel, text, botUserId);
         try {
-            String messageText = objectMapper.writeValueAsString(message);
+            final String messageText = objectMapper.writeValueAsString(message);
             socketSession.getAsyncRemote().sendText(messageText);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            logger.error("Failed to process message json.", e);
         }
     }
 
-    private User getUser(String userId) throws UserExtractionFailedException {
-        Client client = ClientBuilder.newClient();
-        WebTarget target = client.target("https://slack.com")
+    private Player getUser(final String userId) throws UserExtractionFailedException {
+        final Client client = ClientBuilder.newClient();
+        final WebTarget target = client.target("https://slack.com")
                 .path("/api/users.info")
                 .queryParam("token", token)
                 .queryParam("user", userId);
         try {
-            String userString = target.request(MediaType.APPLICATION_JSON).get(String.class);
-            SlackUser slackUser = objectMapper.readValue(userString, SlackUser.class);
+            final String userString = target.request(MediaType.APPLICATION_JSON).get(String.class);
+            final SlackUser slackUser = objectMapper.readValue(userString, SlackUser.class);
 
-            User user = new User();
-            user.id = slackUser.user.id;
-            user.name = slackUser.user.name;
-            user.avatarImage = slackUser.user.profile.image_192;
-            return user;
-        } catch (ResponseProcessingException | IOException e) {
+            final Player player = new Player();
+            player.id = slackUser.user.id;
+            player.name = slackUser.user.name;
+            player.avatarImage = slackUser.user.profile.image_192;
+            return player;
+        } catch (final ResponseProcessingException | IOException e) {
             throw new UserExtractionFailedException(userId, e);
+        }
+    }
+
+    public static class StartSocketSessionException extends Exception {
+
+        StartSocketSessionException(final Throwable cause) {
+            super("Failed to establish web socket connection.", cause);
+        }
+
+        StartSocketSessionException(final String error) {
+            super(String.format("Failed to establish web socket connection. Cause: %s", error));
         }
     }
 
     public static class UserExtractionFailedException extends Exception {
 
-        UserExtractionFailedException(String userId, Throwable cause) {
+        UserExtractionFailedException(final String userId, final Throwable cause) {
             super(String.format("Failed to get user informations for '%s' from slack API.", userId),
                   cause);
         }

@@ -7,7 +7,7 @@
     <RollingFile name="RollingFile" fileName="${log-path}/kicker.log"
                  filePattern="${log-path}/kicker-%d{yyyy-MM-dd}-%i.log">
       <PatternLayout>
-        <pattern>%d{dd/MMM/yyyy HH:mm:ss,SSS}- %c{1}: %m%n</pattern>
+        <pattern>%d %p %C{1.} [%t] %m%n</pattern>
       </PatternLayout>
       <Policies>
         <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
@@ -16,7 +16,7 @@
     </RollingFile>
   </Appenders>
   <Loggers>
-    <Root level="info" additivity="false">
+    <Root level="info">
       <AppenderRef ref="RollingFile"/>
     </Root>
   </Loggers>

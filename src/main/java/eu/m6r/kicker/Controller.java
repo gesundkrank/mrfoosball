@@ -49,6 +49,15 @@ public enum Controller implements Closeable {
         store.updateTournament(tournament);
     }
 
+    public boolean cancelRunningTournament() {
+        if (!hasRunningTournament()) {
+            return false;
+        }
+
+        store.deleteTournament(getRunningTournament());
+        return true;
+    }
+
     public void newMatch(int tournamentId) {
         store.addMatch(tournamentId);
     }

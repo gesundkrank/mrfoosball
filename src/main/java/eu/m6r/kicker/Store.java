@@ -125,6 +125,14 @@ public class Store implements Closeable {
         }
     }
 
+    public void deleteTournament(final Tournament tournament) {
+        try (final Session session = newSession()) {
+            Transaction tx = session.beginTransaction();
+            session.delete(tournament);
+            tx.commit();
+        }
+    }
+
     public Tournament getRunningTournament() {
         try (final Session session = newSession()) {
             TypedQuery<Tournament> query = session.createNamedQuery(

@@ -1,10 +1,10 @@
 package eu.m6r.kicker;
 
 import eu.m6r.kicker.models.Match;
+import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
-import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.utils.Properties;
 
 import org.hibernate.Session;
@@ -56,7 +56,6 @@ public class Store implements Closeable {
                 session.saveOrUpdate(player);
             }
 
-
             Collections.shuffle(players);
             Tournament tournament = new Tournament();
             tournament.state = State.RUNNING;
@@ -67,7 +66,9 @@ public class Store implements Closeable {
             teamA.player1 = team1.get(0);
             teamA.player2 = team1.get(1);
 
-            session.saveOrUpdate(teamA);
+            if (!session.contains(teamA)) {
+                session.save(teamA);
+            }
             tournament.teamA = teamA;
 
             Team teamB = new Team();
@@ -76,7 +77,9 @@ public class Store implements Closeable {
             teamB.player1 = team2.get(0);
             teamB.player2 = team2.get(1);
 
-            session.saveOrUpdate(teamB);
+            if (!session.contains(teamB)) {
+                session.save(teamB);
+            }
             tournament.teamB = teamB;
 
             tournament.id = (int) session.save(tournament);
@@ -136,7 +139,8 @@ public class Store implements Closeable {
     public Tournament getRunningTournament() {
         try (final Session session = newSession()) {
             TypedQuery<Tournament> query = session.createNamedQuery(
-                    "get_tournaments_with_state", Tournament.class).setParameter("state", State.RUNNING);
+                    "get_tournaments_with_state", Tournament.class)
+                    .setParameter("state", State.RUNNING);
             return query.getSingleResult();
         }
     }

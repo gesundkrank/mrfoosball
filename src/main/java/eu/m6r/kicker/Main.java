@@ -65,7 +65,6 @@ public class Main {
                 Thread.currentThread().join();
             } finally {
                 LOGGER.info("Shutting down kicker app.");
-                Controller.INSTANCE.close();
             }
         } catch (Throwable e) {
             LOGGER.error(e.getMessage(), e);

@@ -37,6 +37,7 @@ public class Store implements Closeable {
                                   properties.getConnectionUsername());
         configuration.setProperty("hibernate.connection.password",
                                   properties.getConnectionPassword());
+        configuration.setProperty("hibernate.hbm2ddl.auto", properties.getHbm2Ddl());
 
         sessionFactory = configuration.buildSessionFactory();
     }

@@ -71,4 +71,8 @@ public class Properties {
     public String getConnectionPassword() {
         return properties.getProperty("connectionPassword", "");
     }
+
+    public String getHbm2Ddl() {
+        return properties.getProperty("connectionHbm2ddl", "validate");
+    }
 }

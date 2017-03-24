@@ -12,7 +12,7 @@ import javax.persistence.Table;
 @Entity
 @Table
 @IdClass(Team.class)
-public class Team implements Serializable{
+public class Team implements Serializable {
 
     @Id
     @ManyToOne(cascade = CascadeType.PERSIST)
@@ -25,5 +25,15 @@ public class Team implements Serializable{
     @Override
     public String toString() {
         return String.format("player1=%s, player2=%s", player1, player2);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if (obj instanceof Team) {
+            final Team oTeam = (Team) obj;
+            return oTeam.player1.equals(player1) && oTeam.player2.equals(player2);
+        }
+        return false;
     }
 }

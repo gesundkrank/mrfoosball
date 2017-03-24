@@ -8,6 +8,7 @@ import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/toPromise';
 
 const TOURNAMENT_URL = '/api/tournament';
+const RUNNING_TOURNAMENT_URL = '/api/tournament/running';
 
 export enum MatchState {
   RUNNING,
@@ -74,7 +75,7 @@ export class Tournament {
     return this.get()
       .then(tournament => {
         previousState = JSON.stringify(tournament);
-        const running = this.findRunning(tournament.matches)
+        const running = Tournament.findRunning(tournament.matches)
         running[team] += 1;
       })
       .then(() => this.push())
@@ -87,7 +88,7 @@ export class Tournament {
         if (!tournament) {
           return;
         }
-        const running = this.findRunning(tournament.matches);
+        const running = Tournament.findRunning(tournament.matches);
         if (!running) {
           return;
         }
@@ -157,10 +158,10 @@ export class Tournament {
   finishMatch() {
     return this.get()
       .then((tournament) => {
-        const running = this.findRunning(tournament.matches);
+        const running = Tournament.findRunning(tournament.matches);
         running.state = MatchState[MatchState.FINISHED];
 
-        assert(!this.findRunning(tournament.matches));
+        assert(!Tournament.findRunning(tournament.matches));
         const wins = this.countWins(tournament.matches);
         const previousBestOfN = this.tournament.bestOfN;
         this.tournament.bestOfN = _(wins).values().max() * 2 + 1;
@@ -169,20 +170,19 @@ export class Tournament {
       .then((args) => this.push().then(() => args));
   }
 
-  endTournament(): Promise<string> {
+  finishTournament(): Promise<string> {
     return this.get()
       .then((tournament) => {
-        const state = JSON.stringify(this.tournament);
-        this.tournament = null;
-        return state;
-      });
+        this.tournament.state = MatchState[MatchState.FINISHED];
+      })
+      .then((args) => this.push().then(() => args));
   }
 
   cancelMatch(): Promise<string> {
     return Promise.resolve(JSON.stringify(this.tournament));
   }
 
-  private findRunning(matches) {
+  private static findRunning(matches) {
     return _.find(matches, {state: MatchState[MatchState.RUNNING]});
   }
 
@@ -196,7 +196,7 @@ export class Tournament {
    }
 
   private pull(): Promise<any> {
-    return this.http.get(TOURNAMENT_URL)
+    return this.http.get(RUNNING_TOURNAMENT_URL)
       .map(res => res.json())
       .toPromise()
       .then(tournament => {

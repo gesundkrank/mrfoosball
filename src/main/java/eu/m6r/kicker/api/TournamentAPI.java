@@ -23,18 +23,25 @@ public class TournamentAPI {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getTournament() {
-        if (controller.hasRunningTournament()) {
-            return Response.ok(controller.getRunningTournament()).build();
-        }
-
-        return Response.noContent().build();
+    public List<Tournament> getTournament() {
+        return controller.getTournaments();
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     public void updateTournament(final Tournament tournament) {
         controller.updateTournament(tournament);
+    }
+
+    @GET
+    @Path("running")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getRunningTournament() {
+        if (controller.hasRunningTournament()) {
+            return Response.ok(controller.getRunningTournament()).build();
+        }
+
+        return Response.noContent().build();
     }
 
     @POST

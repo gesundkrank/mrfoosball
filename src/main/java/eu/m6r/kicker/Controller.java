@@ -6,47 +6,54 @@ import eu.m6r.kicker.models.Tournament;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public enum Controller implements Closeable {
+public enum Controller {
     INSTANCE;
 
     private final Logger logger;
-    private final Store store;
     private final Set<Player> players;
 
     Controller() {
         this.logger = LogManager.getLogger();
-        this.store = new Store();
         this.players = new HashSet<>(6);
     }
 
     public void startTournament() {
-        store.newTournament(new ArrayList<>(players));
-        players.clear();
+        try (final Store store = new Store()) {
+            store.newTournament(new ArrayList<>(players));
+            players.clear();
+        }
     }
 
     public List<Tournament> getTournaments() {
-        return store.getTournaments();
+        try (final Store store = new Store()) {
+
+            return store.getTournaments();
+        }
     }
 
     public boolean hasRunningTournament() {
-        return store.hasRunningTournament();
+        try (final Store store = new Store()) {
+            return store.hasRunningTournament();
+        }
     }
 
     public Tournament getRunningTournament() {
-        return store.getRunningTournament();
+        try (final Store store = new Store()) {
+            return store.getRunningTournament();
+        }
     }
 
     public void updateTournament(final Tournament tournament) {
-        logger.debug("Updating tournament");
-        store.updateTournament(tournament);
+        try (final Store store = new Store()) {
+            logger.debug("Updating tournament");
+            store.updateTournament(tournament);
+        }
     }
 
     public boolean cancelRunningTournament() {
@@ -54,15 +61,25 @@ public enum Controller implements Closeable {
             return false;
         }
 
-        store.deleteTournament(getRunningTournament());
+        try (final Store store = new Store()) {
+            store.deleteTournament(getRunningTournament());
+        }
         return true;
     }
 
     public void newMatch(int tournamentId) {
-        store.addMatch(tournamentId);
+        try (final Store store = new Store()) {
+            store.addMatch(tournamentId);
+        }
     }
 
-    public String addPlayer(Player player) throws TooManyUsersException, PlayerAlreadyInQueueException {
+    public String getPlayersString() {
+        return players.stream().map(p -> String.format("<@%s>", p.id))
+                .collect(Collectors.joining(", "));
+    }
+
+    public String addPlayer(Player player)
+            throws TooManyUsersException, PlayerAlreadyInQueueException {
         if (players.contains(player)) {
             throw new PlayerAlreadyInQueueException(player);
         }
@@ -71,17 +88,19 @@ public enum Controller implements Closeable {
             throw new TooManyUsersException(player);
         }
 
-        players.add(player);
-
-        String playersString = players.stream().map(p -> String.format("<@%s>", p.id))
-                .collect(Collectors.joining(", "));
-
-        if (players.size() == 4) {
-            startTournament();
-            return String.format("%s a new game started!", playersString);
+        if (hasRunningTournament()) {
+            return "A tournament is still running!";
         }
 
-        return String.format("Added %s to the queue. Current queue: %s.", player.name, playersString);
+        players.add(player);
+
+        if (players.size() == 4) {
+            final String players = getPlayersString();
+            startTournament();
+            return String.format("%s a new game started!", players);
+        }
+
+        return String.format("Added %s to the queue.", player.name);
     }
 
     public void resetPlayers() {
@@ -100,12 +119,6 @@ public enum Controller implements Closeable {
         List<String> playerNames = players.stream().map(player -> player.name)
                 .collect(Collectors.toList());
         return String.join(",", playerNames);
-    }
-
-
-    @Override
-    public void close() throws IOException {
-        store.close();
     }
 
     public static class TooManyUsersException extends Exception {

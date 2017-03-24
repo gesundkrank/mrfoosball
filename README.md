@@ -9,6 +9,7 @@ Example configuration file:
 ```
 port=8080
 slackToken=xoxb-1564223413123-adkjADAsjdladdj
+connectionHbm2ddl=create-drop
 ```
 
 ## Build App

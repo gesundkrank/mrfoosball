@@ -15,6 +15,8 @@ import org.glassfish.jersey.client.ClientProperties;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +38,8 @@ import javax.ws.rs.core.MediaType;
 @ClientEndpoint
 public class Bot {
 
-    private final static Pattern COMMAND_PATTERN = Pattern.compile("(\\w+)( ?<@([^>]*)>)*");
+    private final static Pattern COMMAND_PATTERN = Pattern.compile("\\w+");
+    private final static Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
 
     private final Logger logger;
     private final String token;
@@ -125,32 +128,52 @@ public class Bot {
     }
 
     private void onCommand(final String command, final String channel, final String sender) {
-        final Matcher matcher = COMMAND_PATTERN.matcher(command);
-        if (matcher.find()) {
-            final String action = matcher.group(1);
-            String userId = matcher.group(3);
+        final Matcher commandMatcher = COMMAND_PATTERN.matcher(command);
+        if (commandMatcher.find()) {
+            final String action = commandMatcher.group();
+            final Matcher userMatcher = USER_PATTERN.matcher(command);
 
-            if (userId == null) {
-                userId = sender;
+            List<String> userIds = new ArrayList<>();
+
+            while (userMatcher.find()) {
+                userIds.add(userMatcher.group(1));
+            }
+
+            if (userIds.isEmpty()) {
+                userIds.add(sender);
             }
 
             try {
                 switch (action) {
                     case "add":
                     case "play":
-                        final Player player = getUser(userId);
-                        final String message = controller.addPlayer(player);
-                        sendMessage(message, channel);
+                        for (final String userId : userIds) {
+                            try {
+                                final Player player = getUser(userId);
+                                final String message = controller.addPlayer(player);
+                                sendMessage(message, channel);
+                            } catch (Controller.PlayerAlreadyInQueueException e) {
+                                sendMessage(e.getMessage(), channel);
+                            }
+                        }
+
+                        if (!controller.hasRunningTournament()) {
+                            sendMessage(String.format("Current queue: %s",
+                                                      controller.getPlayersString()), channel);
+                        }
                         break;
                     case "reset":
                         controller.resetPlayers();
                         sendMessage("Cleared queue.", channel);
                         break;
                     case "remove":
-                        final Player playerToRemove = getUser(userId);
-                        controller.removePlayer(playerToRemove);
-                        sendMessage(String.format("Removed %s from the queue", playerToRemove.name),
+                        for (final String userId : userIds) {
+                            final Player playerToRemove = getUser(userId);
+                            controller.removePlayer(playerToRemove);
+                            sendMessage(
+                                    String.format("Removed %s from the queue", playerToRemove.name),
                                     channel);
+                        }
                         break;
                     case "queue":
                         sendMessage(controller.getListOfPlayers(), channel);
@@ -167,7 +190,6 @@ public class Bot {
                         sendMessage("Je ne parle pas bullshit.", channel);
                 }
             } catch (final Controller.TooManyUsersException |
-                    Controller.PlayerAlreadyInQueueException |
                     UserExtractionFailedException e) {
                 sendMessage(e.getMessage(), channel);
             }

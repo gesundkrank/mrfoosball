@@ -107,6 +107,8 @@ export class MatchPage {
         if (newMatch) {
           this.tournament.newMatch();
 //            .then(() =>this.navCtrl.push(MatchPage));
+        } else {
+          this.tournament.finishTournament();
         }
       });
   }

@@ -52,7 +52,11 @@ task installFrontend(type: NpmTask) {
     args = ['--prefix', 'frontend', 'install']
 }
 
-task buildFrontend(type: NpmTask, dependsOn: 'installFrontend') {
+task cleanFrontend(type: Delete, dependsOn: 'installFrontend') {
+    delete 'build/resources/main/www'
+}
+
+task buildFrontend(type: NpmTask, dependsOn: 'cleanFrontend') {
     args = ['--prefix', 'frontend', 'run', 'build']
 }
 

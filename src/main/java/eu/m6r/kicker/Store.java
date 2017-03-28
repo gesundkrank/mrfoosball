@@ -60,31 +60,33 @@ public class Store implements Closeable {
         Tournament tournament = new Tournament();
         tournament.state = State.RUNNING;
 
-        Team teamA = new Team();
-        List<Player> team1 = players.subList(0, 2);
-        team1.sort(Player::compareTo);
-        teamA.player1 = team1.get(0);
-        teamA.player2 = team1.get(1);
+        Team teamA = getTeam(players.get(0), players.get(1));
+        Team teamB = getTeam(players.get(2), players.get(3));
 
-        if (!session.contains(teamA)) {
-            session.save(teamA);
-        }
         tournament.teamA = teamA;
-
-        Team teamB = new Team();
-        List<Player> team2 = players.subList(2, 4);
-        team2.sort(Player::compareTo);
-        teamB.player1 = team2.get(0);
-        teamB.player2 = team2.get(1);
-
-        if (!session.contains(teamB)) {
-            session.save(teamB);
-        }
         tournament.teamB = teamB;
 
         tournament.id = (int) session.save(tournament);
         addMatch(tournament);
         tx.commit();
+    }
+
+    private Team getTeam(final Player player1, final Player player2) {
+        final Team team = new Team();
+
+        if (player1.compareTo(player2) > 0) {
+            team.player1 = player2;
+            team.player2 = player1;
+        } else {
+            team.player1 = player1;
+            team.player2 = player2;
+        }
+
+        if (session.get(Team.class, team) == null) {
+            session.save(team);
+        }
+
+        return team;
     }
 
     private void addMatch(final Tournament tournament) {

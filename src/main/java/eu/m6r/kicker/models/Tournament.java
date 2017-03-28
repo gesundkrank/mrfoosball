@@ -42,10 +42,10 @@ public class Tournament {
 
     public int bestOfN = 1;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     public Team teamA;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     public Team teamB;
 
     @Enumerated(EnumType.STRING)

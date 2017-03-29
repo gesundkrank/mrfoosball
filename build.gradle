@@ -60,20 +60,26 @@ task buildFrontend(type: NpmTask, dependsOn: 'cleanFrontend') {
     args = ['--prefix', 'frontend', 'run', 'build']
 }
 
-task copyFrontend(type: Copy, dependsOn: 'buildFrontend') {
+task buildProductionFrontend(type: NpmTask, dependsOn: 'cleanFrontend') {
+    args = ['--prefix', 'frontend', 'run', 'buildProduction']
+}
+
+task copyFrontend(type: Copy) {
     from 'frontend/www'
     into 'build/resources/main/www'
 }
 
 task buildApp(dependsOn: ['shadowJar', 'copyFrontend'])
 
-task runApp(type: JavaExec, dependsOn: 'buildApp') {
+buildApp.shouldRunAfter buildFrontend, buildProductionFrontend
+
+task runApp(type: JavaExec, dependsOn: ['buildFrontend', 'buildApp']) {
     classpath = files('build/libs/kicker-all.jar')
     main = mainClass
     standardInput = System.in
 }
 
-task debianizeApp(type: Deb, dependsOn: 'buildApp') {
+task debianizeApp(type: Deb, dependsOn: ['buildProductionFrontend', 'buildApp']) {
     def df = new SimpleDateFormat("yyyyMMdd'T'HHmmss")
     df.setTimeZone(TimeZone.getTimeZone("UTC"))
 

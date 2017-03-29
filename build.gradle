@@ -8,7 +8,6 @@ plugins {
 }
 
 apply plugin: 'java'
-apply plugin: 'org.ajoberstar.grgit'
 
 def mainClass = 'eu.m6r.kicker.Main'
 
@@ -52,15 +51,15 @@ task installFrontend(type: NpmTask) {
     args = ['--prefix', 'frontend', 'install']
 }
 
-task cleanFrontend(type: Delete, dependsOn: 'installFrontend') {
+task cleanFrontend(type: Delete, dependsOn: installFrontend) {
     delete 'build/resources/main/www'
 }
 
-task buildFrontend(type: NpmTask, dependsOn: 'cleanFrontend') {
+task buildFrontend(type: NpmTask, dependsOn: cleanFrontend) {
     args = ['--prefix', 'frontend', 'run', 'build']
 }
 
-task buildProductionFrontend(type: NpmTask, dependsOn: 'cleanFrontend') {
+task buildProductionFrontend(type: NpmTask, dependsOn: cleanFrontend) {
     args = ['--prefix', 'frontend', 'run', 'buildProduction']
 }
 
@@ -69,17 +68,17 @@ task copyFrontend(type: Copy) {
     into 'build/resources/main/www'
 }
 
-task buildApp(dependsOn: ['shadowJar', 'copyFrontend'])
+copyFrontend.shouldRunAfter buildFrontend, buildProductionFrontend
 
-buildApp.shouldRunAfter buildFrontend, buildProductionFrontend
+task buildApp(dependsOn: [shadowJar, copyFrontend])
 
-task runApp(type: JavaExec, dependsOn: ['buildFrontend', 'buildApp']) {
+task runApp(type: JavaExec, dependsOn: [buildFrontend, buildApp]) {
     classpath = files('build/libs/kicker-all.jar')
     main = mainClass
     standardInput = System.in
 }
 
-task debianizeApp(type: Deb, dependsOn: ['buildProductionFrontend', 'buildApp']) {
+task debianizeApp(type: Deb, dependsOn: [buildProductionFrontend, buildApp]) {
     def df = new SimpleDateFormat("yyyyMMdd'T'HHmmss")
     df.setTimeZone(TimeZone.getTimeZone("UTC"))
 

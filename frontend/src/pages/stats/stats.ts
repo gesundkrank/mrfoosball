@@ -23,17 +23,24 @@ export class StatsPage {
     this.checkTournament();
   }
 
-  checkTournament() {
-    this.tournament.getRunningMatch()
+  refresh(refresher) {
+    this.checkTournament(false)
+      .then(() => refresher.complete());
+  }
+
+  checkTournament(loop = true) {
+    return this.tournament.getRunningMatch()
       .then((match) => {
         if (match) {
           this.newMatch();
         } else {
           this.loadQueue();
-          let self = this;
-          setTimeout(function() {
-            self.checkTournament();
-          }, 5000);
+          if (loop) {
+            let self = this;
+            setTimeout(function() {
+              self.checkTournament();
+            }, 5000);
+          }
         }
       })
   }

@@ -214,8 +214,10 @@ export class Tournament {
 
   }
 
-  cancelMatch(): Promise<string> {
-    return Promise.resolve(JSON.stringify(this.tournament));
+  cancelMatch(): Promise<void> {
+    this.recordState();
+    return this.http.delete(RUNNING_TOURNAMENT_URL)
+      .toPromise();
   }
 
   getUpdateInProgress() {

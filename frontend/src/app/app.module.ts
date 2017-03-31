@@ -1,5 +1,8 @@
-import { NgModule, ErrorHandler } from '@angular/core';
-import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
+import { NgModule } from '@angular/core';
+import { ErrorHandler } from '@angular/core';
+import { IonicApp } from 'ionic-angular';
+import { IonicModule } from 'ionic-angular';
+import { IonicErrorHandler } from 'ionic-angular';
 
 import { MyApp } from './app.component';
 import { MatchPage } from '../pages/match/match';

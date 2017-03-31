@@ -182,6 +182,16 @@ export class Tournament {
     return Promise.resolve(JSON.stringify(this.tournament));
   }
 
+  swapTeams(): Promise<void> {
+    return this.get()
+      .then(tournament => [
+        tournament.teamA, tournament.teamB,
+      ] = [
+        tournament.teamB, tournament.teamA,
+      ])
+      .then(() => this.push());
+  }
+
   private static findRunning(matches) {
     return _.find(matches, {state: MatchState[MatchState.RUNNING]});
   }

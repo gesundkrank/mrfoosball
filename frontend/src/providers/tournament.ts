@@ -179,6 +179,7 @@ export class Tournament {
   }
 
   cancelMatch(): Promise<string> {
+    console.error('Tournament.cancelMatch Not yet implemented!');
     return Promise.resolve(JSON.stringify(this.tournament));
   }
 

@@ -20,7 +20,18 @@
       </h1>
     </ion-row>
     <ion-row>
-      <ion-col offset-33 width-33>
+      <ion-col>
+        <button
+          ion-button
+          large
+          outline
+          block
+          class="big-button"
+        >
+          {{ getTeamName('grey') }}
+        </button>
+      </ion-col>
+      <ion-col>
         <ion-list>
           <ion-item>
             <ion-card  class="score-card tournament-score-card">
@@ -28,6 +39,17 @@
             </ion-card>
           </ion-item>
         </ion-list>
+      </ion-col>
+      <ion-col>
+        <button
+          ion-button
+          large
+          outline
+          block
+          class="big-button"
+        >
+          {{ getTeamName('black') }}
+        </button>
       </ion-col>
     </ion-row>
     <ion-row>

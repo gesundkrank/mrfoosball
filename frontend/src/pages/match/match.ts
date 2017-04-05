@@ -45,6 +45,13 @@ export class MatchPage {
       .then(() => this.update());
   }
 
+  getTeamName(color: string) {
+    if (this.teamA === undefined || this.teamB === undefined) {
+      return;
+    }
+    return this[this.getTeamNameForColor(color)].name;
+  }
+
   getPlayers(color: string) {
     if (this.teamA === undefined && this.teamB === undefined) {
       return [];

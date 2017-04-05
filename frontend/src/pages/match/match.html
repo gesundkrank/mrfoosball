@@ -23,7 +23,7 @@
       <ion-col offset-33 width-33>
         <ion-list>
           <ion-item>
-            <ion-card>
+            <ion-card  class="score-card tournament-score-card">
               {{ getWins('grey') }} : {{ getWins('black') }}
             </ion-card>
           </ion-item>
@@ -55,7 +55,19 @@
       <ion-col width-33>
         <ion-row>
           <ion-col>
-            <ion-card>
+            <p>
+            </p>
+          </ion-col>
+          <ion-col class="align-right">
+            <p>
+            </p>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+            <ion-card
+              class="score-card match-score-card"
+            >
               {{ getScore('grey') }} : {{ getScore('black') }}
             </ion-card>
           </ion-col>

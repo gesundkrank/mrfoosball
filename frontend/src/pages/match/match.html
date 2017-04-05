@@ -46,6 +46,13 @@
         >
           <ion-grid>
             <ion-row>
+              <ion-col>
+                <p [style.color]="'white'">
+                  {{ getTeamName('left') }}
+                </p>
+              </ion-col>
+            </ion-row>
+            <ion-row>
               <ion-col *ngFor="let player of getPlayers('left')">
                 <div class="player-avatar">
                   <img src="{{ player?.avatarImage }}">
@@ -103,6 +110,13 @@
           (click)="addGoal('right')"
         >
           <ion-grid>
+            <ion-row>
+              <ion-col>
+                <p [style.color]="'white'">
+                  {{ getTeamName('right') }}
+                </p>
+              </ion-col>
+            </ion-row>
             <ion-row>
               <ion-col *ngFor="let player of getPlayers('right')">
                 <div class="player-avatar">

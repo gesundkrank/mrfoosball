@@ -15,6 +15,9 @@ import javax.persistence.Table;
 public class Team implements Serializable {
 
     @Id
+    public String name;
+
+    @Id
     @ManyToOne(cascade = CascadeType.PERSIST)
     public Player player1;
 

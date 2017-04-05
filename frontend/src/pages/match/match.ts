@@ -50,6 +50,13 @@ export class MatchPage {
     return this.tournament.getUpdateInProgress();
   }
 
+  getTeamName(side: string) {
+    if (this.teamA === undefined || this.teamB === undefined) {
+      return;
+    }
+    return this[this.getTeamNameForSide(side)].name;
+  }
+
   getPlayers(side: string) {
     if (this.teamA === undefined && this.teamB === undefined) {
       return [];

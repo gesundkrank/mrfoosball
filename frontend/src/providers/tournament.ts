@@ -29,19 +29,24 @@ export class Player {
   }
 }
 
-enum TeamName {
+enum InternalTeamName {
   teamA,
   teamB,
 }
 
 export class Team {
   readonly players: Player[];
+  readonly name: string;
 
   constructor(
-    public readonly name: TeamName,
+    public readonly internalName: InternalTeamName,
     data: any,
   ) {
-    this.players = _.map(data, (player) => new Player(player));
+    this.players = _(data)
+      .pick(['player1', 'player2'])
+      .map((player) => new Player(player))
+      .value();
+    this.name = data.name;
   }
 }
 
@@ -130,18 +135,18 @@ export class Tournament {
       return;
     }
     if (match.teamA >= 6) {
-      return new Team(TeamName.teamA, this.tournament.teamA);
+      return new Team(InternalTeamName.teamA, this.tournament.teamA);
     }
     if (match.teamB >= 6) {
-      return new Team(TeamName.teamB, this.tournament.teamB);
+      return new Team(InternalTeamName.teamB, this.tournament.teamB);
     }
   }
 
   getTeams(): Promise<Team[]> {
     return this.get()
       .then(tournament => [
-        new Team(TeamName.teamA, tournament.teamA),
-        new Team(TeamName.teamB, tournament.teamB),
+        new Team(InternalTeamName.teamA, tournament.teamA),
+        new Team(InternalTeamName.teamB, tournament.teamB),
       ]);
   }
 
@@ -179,7 +184,7 @@ export class Tournament {
   countWins(matches) {
     return _.reduce(matches, (memo, match) => {
       const winner = this.getWinner(new Match(match));
-      memo[TeamName[winner.name]] += 1;
+      memo[InternalTeamName[winner.internalName]] += 1;
       return memo;
     }, {teamA: 0, teamB: 0});
   }

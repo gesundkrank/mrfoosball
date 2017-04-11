@@ -64,11 +64,41 @@ export class Match {
   }
 }
 
+class State {
+
+  private readonly stringyfiedState: string;
+
+  constructor(
+    state: any,
+  ) {
+    this.stringyfiedState = JSON.stringify(state);
+  }
+
+  getState() {
+    return JSON.parse(this.stringyfiedState);
+  }
+}
+
 @Injectable()
 export class Tournament {
 
   private updateInPrgoress: number = 0;
   private tournament: any;
+
+  private undoStack: State[] = [];
+
+  canUndo() {
+    return !_.isEmpty(this.undoStack);
+  }
+
+  undo() {
+    this.tournament = this.undoStack.pop().getState();
+    this.push();
+  }
+
+  recordState() {
+    this.undoStack.push(new State(this.tournament));
+  }
 
   constructor(
     public http: Http,
@@ -77,14 +107,12 @@ export class Tournament {
  }
 
   addGoal(team: string): Promise<any> {
-    let previousState;
     return this.get()
       .then(tournament => {
-        previousState = JSON.stringify(tournament);
+        this.recordState();
         const running = Tournament.findRunning(tournament.matches)
         running[team] += 1;
         this.push();
-        return previousState;
       });
   }
 
@@ -135,6 +163,7 @@ export class Tournament {
   }
 
   reset(tournament) {
+    this.recordState();
     this.push();
   }
 

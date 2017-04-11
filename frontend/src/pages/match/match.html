@@ -11,7 +11,9 @@
           </ion-buttons>
         </ion-col>
         <ion-col offset-33 width-10>
-          <ion-title>Match</ion-title>
+          <ion-title>
+            Best of {{ bestOfN }}
+          </ion-title>
         </ion-col>
         <ion-col class="align-right">
           <ion-spinner *ngIf="getUpdateInProgress()"></ion-spinner>

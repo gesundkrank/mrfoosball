@@ -34,84 +34,78 @@
 </ion-header>
 
 
-<ion-content padding class="vertical-align-content">
+<ion-content>
   <ion-grid>
     <ion-row>
-      <h1>
-        Tournament
-      </h1>
-    </ion-row>
-    <ion-row>
-      <ion-col offset-33 width-33>
-        <ion-list>
-          <ion-item>
-            <ion-card  class="score-card tournament-score-card">
-              {{ getWins('grey') }} : {{ getWins('black') }}
-            </ion-card>
-          </ion-item>
-        </ion-list>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <h1>
-        Match
-      </h1>
-    </ion-row>
-    <ion-row>
-      <ion-col width-33>
-        <ion-row
-          *ngFor="let player of getPlayers('grey')"
+      <ion-col>
+        <ion-item
+          width-33
+          class="goal-button"
+          [color]="getTeamColor('left')"
+          (click)="addGoal('left')"
         >
-          <ion-col>
-            <button
-              ion-button
-              large
-              block
-              class="big-button"
-              (tap)="addGoal('grey')"
-            >
-              {{ player.name }}
-            </button>
-          </ion-col>
-        </ion-row>
+          <ion-grid>
+            <ion-row>
+              <ion-col *ngFor="let player of getPlayers('left')">
+                <div class="player-avatar">
+                  <img src="{{ player?.avatarImage }}">
+                </div>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col *ngFor="let player of getPlayers('left')">
+                <p>
+                  {{ player?.name }}
+                </p>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-item>
       </ion-col>
       <ion-col width-33>
-        <ion-row>
-          <ion-col>
-            <p>
-            </p>
-          </ion-col>
-          <ion-col class="align-right">
-            <p>
-            </p>
-          </ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col>
-            <ion-card
-              class="score-card match-score-card"
-            >
-              {{ getScore('grey') }} : {{ getScore('black') }}
-            </ion-card>
-          </ion-col>
-        </ion-row>
+        <ion-grid>
+          <ion-row>
+            <ion-col>
+              <ion-card  class="score-card tournament-score-card">
+                {{ getWins('left') }} : {{ getWins('right') }}
+              </ion-card>
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col>
+              <ion-card
+                class="score-card match-score-card"
+              >
+                {{ getScore('left') }} : {{ getScore('right') }}
+              </ion-card>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
       </ion-col>
-      <ion-col width-33>
-        <ion-row
-          *ngFor="let player of getPlayers('black')"
+      <ion-col>
+        <ion-item
+          width-33
+          class="goal-button"
+          [color]="getTeamColor('right')"
+          (click)="addGoal('right')"
         >
-          <ion-col>
-            <button
-              ion-button
-              large
-              block
-              class="big-button"
-              (tap)="addGoal('black')"
-            >
-              {{ player.name }}
-            </button>
-          </ion-col>
-        </ion-row>
+          <ion-grid>
+            <ion-row>
+              <ion-col *ngFor="let player of getPlayers('right')">
+                <div class="player-avatar">
+                  <img src="{{ player?.avatarImage }}">
+                </div>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col *ngFor="let player of getPlayers('right')">
+                <p>
+                  {{ player?.name }}
+                </p>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-item>
       </ion-col>
     </ion-row>
   </ion-grid>

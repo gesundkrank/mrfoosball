@@ -84,6 +84,13 @@ export class MatchPage {
       .then(() => this.update());
   }
 
+  getTeamColor(color: string) {
+    return {
+      teamA: 'light',
+      teamB: 'dark',
+    }[this.getTeamNameForColor(color)];
+  }
+
   swapTeams() {
     this.tournament.swapTeams()
       .then(() => this.update());
@@ -145,13 +152,13 @@ export class MatchPage {
     const matchCount = this.wins ? this.wins.teamA + this.wins.teamB : 0;
     if (matchCount % 2 == 0) {
       return {
-        grey: 'teamA',
-        black: 'teamB',
+        left: 'teamA',
+        right: 'teamB',
       }[color];
     }
     return {
-      grey: 'teamB',
-      black: 'teamA',
+      left: 'teamB',
+      right: 'teamA',
     }[color];
   }
 

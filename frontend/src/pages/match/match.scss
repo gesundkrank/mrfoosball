@@ -1,7 +1,41 @@
 page-match {
 
+  scroll-content {
+      display: flex;
+      flex-direction: column;
+  }
+
+  ion-grid, ion-item {
+      padding: 0;
+      height: 100%;
+  }
+
+  ion-row {
+    flex: 1;
+    text-align: center;
+  }
+
   * {
     box-sizing: border-box;
+  }
+
+  .goal-button {
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    text-transform: uppercase;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .player-avatar > img {
+    border-radius: 100%;
+  }
+
+  .swap-team-button {
+    margin: 3%;
+    padding: 15%;
+    font-size: 3em;
   }
 
   .score-card {
@@ -11,25 +45,14 @@ page-match {
   }
 
   .tournament-score-card {
-    padding-top: 5%;
-    padding-bottom: 5%;
     font-size: 6em !important;
   }
 
   .match-score-card {
-    padding-top: 12%;
-    padding-bottom: 12%;
     font-size: 12em !important;
   }
 
-  .big-button {
-    padding-top: 15%;
-    padding-bottom: 15%;
-    font-size: 3em;
-  }
-
-  .vertical-align-content > * {
-    display: flex;
-    align-items: center;
+  .align-right {
+    text-align: right;
   }
 }

@@ -219,9 +219,10 @@ export class Tournament {
 
   }
 
-  cancelMatch(): Promise<string> {
-    console.error('Tournament.cancelMatch Not yet implemented!');
-    return Promise.resolve(JSON.stringify(this.tournament));
+  cancelMatch(): Promise<void> {
+    this.recordState();
+    return this.http.delete(RUNNING_TOURNAMENT_URL)
+      .toPromise();
   }
 
   swapTeams(): Promise<void> {

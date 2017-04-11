@@ -20,6 +20,8 @@ export class MatchPage {
   alert: any;
   wins: any;
 
+  private bestOfN: number;
+
   constructor(
     readonly navCtrl: NavController,
     private readonly alertCtrl: AlertController,
@@ -34,15 +36,25 @@ export class MatchPage {
   }
 
   addGoal(color: string) {
-    let oldState: string;
-    this.tournament.addGoal(this.getTeamNameForColor(color))
-      .then((state) => {
-        oldState = state;
-        return this.update();
-      })
-      .then(() => this.showToast('Team: ' + color + ' scored!', 'UNDO'))
-      .then((undone) => undone ? this.tournament.reset(oldState) : null)
+    const team = this.getTeamNameForColor(color);
+    this.tournament.addGoal(team)
       .then(() => this.update());
+  }
+
+  undo() {
+    this.tournament.undo();
+    this.update();
+  }
+
+  getUpdateInProgress() {
+    return this.tournament.getUpdateInProgress();
+  }
+
+  getTeamName(color: string) {
+    if (this.teamA === undefined || this.teamB === undefined) {
+      return;
+    }
+    return this[this.getTeamNameForColor(color)].name;
   }
 
   getPlayers(color: string) {
@@ -67,19 +79,20 @@ export class MatchPage {
   }
 
   cancelMatch() {
-    let oldState: string;
     this.tournament.cancelMatch()
-      .then((state) => {
-        this.navCtrl.pop();
-        oldState = state
-      })
-      .then(() => this.showToast('Match canceled!', 'UNDO'))
-      .then((undone) => {
-        if (undone) {
-          this.tournament.reset(oldState);
-          this.navCtrl.push(MatchPage);
-        }
-      })
+      .then(() => this.navCtrl.pop())
+      .then(() => this.update());
+  }
+
+  getTeamColor(color: string) {
+    return {
+      teamA: 'light',
+      teamB: 'dark',
+    }[this.getTeamNameForColor(color)];
+  }
+
+  swapTeams() {
+    this.tournament.swapTeams()
       .then(() => this.update());
   }
 
@@ -90,27 +103,50 @@ export class MatchPage {
         const match = args[0] as Match;
         const tournamentFinished = args[1];
         this.match = match;
-        this.navCtrl.pop();
+        // if (this.match.teamA === 0 || this.match.teamB === 0) {
+        //   this.alertCtrl.create({
+        //     title: 'KRIEEECHEEEEN!!!!',
+        //     message: 'KRIEEECHEEEEN!!!!1!!eins!11!!elf!!!!',
+        //   }).present();
+        // }
         if (tournamentFinished) {
+          const title = [
+            'Team', matchWinner.name, 'is the winner!'
+          ].join(' ');
           const message = [
-            'Tournament ended,', playerA.name, 'and', playerB.name, 'won!',
+            playerA.name, 'and', playerB.name, 'won!',
           ].join(' ');
           return this.tournament.getBestOfN()
-            .then((bestOfN) => this.showToast(
-              message,
-              'Play best of ' + bestOfN + '?',
-            ));
+            .then((bestOfN) => this.showPlayBestOfNAlert(title, message, bestOfN));
         }
         return true;
       })
       .then((newMatch) => {
         if (newMatch) {
           this.tournament.newMatch();
-//            .then(() =>this.navCtrl.push(MatchPage));
         } else {
+          this.navCtrl.pop();
           this.tournament.finishTournament();
         }
       });
+  }
+
+  showPlayBestOfNAlert(title, message, bestOfN) {
+    return new Promise((resolve, reject) => {
+      let alert = this.alertCtrl.create({
+        title,
+        message,
+        buttons: [{
+         text: 'Finish',
+         role: 'cancel',
+         handler: () => {resolve(false)},
+        }, {
+         text: 'Play best of ' + bestOfN,
+         handler: () => {resolve(true)},
+        }],
+      });
+      alert.present();
+    });
   }
 
   private getRunning() {
@@ -122,13 +158,13 @@ export class MatchPage {
     const matchCount = this.wins ? this.wins.teamA + this.wins.teamB : 0;
     if (matchCount % 2 == 0) {
       return {
-        grey: 'teamA',
-        black: 'teamB',
+        left: 'teamA',
+        right: 'teamB',
       }[color];
     }
     return {
-      grey: 'teamB',
-      black: 'teamA',
+      left: 'teamB',
+      right: 'teamA',
     }[color];
   }
 
@@ -141,30 +177,8 @@ export class MatchPage {
       .then(() => this.getRunning())
       .then((running) => this.match = running)
       .then(() => this.tournament.getWins())
-      .then((wins) => this.wins = wins);
+      .then((wins) => this.wins = wins)
+      .then(() => this.tournament.getBestOfN())
+      .then((bestOfN) => this.bestOfN = bestOfN);
   }
-
-  private showToast(message: string, text: string) {
-    let toast = this.toastCtrl.create({
-      message,
-      duration: 6000,
-      position: 'top',
-      showCloseButton: true,
-      closeButtonText: text,
-    });
-    return new Promise<boolean>(resolve => {
-      toast.onDidDismiss((_data, role) => {
-        // If user clicks the 'UNDO' button, the role is 'close',
-        // otherwise it is 'backdrop', which means he does not
-        // want to 'undo'.
-        if (role !== 'close') {
-          resolve(false);
-          return;
-        }
-        resolve(true);
-      });
-      toast.present();
-    });
-  }
-
 }

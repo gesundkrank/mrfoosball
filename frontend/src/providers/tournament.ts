@@ -4,8 +4,11 @@ import { Injectable } from '@angular/core';
 import { Http } from '@angular/http';
 import { Headers } from '@angular/http';
 import { RequestOptions } from '@angular/http';
+import { ResponseOptions } from '@angular/http';
+import { Response } from '@angular/http';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/toPromise';
+import { MockBackend } from '@angular/http/testing';
 
 const TOURNAMENT_URL = '/api/tournament';
 const RUNNING_TOURNAMENT_URL = '/api/tournament/running';
@@ -29,19 +32,24 @@ export class Player {
   }
 }
 
-enum TeamName {
+enum InternalTeamName {
   teamA,
   teamB,
 }
 
 export class Team {
   readonly players: Player[];
+  readonly name: string;
 
   constructor(
-    public readonly name: TeamName,
+    public readonly internalName: InternalTeamName,
     data: any,
   ) {
-    this.players = _.map(data, (player) => new Player(player));
+    this.players = _(data)
+      .pick(['player1', 'player2'])
+      .map((player) => new Player(player))
+      .value();
+    this.name = data.name;
   }
 }
 
@@ -59,27 +67,57 @@ export class Match {
   }
 }
 
+class State {
+
+  private readonly stringyfiedState: string;
+
+  constructor(
+    state: any,
+  ) {
+    this.stringyfiedState = JSON.stringify(state);
+  }
+
+  getState() {
+    return JSON.parse(this.stringyfiedState);
+  }
+}
+
 @Injectable()
 export class Tournament {
 
+  private updateInPrgoress: number = 0;
   private tournament: any;
+
+  private undoStack: State[] = [];
+
+  canUndo() {
+    return !_.isEmpty(this.undoStack);
+  }
+
+  undo() {
+    this.tournament = this.undoStack.pop().getState();
+    this.push();
+  }
+
+  recordState() {
+    this.undoStack.push(new State(this.tournament));
+  }
 
   constructor(
     public http: Http,
+    private backend: MockBackend,
   ) {
-   //
+    this.setupMockBackend();
  }
 
   addGoal(team: string): Promise<any> {
-    let previousState;
     return this.get()
       .then(tournament => {
-        previousState = JSON.stringify(tournament);
+        this.recordState();
         const running = Tournament.findRunning(tournament.matches)
         running[team] += 1;
-      })
-      .then(() => this.push())
-      .then(() => previousState);
+        this.push();
+      });
   }
 
   getRunningMatch(): Promise<Match> {
@@ -101,18 +139,18 @@ export class Tournament {
       return;
     }
     if (match.teamA >= 6) {
-      return new Team(TeamName.teamA, this.tournament.teamA);
+      return new Team(InternalTeamName.teamA, this.tournament.teamA);
     }
     if (match.teamB >= 6) {
-      return new Team(TeamName.teamB, this.tournament.teamB);
+      return new Team(InternalTeamName.teamB, this.tournament.teamB);
     }
   }
 
   getTeams(): Promise<Team[]> {
     return this.get()
       .then(tournament => [
-        new Team(TeamName.teamA, tournament.teamA),
-        new Team(TeamName.teamB, tournament.teamB),
+        new Team(InternalTeamName.teamA, tournament.teamA),
+        new Team(InternalTeamName.teamB, tournament.teamB),
       ]);
   }
 
@@ -123,14 +161,14 @@ export class Tournament {
       });
   }
 
-  getBestOfN() {
+  getBestOfN(): Promise<number> {
     return this.get()
       .then((tournament) => tournament.bestOfN);
   }
 
   reset(tournament) {
-    this.tournament = JSON.parse(tournament);
-    return this.push();
+    this.recordState();
+    this.push();
   }
 
   newMatch(): Promise<void> {
@@ -150,7 +188,7 @@ export class Tournament {
   countWins(matches) {
     return _.reduce(matches, (memo, match) => {
       const winner = this.getWinner(new Match(match));
-      memo[TeamName[winner.name]] += 1;
+      memo[InternalTeamName[winner.internalName]] += 1;
       return memo;
     }, {teamA: 0, teamB: 0});
   }
@@ -167,7 +205,10 @@ export class Tournament {
         this.tournament.bestOfN = _(wins).values().max() * 2 + 1;
         return [new Match(running), this.tournament.bestOfN > previousBestOfN];
       })
-      .then((args) => this.push().then(() => args));
+      .then((args) => {
+        this.push();
+        return args;
+      });
   }
 
   finishTournament(): Promise<string> {
@@ -175,11 +216,31 @@ export class Tournament {
       .then((tournament) => {
         this.tournament.state = MatchState[MatchState.FINISHED];
       })
-      .then((args) => this.push().then(() => args));
+      .then((args) => {
+        this.push();
+        return args;
+      });
+
   }
 
-  cancelMatch(): Promise<string> {
-    return Promise.resolve(JSON.stringify(this.tournament));
+  cancelMatch(): Promise<void> {
+    this.recordState();
+    return this.http.delete(RUNNING_TOURNAMENT_URL)
+      .toPromise();
+  }
+
+  swapTeams(): Promise<void> {
+    return this.get()
+      .then(tournament => [
+        tournament.teamA, tournament.teamB,
+      ] = [
+        tournament.teamB, tournament.teamA,
+      ])
+      .then(() => {this.push()});
+  }
+
+  getUpdateInProgress() {
+    return this.updateInPrgoress > 0;
   }
 
   private static findRunning(matches) {
@@ -205,9 +266,138 @@ export class Tournament {
   }
 
   private push(): Promise<any> {
+    this.updateInPrgoress += 1;
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
     return this.http.put(TOURNAMENT_URL, this.tournament, options)
-      .toPromise();
+      .toPromise()
+      .then(() => this.updateInPrgoress -= 1);
    }
+
+  private mockDb = {
+    "id": 1,
+    "bestOfN": 1,
+    "teamA": {
+      "name": "grey",
+      "player1": {
+        "id": "U12PAFQ9E",
+        "name": "grey front",
+        "avatarImage": "https://avatars.slack-edge.com/2016-04-22/36805531893_c20a75f7e3ffe6cf9d32_192.jpg",
+      },
+      "player2": {
+        "id": "U15CRSYKY",
+        "name": "grey back",
+        "avatarImage": "https://secure.gravatar.com/avatar/f4bfdfbc97572182ad1bb871161dbe64.jpg?s=192&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0001-192.png",
+      },
+    },
+    "teamB": {
+      "name": "black",
+      "player1": {
+        "id": "U12G6EUSZ",
+        "name": "black front",
+        "avatarImage": "https://avatars.slack-edge.com/2017-02-27/146734268195_f68a8b3c1fd4740a366b_192.jpg",
+      },
+      "player2": {
+        "id": "U12GTAA49",
+        "name": "black back",
+        "avatarImage": "https://avatars.slack-edge.com/2016-04-21/36516684115_cdf0846b0c832973080b_192.jpg",
+      },
+    },
+    "state": "RUNNING",
+    "matches": [
+      {
+        "id": 2,
+        "date": "2017-03-22T17:07:15.414Z",
+        "teamA": 0,
+        "teamB": 0,
+        "state": "RUNNING",
+        // "players": [{
+        //   "id": "U12PAFQ9E",
+        //   "color": "grey",
+        //   "goals": 2,
+        //   "ownGoals": 1,
+        //   "position": "front",
+        // }, {
+        //   "id": "U15CRSYKY",
+        //   "color": "grey",
+        //   "goals": 2,
+        //   "ownGoals": 0,
+        //   "position": "back",
+        // }, {
+        //   "id": "U12G6EUSZ",
+        //   "color": "black",
+        //   "goals": 4,
+        //   "ownGoals": 0,
+        //   "position": "front",
+        // }, {
+        //   "id": "U12GTAA49",
+        //   "color": "black",
+        //   "goals": 0,
+        //   "ownGoals": 0,
+        //   "position": "back",
+        // }],
+      },
+    ],
+  };
+
+  private setupMockBackend() {
+    this.backend.connections.subscribe(c => {
+      console.log(c);
+
+      // GET: /api/tournament/queue -> return current queue
+      if (c.request.url.match(/\/api\/tournament\/queue$/i) && c.request.method === 0) {
+        let res = new Response(new ResponseOptions({
+          body: JSON.stringify([])
+        }));
+
+        c.mockRespond(res);
+        return;
+      }
+      // GET: /api/tournament -> return current tournament
+      if (c.request.url.match(/\/api\/tournament\/running$/i) && c.request.method === 0) {
+        let res = new Response(new ResponseOptions({
+          body: JSON.stringify(this.mockDb)
+        }));
+
+        c.mockRespond(res);
+        return;
+      }
+      // GET: /api/tournament -> return current tournament
+      if (c.request.url.match(/\/api\/tournament$/i) && c.request.method === 0) {
+        let res = new Response(new ResponseOptions({
+          body: JSON.stringify(this.mockDb)
+        }));
+
+        c.mockRespond(res);
+        return;
+      }
+      // PUT: /api/tournament -> update current tournament
+      if (c.request.url.match(/\/api\/tournament$/i) && c.request.method === 2) {
+        this.mockDb = c.request._body;
+        setTimeout(() => {
+          c.mockRespond(new Response(new ResponseOptions()));
+        }, 500);
+        return;
+      }
+      // GET: /api/tournament/:id -> return tournament with id
+      let match = c.request.url.match(/\/api\/tournament\/[0-9]+$/i);
+      if (match && c.request.method === 1) {
+        this.mockDb.matches.push({
+          id: (_.last(this.mockDb.matches).id as number) + 1,
+          date: new Date().toISOString(),
+          teamA: 0,
+          teamB: 0,
+          state: "RUNNING",
+        });
+        c.mockRespond(new Response(new ResponseOptions()));
+        return;
+      }
+      // DELETE: /api/tournament/:id -> delete tournament with id
+      if (match && c.request.method === 3) {
+        this.mockDb.matches.pop();
+        c.mockRespond(new Response(new ResponseOptions()));
+        return;
+      }
+    });
+  }
 }

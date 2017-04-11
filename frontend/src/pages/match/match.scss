@@ -1,19 +1,58 @@
 page-match {
 
+  scroll-content {
+      display: flex;
+      flex-direction: column;
+  }
+
+  ion-grid, ion-item {
+      padding: 0;
+      height: 100%;
+  }
+
+  ion-row {
+    flex: 1;
+    text-align: center;
+  }
+
   * {
     box-sizing: border-box;
   }
 
-  ion-card {
-    height: 100%;
+  .goal-button {
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    text-transform: uppercase;
+    font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .player-avatar > img {
+    border-radius: 100%;
+  }
+
+  .swap-team-button {
+    margin: 3%;
+    padding: 15%;
+    font-size: 3em;
+  }
+
+  .score-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tournament-score-card {
     font-size: 6em !important;
   }
 
-  .vertical-align-content > * {
-    display: flex;
-    align-items: center;
+  .match-score-card {
+    font-size: 12em !important;
+  }
+
+  .align-right {
+    text-align: right;
   }
 }

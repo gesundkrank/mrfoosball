@@ -4,8 +4,11 @@ import { Injectable } from '@angular/core';
 import { Http } from '@angular/http';
 import { Headers } from '@angular/http';
 import { RequestOptions } from '@angular/http';
+import { ResponseOptions } from '@angular/http';
+import { Response } from '@angular/http';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/toPromise';
+import { MockBackend } from '@angular/http/testing';
 
 const TOURNAMENT_URL = '/api/tournament';
 const RUNNING_TOURNAMENT_URL = '/api/tournament/running';
@@ -102,8 +105,9 @@ export class Tournament {
 
   constructor(
     public http: Http,
+    private backend: MockBackend,
   ) {
-   //
+    this.setupMockBackend();
  }
 
   addGoal(team: string): Promise<any> {
@@ -269,4 +273,131 @@ export class Tournament {
       .toPromise()
       .then(() => this.updateInPrgoress -= 1);
    }
+
+  private mockDb = {
+    "id": 1,
+    "bestOfN": 1,
+    "teamA": {
+      "name": "grey",
+      "player1": {
+        "id": "U12PAFQ9E",
+        "name": "grey front",
+        "avatarImage": "https://avatars.slack-edge.com/2016-04-22/36805531893_c20a75f7e3ffe6cf9d32_192.jpg",
+      },
+      "player2": {
+        "id": "U15CRSYKY",
+        "name": "grey back",
+        "avatarImage": "https://secure.gravatar.com/avatar/f4bfdfbc97572182ad1bb871161dbe64.jpg?s=192&d=https%3A%2F%2Fa.slack-edge.com%2F7fa9%2Fimg%2Favatars%2Fava_0001-192.png",
+      },
+    },
+    "teamB": {
+      "name": "black",
+      "player1": {
+        "id": "U12G6EUSZ",
+        "name": "black front",
+        "avatarImage": "https://avatars.slack-edge.com/2017-02-27/146734268195_f68a8b3c1fd4740a366b_192.jpg",
+      },
+      "player2": {
+        "id": "U12GTAA49",
+        "name": "black back",
+        "avatarImage": "https://avatars.slack-edge.com/2016-04-21/36516684115_cdf0846b0c832973080b_192.jpg",
+      },
+    },
+    "state": "RUNNING",
+    "matches": [
+      {
+        "id": 2,
+        "date": "2017-03-22T17:07:15.414Z",
+        "teamA": 0,
+        "teamB": 0,
+        "state": "RUNNING",
+        // "players": [{
+        //   "id": "U12PAFQ9E",
+        //   "color": "grey",
+        //   "goals": 2,
+        //   "ownGoals": 1,
+        //   "position": "front",
+        // }, {
+        //   "id": "U15CRSYKY",
+        //   "color": "grey",
+        //   "goals": 2,
+        //   "ownGoals": 0,
+        //   "position": "back",
+        // }, {
+        //   "id": "U12G6EUSZ",
+        //   "color": "black",
+        //   "goals": 4,
+        //   "ownGoals": 0,
+        //   "position": "front",
+        // }, {
+        //   "id": "U12GTAA49",
+        //   "color": "black",
+        //   "goals": 0,
+        //   "ownGoals": 0,
+        //   "position": "back",
+        // }],
+      },
+    ],
+  };
+
+  private setupMockBackend() {
+    this.backend.connections.subscribe(c => {
+      console.log(c);
+
+      // GET: /api/tournament/queue -> return current queue
+      if (c.request.url.match(/\/api\/tournament\/queue$/i) && c.request.method === 0) {
+        let res = new Response(new ResponseOptions({
+          body: JSON.stringify([])
+        }));
+
+        c.mockRespond(res);
+        return;
+      }
+      // GET: /api/tournament -> return current tournament
+      if (c.request.url.match(/\/api\/tournament\/running$/i) && c.request.method === 0) {
+        let res = new Response(new ResponseOptions({
+          body: JSON.stringify(this.mockDb)
+        }));
+
+        c.mockRespond(res);
+        return;
+      }
+      // GET: /api/tournament -> return current tournament
+      if (c.request.url.match(/\/api\/tournament$/i) && c.request.method === 0) {
+        let res = new Response(new ResponseOptions({
+          body: JSON.stringify(this.mockDb)
+        }));
+
+        c.mockRespond(res);
+        return;
+      }
+      // PUT: /api/tournament -> update current tournament
+      if (c.request.url.match(/\/api\/tournament$/i) && c.request.method === 2) {
+        this.mockDb = c.request._body;
+        setTimeout(() => {
+          c.mockRespond(new Response(new ResponseOptions()));
+        }, 500);
+        return;
+      }
+      // GET: /api/tournament/:id -> return tournament with id
+      let match = c.request.url.match(/\/api\/tournament\/[0-9]+$/i);
+      if (match && c.request.method === 1) {
+        this.mockDb.matches.push({
+          id: (_.last(this.mockDb.matches).id as number) + 1,
+          date: new Date().toISOString(),
+          teamA: 0,
+          teamB: 0,
+          state: "RUNNING",
+        });
+        c.mockRespond(new Response(new ResponseOptions()));
+        return;
+      }
+      // DELETE: /api/tournament/:id -> delete tournament with id
+      if (match && c.request.method === 3) {
+        this.mockDb.matches.pop();
+        c.mockRespond(new Response(new ResponseOptions()));
+        return;
+      }
+    });
+  }
 }

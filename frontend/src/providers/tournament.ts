@@ -152,7 +152,7 @@ export class Tournament {
       });
   }
 
-  getBestOfN() {
+  getBestOfN(): Promise<number> {
     return this.get()
       .then((tournament) => tournament.bestOfN);
   }

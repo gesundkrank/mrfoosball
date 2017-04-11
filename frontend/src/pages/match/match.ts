@@ -20,6 +20,8 @@ export class MatchPage {
   alert: any;
   wins: any;
 
+  private bestOfN: number;
+
   constructor(
     readonly navCtrl: NavController,
     private readonly alertCtrl: AlertController,
@@ -150,7 +152,8 @@ export class MatchPage {
       .then(() => this.getRunning())
       .then((running) => this.match = running)
       .then(() => this.tournament.getWins())
-      .then((wins) => this.wins = wins);
+      .then((wins) => this.wins = wins)
+      .then(() => this.tournament.getBestOfN())
+      .then((bestOfN) => this.bestOfN = bestOfN);
   }
-
 }

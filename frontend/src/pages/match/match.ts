@@ -45,6 +45,10 @@ export class MatchPage {
       .then(() => this.update());
   }
 
+  getUpdateInProgress() {
+    return this.tournament.getUpdateInProgress();
+  }
+
   getPlayers(color: string) {
     if (this.teamA === undefined && this.teamB === undefined) {
       return [];

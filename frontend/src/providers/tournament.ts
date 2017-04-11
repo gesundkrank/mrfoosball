@@ -62,6 +62,7 @@ export class Match {
 @Injectable()
 export class Tournament {
 
+  private updateInProgress: number = 0;
   private tournament: any;
 
   constructor(
@@ -77,9 +78,9 @@ export class Tournament {
         previousState = JSON.stringify(tournament);
         const running = Tournament.findRunning(tournament.matches)
         running[team] += 1;
-      })
-      .then(() => this.push())
-      .then(() => previousState);
+        this.push();
+        return previousState;
+      });
   }
 
   getRunningMatch(): Promise<Match> {
@@ -129,8 +130,7 @@ export class Tournament {
   }
 
   reset(tournament) {
-    this.tournament = JSON.parse(tournament);
-    return this.push();
+    this.push();
   }
 
   newMatch(): Promise<void> {
@@ -167,7 +167,10 @@ export class Tournament {
         this.tournament.bestOfN = _(wins).values().max() * 2 + 1;
         return [new Match(running), this.tournament.bestOfN > previousBestOfN];
       })
-      .then((args) => this.push().then(() => args));
+      .then((args) => {
+        this.push();
+        return args;
+      });
   }
 
   finishTournament(): Promise<string> {
@@ -175,11 +178,19 @@ export class Tournament {
       .then((tournament) => {
         this.tournament.state = MatchState[MatchState.FINISHED];
       })
-      .then((args) => this.push().then(() => args));
+      .then((args) => {
+        this.push();
+        return args;
+      });
+
   }
 
   cancelMatch(): Promise<string> {
     return Promise.resolve(JSON.stringify(this.tournament));
+  }
+
+  getUpdateInProgress() {
+    return this.updateInProgress > 0;
   }
 
   private static findRunning(matches) {
@@ -205,9 +216,11 @@ export class Tournament {
   }
 
   private push(): Promise<any> {
+    this.updateInProgress += 1;
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
     return this.http.put(TOURNAMENT_URL, this.tournament, options)
-      .toPromise();
+      .toPromise()
+      .then(() => this.updateInProgress -= 1);
    }
 }

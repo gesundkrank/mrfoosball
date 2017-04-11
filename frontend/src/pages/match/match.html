@@ -1,12 +1,23 @@
 <ion-header>
 
   <ion-navbar hideBackButton>
-    <ion-buttons left>
-      <button ion-button (click)="cancelMatch()">
-        <ion-icon name="md-close"></ion-icon>
-      </button>
-    </ion-buttons>
-    <ion-title>Match</ion-title>
+    <ion-grid>
+      <ion-row>
+        <ion-col width-10>
+          <ion-buttons left>
+            <button ion-button (click)="cancelMatch()">
+              <ion-icon name="md-close"></ion-icon>
+            </button>
+          </ion-buttons>
+        </ion-col>
+        <ion-col offset-33 width-10>
+          <ion-title>Match</ion-title>
+        </ion-col>
+        <ion-col class="align-right">
+          <ion-spinner *ngIf="getUpdateInProgress()"></ion-spinner>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
   </ion-navbar>
 
 </ion-header>

@@ -16,6 +16,15 @@
         <ion-col class="align-right">
           <ion-spinner *ngIf="getUpdateInProgress()"></ion-spinner>
         </ion-col>
+        <ion-col class="align-right" width-10>
+          <button
+            ion-button
+            [disabled]="!tournament.canUndo() || getUpdateInProgress()"
+            (click)="undo()"
+          >
+            <ion-icon name="md-undo"></ion-icon>
+          </button>
+        </ion-col>
       </ion-row>
     </ion-grid>
   </ion-navbar>

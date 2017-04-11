@@ -103,6 +103,12 @@ export class MatchPage {
         const match = args[0] as Match;
         const tournamentFinished = args[1];
         this.match = match;
+        // if (this.match.teamA === 0 || this.match.teamB === 0) {
+        //   this.alertCtrl.create({
+        //     title: 'KRIEEECHEEEEN!!!!',
+        //     message: 'KRIEEECHEEEEN!!!!1!!eins!11!!elf!!!!',
+        //   }).present();
+        // }
         if (tournamentFinished) {
           const title = [
             'Team', matchWinner.name, 'is the winner!'

@@ -67,6 +67,7 @@ export class Match {
 @Injectable()
 export class Tournament {
 
+  private updateInPrgoress: number = 0;
   private tournament: any;
 
   constructor(
@@ -82,9 +83,9 @@ export class Tournament {
         previousState = JSON.stringify(tournament);
         const running = Tournament.findRunning(tournament.matches)
         running[team] += 1;
-      })
-      .then(() => this.push())
-      .then(() => previousState);
+        this.push();
+        return previousState;
+      });
   }
 
   getRunningMatch(): Promise<Match> {
@@ -134,8 +135,7 @@ export class Tournament {
   }
 
   reset(tournament) {
-    this.tournament = JSON.parse(tournament);
-    return this.push();
+    this.push();
   }
 
   newMatch(): Promise<void> {
@@ -172,7 +172,10 @@ export class Tournament {
         this.tournament.bestOfN = _(wins).values().max() * 2 + 1;
         return [new Match(running), this.tournament.bestOfN > previousBestOfN];
       })
-      .then((args) => this.push().then(() => args));
+      .then((args) => {
+        this.push();
+        return args;
+      });
   }
 
   finishTournament(): Promise<string> {
@@ -180,7 +183,11 @@ export class Tournament {
       .then((tournament) => {
         this.tournament.state = MatchState[MatchState.FINISHED];
       })
-      .then((args) => this.push().then(() => args));
+      .then((args) => {
+        this.push();
+        return args;
+      });
+
   }
 
   cancelMatch(): Promise<string> {
@@ -195,7 +202,11 @@ export class Tournament {
       ] = [
         tournament.teamB, tournament.teamA,
       ])
-      .then(() => this.push());
+      .then(() => {this.push()});
+  }
+
+  getUpdateInProgress() {
+    return this.updateInPrgoress > 0;
   }
 
   private static findRunning(matches) {
@@ -221,9 +232,11 @@ export class Tournament {
   }
 
   private push(): Promise<any> {
+    this.updateInPrgoress += 1;
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
     return this.http.put(TOURNAMENT_URL, this.tournament, options)
-      .toPromise();
+      .toPromise()
+      .then(() => this.updateInPrgoress -= 1);
    }
 }

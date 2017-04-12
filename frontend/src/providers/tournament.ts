@@ -59,10 +59,41 @@ export class Match {
   }
 }
 
+class State {
+
+  private readonly stringyfiedState: string;
+
+  constructor(
+    state: any,
+  ) {
+    this.stringyfiedState = JSON.stringify(state);
+  }
+
+  getState() {
+    return JSON.parse(this.stringyfiedState);
+  }
+}
+
 @Injectable()
 export class Tournament {
 
+  private updateInProgress: number = 0;
   private tournament: any;
+
+  private undoStack: State[] = [];
+
+  canUndo() {
+    return !_.isEmpty(this.undoStack);
+  }
+
+  undo() {
+    this.tournament = this.undoStack.pop().getState();
+    this.push();
+  }
+
+  recordState() {
+    this.undoStack.push(new State(this.tournament));
+  }
 
   constructor(
     public http: Http,
@@ -71,15 +102,13 @@ export class Tournament {
  }
 
   addGoal(team: string): Promise<any> {
-    let previousState;
     return this.get()
       .then(tournament => {
-        previousState = JSON.stringify(tournament);
+        this.recordState();
         const running = Tournament.findRunning(tournament.matches)
         running[team] += 1;
-      })
-      .then(() => this.push())
-      .then(() => previousState);
+        this.push();
+      });
   }
 
   getRunningMatch(): Promise<Match> {
@@ -123,14 +152,14 @@ export class Tournament {
       });
   }
 
-  getBestOfN() {
+  getBestOfN(): Promise<number> {
     return this.get()
       .then((tournament) => tournament.bestOfN);
   }
 
   reset(tournament) {
-    this.tournament = JSON.parse(tournament);
-    return this.push();
+    this.recordState();
+    this.push();
   }
 
   newMatch(): Promise<void> {
@@ -167,7 +196,10 @@ export class Tournament {
         this.tournament.bestOfN = _(wins).values().max() * 2 + 1;
         return [new Match(running), this.tournament.bestOfN > previousBestOfN];
       })
-      .then((args) => this.push().then(() => args));
+      .then((args) => {
+        this.push();
+        return args;
+      });
   }
 
   finishTournament(): Promise<string> {
@@ -175,11 +207,21 @@ export class Tournament {
       .then((tournament) => {
         this.tournament.state = MatchState[MatchState.FINISHED];
       })
-      .then((args) => this.push().then(() => args));
+      .then((args) => {
+        this.push();
+        return args;
+      });
+
   }
 
-  cancelMatch(): Promise<string> {
-    return Promise.resolve(JSON.stringify(this.tournament));
+  cancelMatch(): Promise<void> {
+    this.recordState();
+    return this.http.delete(RUNNING_TOURNAMENT_URL)
+      .toPromise();
+  }
+
+  getUpdateInProgress() {
+    return this.updateInProgress > 0;
   }
 
   private static findRunning(matches) {
@@ -205,9 +247,11 @@ export class Tournament {
   }
 
   private push(): Promise<any> {
+    this.updateInProgress += 1;
     let headers = new Headers({ 'Content-Type': 'application/json' });
     let options = new RequestOptions({ headers: headers });
     return this.http.put(TOURNAMENT_URL, this.tournament, options)
-      .toPromise();
+      .toPromise()
+      .then(() => this.updateInProgress -= 1);
    }
 }

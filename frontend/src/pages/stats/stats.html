@@ -7,6 +7,10 @@
 </ion-header>
 
 <ion-content padding>
+  <ion-refresher (ionRefresh)="refresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <ion-item>Players in the queue:</ion-item>
   <ion-list>
     <ion-item *ngFor="let player of queue">

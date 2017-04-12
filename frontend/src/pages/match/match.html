@@ -80,6 +80,19 @@
               </ion-card>
             </ion-col>
           </ion-row>
+          <ion-row>
+            <ion-col offset-33 width-33>
+              <button
+                ion-button
+                block
+                class="swap-team-button"
+                [disabled]="getUpdateInProgress()"
+                (tap)="swapTeams()"
+              >
+                <ion-icon name="swap"></ion-icon>
+              </button>
+            </ion-col>
+          </ion-row>
         </ion-grid>
       </ion-col>
       <ion-col>

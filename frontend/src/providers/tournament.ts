@@ -224,6 +224,16 @@ export class Tournament {
     return this.updateInProgress > 0;
   }
 
+  swapTeams(): Promise<void> {
+    return this.get()
+      .then(tournament => [
+        tournament.teamA, tournament.teamB,
+      ] = [
+        tournament.teamB, tournament.teamA,
+      ])
+      .then(() => {this.push()});
+  }
+
   private static findRunning(matches) {
     return _.find(matches, {state: MatchState[MatchState.RUNNING]});
   }

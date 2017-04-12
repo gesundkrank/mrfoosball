@@ -81,6 +81,11 @@ export class MatchPage {
     return '#387ef5';
   }
 
+  swapTeams() {
+    this.tournament.swapTeams()
+      .then(() => this.update());
+  }
+
   private finishMatch(matchWinner: Team) {
     const [playerA, playerB] = matchWinner.players;
     return this.tournament.finishMatch()

@@ -85,7 +85,10 @@ export class MatchPage {
   }
 
   getTeamColor(side: string) {
-    return '#387ef5';
+    if (this.teamA === undefined && this.teamB === undefined) {
+      return undefined;
+    }
+    return this[this.getTeamNameForSide(side)].color;
   }
 
   swapTeams() {

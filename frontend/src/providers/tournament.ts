@@ -40,6 +40,7 @@ enum InternalTeamName {
 export class Team {
   readonly players: Player[];
   readonly name: string;
+  readonly color: string;
 
   constructor(
     public readonly internalName: InternalTeamName,
@@ -50,6 +51,7 @@ export class Team {
       .map((player) => new Player(player))
       .value();
     this.name = data.name;
+    this.color = data.color;
   }
 }
 
@@ -279,6 +281,7 @@ export class Tournament {
     "bestOfN": 1,
     "teamA": {
       "name": "grey",
+      "color": "purple",
       "player1": {
         "id": "U12PAFQ9E",
         "name": "grey front",
@@ -292,6 +295,7 @@ export class Tournament {
     },
     "teamB": {
       "name": "black",
+      "color": "orange",
       "player1": {
         "id": "U12G6EUSZ",
         "name": "black front",

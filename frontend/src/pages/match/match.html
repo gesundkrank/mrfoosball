@@ -41,7 +41,7 @@
         <ion-item
           width-33
           class="goal-button"
-          [color]="getTeamColor('left')"
+          [style.background-color]="getTeamColor('left')"
           (click)="addGoal('left')"
         >
           <ion-grid>
@@ -54,7 +54,7 @@
             </ion-row>
             <ion-row>
               <ion-col *ngFor="let player of getPlayers('left')">
-                <p>
+                <p [style.color]="'white'">
                   {{ player?.name }}
                 </p>
               </ion-col>
@@ -86,7 +86,7 @@
         <ion-item
           width-33
           class="goal-button"
-          [color]="getTeamColor('right')"
+          [style.background-color]="getTeamColor('right')"
           (click)="addGoal('right')"
         >
           <ion-grid>
@@ -99,7 +99,7 @@
             </ion-row>
             <ion-row>
               <ion-col *ngFor="let player of getPlayers('right')">
-                <p>
+                <p [style.color]="'white'">
                   {{ player?.name }}
                 </p>
               </ion-col>

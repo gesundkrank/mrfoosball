@@ -119,6 +119,9 @@ export class Tournament {
         }
         const running = Tournament.findRunning(tournament.matches);
         if (!running) {
+          if (tournament.state == MatchState[MatchState.RUNNING]) {
+            return this.newMatch().then(tournament => this.getRunningMatch())
+          }
           return;
         }
         return new Match(running);
@@ -143,13 +146,6 @@ export class Tournament {
         new Team(TeamName.teamA, tournament.teamA),
         new Team(TeamName.teamB, tournament.teamB),
       ]);
-  }
-
-  isTournamentFinished() {
-    return this.get()
-      .then(tournament => {
-
-      });
   }
 
   getBestOfN(): Promise<number> {

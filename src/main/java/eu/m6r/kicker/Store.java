@@ -67,7 +67,6 @@ public class Store implements Closeable {
         tournament.teamB = teamB;
 
         tournament.id = (int) session.save(tournament);
-        addMatch(tournament);
         tx.commit();
     }
 

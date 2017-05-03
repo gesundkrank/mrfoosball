@@ -145,13 +145,6 @@ export class Tournament {
       ]);
   }
 
-  isTournamentFinished() {
-    return this.get()
-      .then(tournament => {
-
-      });
-  }
-
   getBestOfN(): Promise<number> {
     return this.get()
       .then((tournament) => tournament.bestOfN);

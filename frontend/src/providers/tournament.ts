@@ -119,6 +119,9 @@ export class Tournament {
         }
         const running = Tournament.findRunning(tournament.matches);
         if (!running) {
+          if (tournament.state == MatchState[MatchState.RUNNING]) {
+            return this.newMatch().then(tournament => this.getRunningMatch())
+          }
           return;
         }
         return new Match(running);

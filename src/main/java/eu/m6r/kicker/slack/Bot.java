@@ -177,6 +177,7 @@ public class Bot {
                         break;
                     case "queue":
                         sendMessage(controller.getListOfPlayers(), channel);
+                        break;
                     case "cancel":
                         if (controller.cancelRunningTournament()) {
                             sendMessage("Canceled the running match!", channel);

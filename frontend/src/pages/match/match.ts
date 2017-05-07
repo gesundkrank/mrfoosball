@@ -105,7 +105,7 @@ export class MatchPage {
       })
       .then((newMatch) => {
         if (newMatch) {
-          this.tournament.newMatch();
+          this.getRunning();
         } else {
           this.navCtrl.pop();
           this.tournament.finishTournament();

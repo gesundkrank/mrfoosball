@@ -41,10 +41,17 @@
         <ion-item
           width-33
           class="goal-button"
-          [color]="getTeamColor('left')"
+          [style.background-color]="getTeamColor('left')"
           (click)="addGoal('left')"
         >
           <ion-grid>
+            <ion-row>
+              <ion-col>
+                <p [style.color]="'white'">
+                  {{ getTeamName('left') }}
+                </p>
+              </ion-col>
+            </ion-row>
             <ion-row>
               <ion-col *ngFor="let player of getPlayers('left')">
                 <div class="player-avatar">
@@ -54,7 +61,7 @@
             </ion-row>
             <ion-row>
               <ion-col *ngFor="let player of getPlayers('left')">
-                <p>
+                <p [style.color]="'white'">
                   {{ player?.name }}
                 </p>
               </ion-col>
@@ -80,16 +87,36 @@
               </ion-card>
             </ion-col>
           </ion-row>
+          <ion-row>
+            <ion-col offset-33 width-33>
+              <button
+                ion-button
+                block
+                class="swap-team-button"
+                [disabled]="getUpdateInProgress()"
+                (tap)="swapTeams()"
+              >
+                <ion-icon name="swap"></ion-icon>
+              </button>
+            </ion-col>
+          </ion-row>
         </ion-grid>
       </ion-col>
       <ion-col>
         <ion-item
           width-33
           class="goal-button"
-          [color]="getTeamColor('right')"
+          [style.background-color]="getTeamColor('right')"
           (click)="addGoal('right')"
         >
           <ion-grid>
+            <ion-row>
+              <ion-col>
+                <p [style.color]="'white'">
+                  {{ getTeamName('right') }}
+                </p>
+              </ion-col>
+            </ion-row>
             <ion-row>
               <ion-col *ngFor="let player of getPlayers('right')">
                 <div class="player-avatar">
@@ -99,7 +126,7 @@
             </ion-row>
             <ion-row>
               <ion-col *ngFor="let player of getPlayers('right')">
-                <p>
+                <p [style.color]="'white'">
                   {{ player?.name }}
                 </p>
               </ion-col>

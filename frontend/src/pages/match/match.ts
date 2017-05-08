@@ -35,8 +35,8 @@ export class MatchPage {
     this.update();
   }
 
-  addGoal(color: string) {
-    const team = this.getTeamNameForColor(color);
+  addGoal(side: string) {
+    const team = this.getTeamNameForSide(side);
     this.tournament.addGoal(team)
       .then(() => this.update());
   }
@@ -50,25 +50,32 @@ export class MatchPage {
     return this.tournament.getUpdateInProgress();
   }
 
-  getPlayers(color: string) {
+  getTeamName(side: string) {
+    if (this.teamA === undefined || this.teamB === undefined) {
+      return;
+    }
+    return this[this.getTeamNameForSide(side)].name;
+  }
+
+  getPlayers(side: string) {
     if (this.teamA === undefined && this.teamB === undefined) {
       return [];
     }
-    return this[this.getTeamNameForColor(color)].players;
+    return this[this.getTeamNameForSide(side)].players;
   }
 
-  getScore(color: string) {
+  getScore(side: string) {
     if (this.match === undefined) {
       return 0;
     }
-    return this.match[this.getTeamNameForColor(color)];
+    return this.match[this.getTeamNameForSide(side)];
   }
 
-  getWins(color: string) {
+  getWins(side: string) {
     if (this.wins === undefined) {
       return 0;
     }
-    return this.wins[this.getTeamNameForColor(color)];
+    return this.wins[this.getTeamNameForSide(side)];
   }
 
   cancelMatch() {
@@ -77,11 +84,16 @@ export class MatchPage {
       .then(() => this.update());
   }
 
-  getTeamColor(color: string) {
-    return {
-      teamA: 'light',
-      teamB: 'dark',
-    }[this.getTeamNameForColor(color)];
+  getTeamColor(side: string) {
+    if (this.teamA === undefined && this.teamB === undefined) {
+      return undefined;
+    }
+    return this[this.getTeamNameForSide(side)].color;
+  }
+
+  swapTeams() {
+    this.tournament.swapTeams()
+      .then(() => this.update());
   }
 
   private finishMatch(matchWinner: Team) {
@@ -91,6 +103,12 @@ export class MatchPage {
         const match = args[0] as Match;
         const tournamentFinished = args[1];
         this.match = match;
+        // if (this.match.teamA === 0 || this.match.teamB === 0) {
+        //   this.alertCtrl.create({
+        //     title: 'KRIEEECHEEEEN!!!!',
+        //     message: 'KRIEEECHEEEEN!!!!1!!eins!11!!elf!!!!',
+        //   }).present();
+        // }
         if (tournamentFinished) {
           const title = [
             'Team', matchWinner.name, 'is the winner!'
@@ -136,18 +154,18 @@ export class MatchPage {
       .then(running => this.match = running);
   }
 
-  private getTeamNameForColor(color: string) {
+  private getTeamNameForSide(side: string) {
     const matchCount = this.wins ? this.wins.teamA + this.wins.teamB : 0;
     if (matchCount % 2 == 0) {
       return {
         left: 'teamA',
         right: 'teamB',
-      }[color];
+      }[side];
     }
     return {
       left: 'teamB',
       right: 'teamA',
-    }[color];
+    }[side];
   }
 
   private update() {

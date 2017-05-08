@@ -80,6 +80,7 @@ public class Store implements Closeable {
             team.player1 = player1;
             team.player2 = player2;
         }
+        team.name = team.player1.name + " & "  + team.player2.name;
 
         if (session.get(Team.class, team) == null) {
             session.save(team);

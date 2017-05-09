@@ -3,9 +3,9 @@ import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { ToastController } from 'ionic-angular';
 
-import { Tournament } from '../../providers/tournament';
-import { Team } from '../../providers/tournament';
-import { Match } from '../../providers/tournament';
+import { TournamentController } from '../../controllers/tournamentController';
+import { Team } from '../../controllers/tournamentController';
+import { Match } from '../../controllers/tournamentController';
 
 
 @Component({
@@ -26,7 +26,7 @@ export class MatchPage {
     readonly navCtrl: NavController,
     private readonly alertCtrl: AlertController,
     private readonly toastCtrl: ToastController,
-    private readonly tournament: Tournament,
+    private readonly tournament: TournamentController,
   ) {
     //
   }

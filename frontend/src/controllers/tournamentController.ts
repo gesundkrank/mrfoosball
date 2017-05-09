@@ -75,7 +75,7 @@ class State {
 }
 
 @Injectable()
-export class Tournament {
+export class TournamentController {
 
   private updateInProgress: number = 0;
   private tournament: any;
@@ -105,7 +105,7 @@ export class Tournament {
     return this.get()
       .then(tournament => {
         this.recordState();
-        const running = Tournament.findRunning(tournament.matches)
+        const running = TournamentController.findRunning(tournament.matches)
         running[team] += 1;
         this.push();
       });
@@ -117,7 +117,7 @@ export class Tournament {
         if (!tournament) {
           return;
         }
-        const running = Tournament.findRunning(tournament.matches);
+        const running = TournamentController.findRunning(tournament.matches);
         if (!running) {
           if (tournament.state == MatchState[MatchState.RUNNING]) {
             return this.newMatch().then(tournament => this.getRunningMatch())
@@ -183,10 +183,10 @@ export class Tournament {
   finishMatch() {
     return this.get()
       .then((tournament) => {
-        const running = Tournament.findRunning(tournament.matches);
+        const running = TournamentController.findRunning(tournament.matches);
         running.state = MatchState[MatchState.FINISHED];
 
-        assert(!Tournament.findRunning(tournament.matches));
+        assert(!TournamentController.findRunning(tournament.matches));
         const wins = this.countWins(tournament.matches);
         const previousBestOfN = this.tournament.bestOfN;
         this.tournament.bestOfN = _(wins).values().max() * 2 + 1;

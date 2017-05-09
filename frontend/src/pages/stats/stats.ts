@@ -2,7 +2,7 @@ import {Component} from "@angular/core";
 import {NavController} from "ionic-angular";
 import {Http} from "@angular/http";
 import {MatchPage} from "../match/match";
-import {Tournament, Player} from "../../providers/tournament";
+import {TournamentController, Player} from "../../controllers/tournamentController";
 
 const QUEUE_URL = '/api/tournament/queue';
 
@@ -17,7 +17,7 @@ export class StatsPage {
   constructor(
     public http: Http,
     private readonly navCtrl: NavController,
-    private readonly tournament: Tournament,
+    private readonly tournament: TournamentController,
   ) {
     //
   }

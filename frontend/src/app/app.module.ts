@@ -6,7 +6,7 @@ import { IonicErrorHandler } from 'ionic-angular';
 
 import { MyApp } from './app.component';
 import { MatchPage } from '../pages/match/match';
-import { Tournament } from '../providers/tournament';
+import { TournamentController } from '../controllers/tournamentController';
 import { StatsPage } from '../pages/stats/stats';
 
 
@@ -27,7 +27,7 @@ import { StatsPage } from '../pages/stats/stats';
   ],
   providers: [
     {provide: ErrorHandler, useClass: IonicErrorHandler},
-    Tournament,
+    TournamentController,
   ],
 })
 export class AppModule {}

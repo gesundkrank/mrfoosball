@@ -13,7 +13,6 @@ import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 
 import java.io.Closeable;
-import java.util.Collections;
 import java.util.List;
 
 import javax.persistence.TypedQuery;
@@ -49,16 +48,16 @@ public class Store implements Closeable {
         this.session = sessionFactory.openSession();
     }
 
-    public void newTournament(final List<Player> players) {
+    public void newTournament(final List<Player> players, final int bestOfN) {
         Transaction tx = session.beginTransaction();
 
         for (Player player : players) {
             session.saveOrUpdate(player);
         }
 
-        Collections.shuffle(players);
         Tournament tournament = new Tournament();
         tournament.state = State.RUNNING;
+        tournament.bestOfN = bestOfN;
 
         Team teamA = getTeam(players.get(0), players.get(1));
         Team teamB = getTeam(players.get(2), players.get(3));
@@ -68,6 +67,12 @@ public class Store implements Closeable {
 
         tournament.id = (int) session.save(tournament);
         tx.commit();
+    }
+
+    public Player getPlayer(final String id) {
+        final Player player = new Player();
+        player.id = id;
+        return session.get(Player.class, id);
     }
 
     private Team getTeam(final Player player1, final Player player2) {

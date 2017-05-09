@@ -21,7 +21,7 @@
         <ion-col class="align-right" width-10>
           <button
             ion-button
-            [disabled]="!tournament.canUndo() || getUpdateInProgress()"
+            [disabled]="!canUndo() || getUpdateInProgress()"
             (click)="undo()"
           >
             <ion-icon name="md-undo"></ion-icon>
@@ -41,21 +41,31 @@
         <ion-item
           width-33
           class="goal-button"
-          [color]="getTeamColor('left')"
+          [color]="'light'"
           (click)="addGoal('left')"
         >
           <ion-grid>
             <ion-row>
-              <ion-col *ngFor="let player of getPlayers('left')">
+              <ion-col>
                 <div class="player-avatar">
-                  <img src="{{ player?.avatarImage }}">
+                  <img src="{{ leftTeam?.player1.avatarImage }}">
+                </div>
+              </ion-col>
+              <ion-col>
+                <div class="player-avatar">
+                  <img src="{{ leftTeam?.player2.avatarImage }}">
                 </div>
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col *ngFor="let player of getPlayers('left')">
+              <ion-col>
                 <p>
-                  {{ player?.name }}
+                  {{ leftTeam?.player1.name }}
+                </p>
+              </ion-col>
+              <ion-col>
+                <p>
+                  {{ leftTeam?.player2.name }}
                 </p>
               </ion-col>
             </ion-row>
@@ -67,7 +77,7 @@
           <ion-row>
             <ion-col>
               <ion-card  class="score-card tournament-score-card">
-                {{ getWins('left') }} : {{ getWins('right') }}
+                {{ leftWins }} : {{ rightWins }}
               </ion-card>
             </ion-col>
           </ion-row>
@@ -86,21 +96,31 @@
         <ion-item
           width-33
           class="goal-button"
-          [color]="getTeamColor('right')"
+          [color]="'dark'"
           (click)="addGoal('right')"
         >
           <ion-grid>
             <ion-row>
-              <ion-col *ngFor="let player of getPlayers('right')">
+              <ion-col>
                 <div class="player-avatar">
-                  <img src="{{ player?.avatarImage }}">
+                  <img src="{{ rightTeam?.player1.avatarImage }}">
+                </div>
+              </ion-col>
+              <ion-col>
+                <div class="player-avatar">
+                  <img src="{{ rightTeam?.player2.avatarImage }}">
                 </div>
               </ion-col>
             </ion-row>
             <ion-row>
-              <ion-col *ngFor="let player of getPlayers('right')">
+              <ion-col>
                 <p>
-                  {{ player?.name }}
+                  {{ rightTeam?.player1.name }}
+                </p>
+              </ion-col>
+              <ion-col>
+                <p>
+                  {{ rightTeam?.player2.name }}
                 </p>
               </ion-col>
             </ion-row>

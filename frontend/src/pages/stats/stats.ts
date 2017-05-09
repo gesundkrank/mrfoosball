@@ -2,23 +2,22 @@ import {Component} from "@angular/core";
 import {NavController} from "ionic-angular";
 import {Http} from "@angular/http";
 import {MatchPage} from "../match/match";
-import {TournamentController, Player} from "../../controllers/tournamentController";
+import {TournamentController} from "../../controllers/tournamentController";
+import {Player} from "../../models/tournament";
 
 const QUEUE_URL = '/api/tournament/queue';
 
 @Component({
-  selector: 'page-stats',
-  templateUrl: 'stats.html'
-})
+             selector: 'page-stats',
+             templateUrl: 'stats.html'
+           })
 export class StatsPage {
 
   queue: Array<Player>;
 
-  constructor(
-    public http: Http,
-    private readonly navCtrl: NavController,
-    private readonly tournament: TournamentController,
-  ) {
+  constructor(public http: Http,
+              private readonly navCtrl: NavController,
+              private readonly tournament: TournamentController) {
     //
   }
 
@@ -32,22 +31,20 @@ export class StatsPage {
   }
 
   checkTournament(loop = true) {
-    return this.tournament.getRunningMatch()
+    return this.tournament.checkForRunningMatch()
       .then((match) => {
         if (match) {
           this.newMatch();
         } else {
           this.loadQueue();
           if (loop) {
-            let self = this;
-            setTimeout(function() {
-              self.checkTournament();
+            setTimeout(() => {
+              this.checkTournament();
             }, 5000);
           }
         }
       })
   }
-
 
   loadQueue() {
     this.http.get(QUEUE_URL)

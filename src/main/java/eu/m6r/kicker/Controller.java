@@ -7,25 +7,34 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public enum Controller {
     INSTANCE;
 
     private final Logger logger;
-    private final Set<Player> players;
+    private final List<Player> players;
 
     Controller() {
         this.logger = LogManager.getLogger();
-        this.players = new HashSet<>(6);
+        this.players = new ArrayList<>();
     }
 
     public void startTournament() {
+        startTournament(true, 1);
+    }
+
+    public void startTournament(final boolean shuffle, final int bestOfN) {
         try (final Store store = new Store()) {
-            store.newTournament(new ArrayList<>(players));
+            List<Player> playerList = players;
+
+            if (shuffle) {
+                Collections.shuffle(playerList);
+            }
+
+            store.newTournament(playerList, bestOfN);
             players.clear();
         }
     }
@@ -76,6 +85,14 @@ public enum Controller {
     public String getPlayersString() {
         return players.stream().map(p -> String.format("<@%s>", p.id))
                 .collect(Collectors.joining(", "));
+    }
+
+    public void addPlayer(final String playerId)
+            throws TooManyUsersException, PlayerAlreadyInQueueException {
+        try (final Store store = new Store()) {
+            players.add(store.getPlayer(playerId));
+        }
+
     }
 
     public String addPlayer(Player player)

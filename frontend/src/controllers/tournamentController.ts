@@ -1,114 +1,63 @@
-import * as assert from 'assert';
-import * as _ from 'lodash';
-import { Injectable } from '@angular/core';
-import { Http } from '@angular/http';
-import { Headers } from '@angular/http';
-import { RequestOptions } from '@angular/http';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/toPromise';
+import _ from "lodash";
+import {Injectable} from "@angular/core";
+import {Http} from "@angular/http";
+import {Headers} from "@angular/http";
+import {RequestOptions} from "@angular/http";
+import {URLSearchParams} from "@angular/http";
+import "rxjs/add/operator/map";
+import "rxjs/add/operator/toPromise";
+import {Match} from "../models/tournament";
+import {State} from "../models/tournament";
+import {Team} from "../models/tournament";
+import {Tournament} from "../models/tournament";
 
 const TOURNAMENT_URL = '/api/tournament';
 const RUNNING_TOURNAMENT_URL = '/api/tournament/running';
-
-export enum MatchState {
-  RUNNING,
-  FINISHED,
-}
-
-export class Player {
-  readonly id: string;
-  readonly name: string;
-  readonly avatarImage: string;
-
-  constructor(
-    data: any,
-  ) {
-    this.id = data.id;
-    this.name = data.name;
-    this.avatarImage = data.avatarImage;
-  }
-}
-
-enum TeamName {
-  teamA,
-  teamB,
-}
-
-export class Team {
-  readonly players: Player[];
-
-  constructor(
-    public readonly name: TeamName,
-    data: any,
-  ) {
-    this.players = _.map(data, (player) => new Player(player));
-  }
-}
-
-export class Match {
-  teamA: number;
-  teamB: number;
-  state: string;
-
-  constructor(
-    data: any,
-  ) {
-    this.teamA = data.teamA;
-    this.teamB = data.teamB;
-    this.state = data.state;
-  }
-}
-
-class State {
-
-  private readonly stringyfiedState: string;
-
-  constructor(
-    state: any,
-  ) {
-    this.stringyfiedState = JSON.stringify(state);
-  }
-
-  getState() {
-    return JSON.parse(this.stringyfiedState);
-  }
-}
 
 @Injectable()
 export class TournamentController {
 
   private updateInProgress: number = 0;
-  private tournament: any;
+  private tournament: Tournament;
 
-  private undoStack: State[] = [];
+  private undoStack: Tournament[] = [];
 
   canUndo() {
     return !_.isEmpty(this.undoStack);
   }
 
   undo() {
-    this.tournament = this.undoStack.pop().getState();
+    this.tournament = this.undoStack.pop();
     this.push();
   }
 
   recordState() {
-    this.undoStack.push(new State(this.tournament));
+    this.undoStack.push(_.cloneDeep(this.tournament));
   }
 
-  constructor(
-    public http: Http,
-  ) {
-   //
- }
+  constructor(public http: Http) {
+    //
+  }
 
-  addGoal(team: string): Promise<any> {
+  addGoal(team: string): Promise<void> {
     return this.get()
-      .then(tournament => {
+      .then(() => {
+        if (!team) {
+          return;
+        }
+
         this.recordState();
-        const running = TournamentController.findRunning(tournament.matches)
+        const running = this.findRunning();
+        if (!running || running[team] >= 6) {
+          return;
+        }
         running[team] += 1;
-        this.push();
+        return this.push();
       });
+  }
+
+  checkForRunningMatch() {
+    return this.pull().then(() => this.getRunningMatch());
   }
 
   getRunningMatch(): Promise<Match> {
@@ -117,35 +66,57 @@ export class TournamentController {
         if (!tournament) {
           return;
         }
-        const running = TournamentController.findRunning(tournament.matches);
+        const running = this.findRunning();
         if (!running) {
-          if (tournament.state == MatchState[MatchState.RUNNING]) {
+          if (tournament.state == State.RUNNING) {
             return this.newMatch().then(tournament => this.getRunningMatch())
           }
           return;
         }
-        return new Match(running);
+        return running;
       });
   }
 
-  getWinner(match) {
+  static getWinner(match): string {
     if (!match) {
       return;
     }
     if (match.teamA >= 6) {
-      return new Team(TeamName.teamA, this.tournament.teamA);
+      return 'teamA';
     }
     if (match.teamB >= 6) {
-      return new Team(TeamName.teamB, this.tournament.teamB);
+      return 'teamB';
     }
   }
 
-  getTeams(): Promise<Team[]> {
-    return this.get()
-      .then(tournament => [
-        new Team(TeamName.teamA, tournament.teamA),
-        new Team(TeamName.teamB, tournament.teamB),
-      ]);
+  getWinnerTeam(match): Promise<Team> {
+    return this.get().then(tournament => {
+      const winner = TournamentController.getWinner(match);
+      if (!winner) {
+        return;
+      }
+      return tournament[winner];
+    })
+  }
+
+  getTeamNames(): Promise<{ [key: string]: string }> {
+    return this.getWins().then(wins => {
+      const matchCount = wins ? wins['teamA'] + wins['teamB'] : 0;
+      if (matchCount % 2 == 0) {
+        return {
+          left: 'teamA',
+          right: 'teamB',
+        };
+      }
+      return {
+        left: 'teamB',
+        right: 'teamA',
+      };
+    });
+  }
+
+  getTeams(): Promise<{ [key: string]: Team }> {
+    return this.get().then(tournament => _.pick(tournament, ['teamA', 'teamB']));
   }
 
   getBestOfN(): Promise<number> {
@@ -153,9 +124,12 @@ export class TournamentController {
       .then((tournament) => tournament.bestOfN);
   }
 
-  reset(tournament) {
-    this.recordState();
-    this.push();
+  incrementBestOfN(): Promise<void> {
+    return this.get().then(() => {
+      this.tournament.bestOfN += 2;
+      this.recordState();
+      return this.push();
+    })
   }
 
   newMatch(): Promise<void> {
@@ -167,47 +141,58 @@ export class TournamentController {
       .then(() => this.pull());
   }
 
+  newTournament() {
+    const headers = new Headers({'Content-Type': 'application/x-www-form-urlencoded'});
+    const options = new RequestOptions({headers: headers});
+
+    const tournament = this.tournament;
+    let data = new URLSearchParams();
+    data.append('playerB1', tournament.teamA.player1.id.toString());
+    data.append('playerB2', tournament.teamA.player2.id.toString());
+    data.append('playerA1', tournament.teamB.player1.id.toString());
+    data.append('playerA2', tournament.teamB.player2.id.toString());
+    data.append('bestOfN', tournament.bestOfN.toString());
+
+    return this.http.post(TOURNAMENT_URL, data, options).toPromise()
+  }
+
   getWins() {
-    return this.get()
-      .then((tournament) => this.countWins(_.filter(tournament.matches, {state: MatchState[MatchState.FINISHED]})));
+    return this.get().then(tournament => {
+      return this.countWins(tournament.matches);
+    });
   }
 
-  countWins(matches) {
-    return _.reduce(matches, (memo, match) => {
-      const winner = this.getWinner(new Match(match));
-      memo[TeamName[winner.name]] += 1;
-      return memo;
-    }, {teamA: 0, teamB: 0});
+  countWins(matches): { [key: string]: number } {
+    return _.filter(matches, {state: State.FINISHED})
+      .reduce((memo, match) => {
+        const winner = TournamentController.getWinner(match);
+        memo[winner] += 1;
+        return memo;
+      }, {teamA: 0, teamB: 0})
   }
 
-  finishMatch() {
+  finishMatch(): Promise<boolean> {
     return this.get()
       .then((tournament) => {
-        const running = TournamentController.findRunning(tournament.matches);
-        running.state = MatchState[MatchState.FINISHED];
+        const running = this.findRunning();
+        running.state = State.FINISHED;
 
-        assert(!TournamentController.findRunning(tournament.matches));
         const wins = this.countWins(tournament.matches);
-        const previousBestOfN = this.tournament.bestOfN;
-        this.tournament.bestOfN = _(wins).values().max() * 2 + 1;
-        return [new Match(running), this.tournament.bestOfN > previousBestOfN];
+        const playedBestOfN = _(wins).values().max() * 2 - 1;
+        return this.tournament.bestOfN == playedBestOfN;
       })
-      .then((args) => {
+      .then((finished) => {
         this.push();
-        return args;
+        return finished;
       });
   }
 
-  finishTournament(): Promise<string> {
+  finishTournament(): Promise<void> {
     return this.get()
       .then((tournament) => {
-        this.tournament.state = MatchState[MatchState.FINISHED];
-      })
-      .then((args) => {
-        this.push();
-        return args;
+        tournament.state = State.FINISHED;
+        return this.push();
       });
-
   }
 
   cancelMatch(): Promise<void> {
@@ -220,34 +205,40 @@ export class TournamentController {
     return this.updateInProgress > 0;
   }
 
-  private static findRunning(matches) {
-    return _.find(matches, {state: MatchState[MatchState.RUNNING]});
+  private findRunning(): Match {
+    return _.find(this.tournament.matches, {state: State.RUNNING});
   }
 
-  private get(): Promise<any> {
+  private get(): Promise<Tournament> {
     if (this.tournament) {
       return Promise.resolve(this.tournament);
     }
 
-    return this.pull()
-      .then(() => this.tournament);
-   }
+    return this.pull();
+  }
 
-  private pull(): Promise<any> {
+  private pull(): Promise<Tournament> {
     return this.http.get(RUNNING_TOURNAMENT_URL)
       .map(res => res.json())
       .toPromise()
       .then(tournament => {
+        if (tournament) {
+          tournament.state = State[tournament.state];
+          tournament.matches.forEach(match => match.state = State[match.state]);
+        }
         this.tournament = tournament;
       });
   }
 
-  private push(): Promise<any> {
+  private push(): Promise<void> {
     this.updateInProgress += 1;
-    let headers = new Headers({ 'Content-Type': 'application/json' });
-    let options = new RequestOptions({ headers: headers });
-    return this.http.put(TOURNAMENT_URL, this.tournament, options)
+    const headers = new Headers({'Content-Type': 'application/json'});
+    const options = new RequestOptions({headers: headers});
+    const tournament = _.cloneDeep(this.tournament);
+    tournament.state = State[tournament.state];
+    tournament.matches.forEach(match => match.state = State[match.state]);
+    return this.http.put(TOURNAMENT_URL, tournament, options)
       .toPromise()
       .then(() => this.updateInProgress -= 1);
-   }
+  }
 }

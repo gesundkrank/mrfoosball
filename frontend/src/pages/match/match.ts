@@ -13,9 +13,9 @@ enum FinishOptions {
 }
 
 @Component({
-             selector: 'page-match',
-             templateUrl: 'match.html'
-           })
+  selector: 'page-match',
+  templateUrl: 'match.html'
+})
 export class MatchPage {
 
   private match: Match;
@@ -27,9 +27,11 @@ export class MatchPage {
 
   private bestOfN: number;
 
-  constructor(readonly navCtrl: NavController,
-              private readonly alertCtrl: AlertController,
-              private readonly tournamentCtrl: TournamentController) {
+  constructor(
+    readonly navCtrl: NavController,
+    private readonly alertCtrl: AlertController,
+    private readonly tournamentCtrl: TournamentController,
+  ) {
     this.teamPositions = {};
     this.leftWins = 0;
     this.rightWins = 0;
@@ -83,22 +85,22 @@ export class MatchPage {
             .then((bestOfN) => {
               this.showPlayBestOfNAlert(title, message, bestOfN)
                 .then((finishOption) => {
-                        switch (finishOption) {
-                          case FinishOptions.PlayBestOfN:
-                            this.tournamentCtrl.incrementBestOfN()
-                              .then(() => this.tournamentCtrl.newMatch())
-                              .then(() => this.update());
-                            break;
-                          case FinishOptions.Finish:
-                            this.navCtrl.pop();
-                            this.tournamentCtrl.finishTournament();
-                            break;
-                          case FinishOptions.Rematch:
-                            this.tournamentCtrl.finishTournament()
-                              .then(() => this.tournamentCtrl.newTournament());
-                            this.navCtrl.pop();
-                        }
-                      }
+                    switch (finishOption) {
+                      case FinishOptions.PlayBestOfN:
+                        this.tournamentCtrl.incrementBestOfN()
+                          .then(() => this.tournamentCtrl.newMatch())
+                          .then(() => this.update());
+                        break;
+                      case FinishOptions.Finish:
+                        this.navCtrl.pop();
+                        this.tournamentCtrl.finishTournament();
+                        break;
+                      case FinishOptions.Rematch:
+                        this.tournamentCtrl.finishTournament()
+                          .then(() => this.tournamentCtrl.newTournament());
+                        this.navCtrl.pop();
+                    }
+                  }
                 )
             });
         }
@@ -108,28 +110,27 @@ export class MatchPage {
 
   showPlayBestOfNAlert(title, message, bestOfN) {
     return new Promise((resolve, reject) => {
-      const alert = this.alertCtrl.create(
-        {
-          title,
-          message,
-          buttons: [{
-            text: 'Finish',
-            role: 'cancel',
-            handler: () => {
-              resolve(FinishOptions.Finish)
-            },
-          }, {
-            text: 'Play best of ' + (bestOfN + 2),
-            handler: () => {
-              resolve(FinishOptions.PlayBestOfN)
-            },
-          }, {
-            text: 'Rematch',
-            handler: () => {
-              resolve(FinishOptions.Rematch)
-            },
-          }],
-        });
+      const alert = this.alertCtrl.create({
+        title,
+        message,
+        buttons: [{
+          text: 'Finish',
+          role: 'cancel',
+          handler: () => {
+            resolve(FinishOptions.Finish)
+          },
+        }, {
+          text: 'Play best of ' + (bestOfN + 2),
+          handler: () => {
+            resolve(FinishOptions.PlayBestOfN)
+          },
+        }, {
+          text: 'Rematch',
+          handler: () => {
+            resolve(FinishOptions.Rematch)
+          },
+        }],
+      });
       alert.present();
     });
   }

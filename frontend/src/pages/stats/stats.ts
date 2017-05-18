@@ -8,16 +8,18 @@ import {Player} from "../../models/tournament";
 const QUEUE_URL = '/api/tournament/queue';
 
 @Component({
-             selector: 'page-stats',
-             templateUrl: 'stats.html'
-           })
+  selector: 'page-stats',
+  templateUrl: 'stats.html'
+})
 export class StatsPage {
 
   queue: Array<Player>;
 
-  constructor(public http: Http,
-              private readonly navCtrl: NavController,
-              private readonly tournament: TournamentController) {
+  constructor(
+    public http: Http,
+    private readonly navCtrl: NavController,
+    private readonly tournament: TournamentController,
+  ) {
     //
   }
 

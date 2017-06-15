@@ -1,12 +1,16 @@
-import { AlertController } from 'ionic-angular';
-import { Component } from '@angular/core';
-import { NavController } from 'ionic-angular';
-import { ToastController } from 'ionic-angular';
+import {AlertController} from "ionic-angular";
+import {NavController} from "ionic-angular";
+import {Component} from "@angular/core";
 
-import { Tournament } from '../../providers/tournament';
-import { Team } from '../../providers/tournament';
-import { Match } from '../../providers/tournament';
+import {TournamentController} from "../../controllers/tournamentController";
+import {Match} from "../../models/tournament";
+import {Team} from "../../models/tournament";
 
+enum FinishOptions {
+  Finish,
+  PlayBestOfN,
+  Rematch
+}
 
 @Component({
   selector: 'page-match',
@@ -14,21 +18,23 @@ import { Match } from '../../providers/tournament';
 })
 export class MatchPage {
 
-  teamA: Team;
-  teamB: Team;
-  match: Match;
-  alert: any;
-  wins: any;
+  private match: Match;
+  private leftTeam: Team;
+  private rightTeam: Team;
+  private leftWins: number;
+  private rightWins: number;
+  private teamPositions: { [key: string]: string };
 
   private bestOfN: number;
 
   constructor(
     readonly navCtrl: NavController,
     private readonly alertCtrl: AlertController,
-    private readonly toastCtrl: ToastController,
-    private readonly tournament: Tournament,
+    private readonly tournamentCtrl: TournamentController,
   ) {
-    //
+    this.teamPositions = {};
+    this.leftWins = 0;
+    this.rightWins = 0;
   }
 
   ionViewDidEnter() {
@@ -36,95 +42,93 @@ export class MatchPage {
   }
 
   addGoal(color: string) {
-    const team = this.getTeamNameForColor(color);
-    this.tournament.addGoal(team)
+    this.tournamentCtrl
+      .addGoal(this.teamPositions[color])
       .then(() => this.update());
   }
 
   undo() {
-    this.tournament.undo();
+    this.tournamentCtrl.undo();
     this.update();
   }
 
-  getUpdateInProgress() {
-    return this.tournament.getUpdateInProgress();
+  canUndo() {
+    return this.tournamentCtrl.canUndo();
   }
 
-  getPlayers(color: string) {
-    if (this.teamA === undefined && this.teamB === undefined) {
-      return [];
-    }
-    return this[this.getTeamNameForColor(color)].players;
+  getUpdateInProgress() {
+    return this.tournamentCtrl.getUpdateInProgress();
   }
 
   getScore(color: string) {
-    if (this.match === undefined) {
+    if (!this.match) {
       return 0;
     }
-    return this.match[this.getTeamNameForColor(color)];
-  }
 
-  getWins(color: string) {
-    if (this.wins === undefined) {
-      return 0;
-    }
-    return this.wins[this.getTeamNameForColor(color)];
+    return this.match[this.teamPositions[color]];
   }
 
   cancelMatch() {
-    this.tournament.cancelMatch()
+    this.tournamentCtrl.cancelMatch()
       .then(() => this.navCtrl.pop())
       .then(() => this.update());
   }
 
-  getTeamColor(color: string) {
-    return {
-      teamA: 'light',
-      teamB: 'dark',
-    }[this.getTeamNameForColor(color)];
-  }
-
   private finishMatch(matchWinner: Team) {
-    const [playerA, playerB] = matchWinner.players;
-    return this.tournament.finishMatch()
-      .then((args) => {
-        const match = args[0] as Match;
-        const tournamentFinished = args[1];
-        this.match = match;
+    const [player1, player2] = [matchWinner.player1, matchWinner.player2];
+    return this.tournamentCtrl.finishMatch()
+      .then((tournamentFinished) => {
         if (tournamentFinished) {
-          const title = [
-            'Team', matchWinner.name, 'is the winner!'
-          ].join(' ');
-          const message = [
-            playerA.name, 'and', playerB.name, 'won!',
-          ].join(' ');
-          return this.tournament.getBestOfN()
-            .then((bestOfN) => this.showPlayBestOfNAlert(title, message, bestOfN));
+          const title = ['Team', matchWinner, 'is the winner!'].join(' ');
+          const message = [player1.name, 'and', player2.name, 'won!'].join(' ');
+          return this.tournamentCtrl.getBestOfN()
+            .then((bestOfN) => {
+              this.showPlayBestOfNAlert(title, message, bestOfN)
+                .then((finishOption) => {
+                    switch (finishOption) {
+                      case FinishOptions.PlayBestOfN:
+                        this.tournamentCtrl.incrementBestOfN()
+                          .then(() => this.tournamentCtrl.newMatch())
+                          .then(() => this.update());
+                        break;
+                      case FinishOptions.Finish:
+                        this.navCtrl.pop();
+                        this.tournamentCtrl.finishTournament();
+                        break;
+                      case FinishOptions.Rematch:
+                        this.tournamentCtrl.finishTournament()
+                          .then(() => this.tournamentCtrl.newTournament());
+                        this.navCtrl.pop();
+                    }
+                  }
+                )
+            });
         }
-        return true;
-      })
-      .then((newMatch) => {
-        if (newMatch) {
-          this.tournament.newMatch();
-        } else {
-          this.navCtrl.pop();
-          this.tournament.finishTournament();
-        }
+        this.update();
       });
   }
 
   showPlayBestOfNAlert(title, message, bestOfN) {
     return new Promise((resolve, reject) => {
-      let alert = this.alertCtrl.create({
+      const alert = this.alertCtrl.create({
         title,
         message,
         buttons: [{
-         text: 'Finish',
-         role: 'cancel',
-         handler: () => {resolve(false)},
+          text: 'Finish',
+          role: 'cancel',
+          handler: () => {
+            resolve(FinishOptions.Finish)
+          },
         }, {
-         text: 'Play best of ' + bestOfN,
-         handler: () => {resolve(true)},
+          text: 'Play best of ' + (bestOfN + 2),
+          handler: () => {
+            resolve(FinishOptions.PlayBestOfN)
+          },
+        }, {
+          text: 'Rematch',
+          handler: () => {
+            resolve(FinishOptions.Rematch)
+          },
         }],
       });
       alert.present();
@@ -132,35 +136,29 @@ export class MatchPage {
   }
 
   private getRunning() {
-    return this.tournament.getRunningMatch()
+    return this.tournamentCtrl.getRunningMatch()
       .then(running => this.match = running);
   }
 
-  private getTeamNameForColor(color: string) {
-    const matchCount = this.wins ? this.wins.teamA + this.wins.teamB : 0;
-    if (matchCount % 2 == 0) {
-      return {
-        left: 'teamA',
-        right: 'teamB',
-      }[color];
-    }
-    return {
-      left: 'teamB',
-      right: 'teamA',
-    }[color];
-  }
-
   private update() {
-    return this.tournament.getTeams()
-      .then(([teamA, teamB]) => [this.teamA, this.teamB] = [teamA, teamB])
-      .then(() => this.getRunning())
-      .then((running) => this.tournament.getWinner(running))
+    this.getRunning()
+      .then(() => this.tournamentCtrl.getWinnerTeam(this.match))
+      .then((winner) => winner ? this.finishMatch(winner).then(() => this.getRunning()) : null)
+      .then(() => this.tournamentCtrl.getTeamNames())
+      .then((teamColors => this.teamPositions = teamColors))
+      .then(() => this.tournamentCtrl.getTeams())
+      .then((teams => {
+        this.leftTeam = teams[this.teamPositions['left']];
+        this.rightTeam = teams[this.teamPositions['right']];
+      }))
+      .then(() => this.tournamentCtrl.getWinnerTeam(this.match))
       .then((winner) => winner ? this.finishMatch(winner) : null)
-      .then(() => this.getRunning())
-      .then((running) => this.match = running)
-      .then(() => this.tournament.getWins())
-      .then((wins) => this.wins = wins)
-      .then(() => this.tournament.getBestOfN())
+      .then(() => this.tournamentCtrl.getWins())
+      .then((wins) => {
+        this.leftWins = wins[this.teamPositions['left']];
+        this.rightWins = wins[this.teamPositions['right']];
+      })
+      .then(() => this.tournamentCtrl.getBestOfN())
       .then((bestOfN) => this.bestOfN = bestOfN);
   }
 }

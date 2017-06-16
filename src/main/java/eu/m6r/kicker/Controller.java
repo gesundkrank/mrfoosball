@@ -23,7 +23,7 @@ public enum Controller {
     }
 
     public void startTournament() {
-        startTournament(true, 1);
+        startTournament(true, 3);
     }
 
     public void startTournament(final boolean shuffle, final int bestOfN) {
@@ -76,7 +76,7 @@ public enum Controller {
         return true;
     }
 
-    public void newMatch(int tournamentId) {
+    public void newMatch(int tournamentId) throws Store.InvalidTournamentStateException {
         try (final Store store = new Store()) {
             store.addMatch(tournamentId);
         }

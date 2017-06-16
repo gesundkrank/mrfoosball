@@ -1,6 +1,7 @@
 package eu.m6r.kicker.api;
 
 import eu.m6r.kicker.Controller;
+import eu.m6r.kicker.Store;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.Tournament;
 
@@ -81,7 +82,11 @@ public class TournamentAPI {
     @POST
     @Path("{tournamentId}")
     public void newMatch(@PathParam("tournamentId") final int tournamentId) {
-        controller.newMatch(tournamentId);
+        try {
+            controller.newMatch(tournamentId);
+        } catch (Store.InvalidTournamentStateException e) {
+            throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
     }
 
     @GET

@@ -8,7 +8,6 @@ import {Team} from "../../models/tournament";
 
 enum FinishOptions {
   Finish,
-  PlayBestOfN,
   Rematch
 }
 
@@ -83,14 +82,9 @@ export class MatchPage {
           const message = [player1.name, 'and', player2.name, 'won!'].join(' ');
           return this.tournamentCtrl.getBestOfN()
             .then((bestOfN) => {
-              this.showPlayBestOfNAlert(title, message, bestOfN)
+              this.showPlayBestOfNAlert(title, message)
                 .then((finishOption) => {
                     switch (finishOption) {
-                      case FinishOptions.PlayBestOfN:
-                        this.tournamentCtrl.incrementBestOfN()
-                          .then(() => this.tournamentCtrl.newMatch())
-                          .then(() => this.update());
-                        break;
                       case FinishOptions.Finish:
                         this.navCtrl.pop();
                         this.tournamentCtrl.finishTournament();
@@ -108,7 +102,7 @@ export class MatchPage {
       });
   }
 
-  showPlayBestOfNAlert(title, message, bestOfN) {
+  showPlayBestOfNAlert(title, message) {
     return new Promise((resolve, reject) => {
       const alert = this.alertCtrl.create({
         title,
@@ -118,11 +112,6 @@ export class MatchPage {
           role: 'cancel',
           handler: () => {
             resolve(FinishOptions.Finish)
-          },
-        }, {
-          text: 'Play best of ' + (bestOfN + 2),
-          handler: () => {
-            resolve(FinishOptions.PlayBestOfN)
           },
         }, {
           text: 'Rematch',

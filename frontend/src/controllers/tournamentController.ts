@@ -124,14 +124,6 @@ export class TournamentController {
       .then((tournament) => tournament.bestOfN);
   }
 
-  incrementBestOfN(): Promise<void> {
-    return this.get().then(() => {
-      this.tournament.bestOfN += 2;
-      this.recordState();
-      return this.push();
-    })
-  }
-
   newMatch(): Promise<void> {
     return this.get()
       .then(tournament => this.http

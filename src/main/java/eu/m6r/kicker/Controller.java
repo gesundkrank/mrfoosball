@@ -23,7 +23,7 @@ public enum Controller {
     }
 
     public void startTournament() {
-        startTournament(true, 1);
+        startTournament(true, 3);
     }
 
     public void startTournament(final boolean shuffle, final int bestOfN) {
@@ -76,7 +76,7 @@ public enum Controller {
         return true;
     }
 
-    public void newMatch(int tournamentId) {
+    public void newMatch(int tournamentId) throws Store.InvalidTournamentStateException {
         try (final Store store = new Store()) {
             store.addMatch(tournamentId);
         }
@@ -112,9 +112,12 @@ public enum Controller {
         players.add(player);
 
         if (players.size() == 4) {
-            final String players = getPlayersString();
             startTournament();
-            return String.format("%s a new game started!", players);
+
+            Tournament tournament = getRunningTournament();
+            return String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
+                                 tournament.teamA.player1.id, tournament.teamA.player2.id,
+                                 tournament.teamB.player1.id, tournament.teamB.player2.id);
         }
 
         return String.format("Added %s to the queue.", player.name);

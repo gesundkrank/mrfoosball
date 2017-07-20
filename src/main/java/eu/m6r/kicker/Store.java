@@ -93,17 +93,33 @@ public class Store implements Closeable {
         return team;
     }
 
-    private void addMatch(final Tournament tournament) {
-        Match match = new Match();
-        tournament.matches.add(match);
-    }
-
-    public void addMatch(final int tournamentId) {
+    public void addMatch(final int tournamentId) throws InvalidTournamentStateException {
         final Transaction tx = session.beginTransaction();
 
         final Tournament tournament = session.get(Tournament.class, tournamentId);
 
-        addMatch(tournament);
+        int teamAWins = 0;
+        int teamBWins = 0;
+
+        for (final Match match : tournament.matches) {
+            if (match.state == State.FINISHED) {
+                if (match.teamA > match.teamB) {
+                    teamAWins++;
+                } else {
+                    teamBWins++;
+                }
+            }
+        }
+
+        final int maxTeamWins = (tournament.bestOfN / 2) + 1;
+
+        if (maxTeamWins <= Math.max(teamAWins, teamBWins)) {
+            tx.rollback();
+            throw new InvalidTournamentStateException("Cannot create more matches than bestOfN.");
+        }
+
+        Match match = new Match();
+        tournament.matches.add(match);
 
         tx.commit();
     }
@@ -142,5 +158,12 @@ public class Store implements Closeable {
     @Override
     public void close() {
         session.close();
+    }
+
+    public static class InvalidTournamentStateException extends Exception {
+
+        public InvalidTournamentStateException(final String message) {
+            super(message);
+        }
     }
 }

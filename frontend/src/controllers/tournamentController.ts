@@ -56,24 +56,37 @@ export class TournamentController {
       });
   }
 
-  checkForRunningMatch() {
-    return this.pull().then(() => this.getRunningMatch());
+  checkAndUpdateTournamentState(): Promise<State> {
+    if (this.tournament.state == State.FINISHED) {
+      return Promise.resolve(State.FINISHED);
+    }
+    const wins = this.countWins(this.tournament.matches);
+    const maxWins = this.tournament.bestOfN / 2 + 1;
+
+    if (Math.max(wins['teamA'], wins['teamB']) >= maxWins) {
+      this.finishTournament().then(() => this.tournament.state);
+    }
+
+    return Promise.resolve(this.tournament.state)
   }
 
   getRunningMatch(): Promise<Match> {
-    return this.get()
+    return this.pull()
       .then(tournament => {
         if (!tournament) {
           return;
         }
-        const running = this.findRunning();
-        if (!running) {
-          if (tournament.state == State.RUNNING) {
-            return this.newMatch().then(tournament => this.getRunningMatch())
+
+        return this.checkAndUpdateTournamentState().then(state => {
+          const running = this.findRunning();
+          if (!running) {
+            if (state == State.RUNNING) {
+              return this.newMatch().then(tournament => this.getRunningMatch())
+            }
+            return;
           }
-          return;
-        }
-        return running;
+          return running;
+        });
       });
   }
 
@@ -219,6 +232,7 @@ export class TournamentController {
           tournament.matches.forEach(match => match.state = State[match.state]);
         }
         this.tournament = tournament;
+        return tournament;
       });
   }
 

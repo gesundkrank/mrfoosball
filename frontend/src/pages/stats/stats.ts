@@ -33,7 +33,7 @@ export class StatsPage {
   }
 
   checkTournament(loop = true) {
-    return this.tournament.checkForRunningMatch()
+    return this.tournament.getRunningMatch()
       .then((match) => {
         if (match) {
           this.newMatch();

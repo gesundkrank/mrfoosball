@@ -64,7 +64,7 @@ export class TournamentController {
     const maxWins = this.tournament.bestOfN / 2 + 1;
 
     if (Math.max(wins['teamA'], wins['teamB']) >= maxWins) {
-      this.finishTournament().then(() => this.tournament.state);
+      return this.finishTournament().then(() => this.tournament.state);
     }
 
     return Promise.resolve(this.tournament.state)
@@ -79,13 +79,14 @@ export class TournamentController {
 
         return this.checkAndUpdateTournamentState().then(state => {
           const running = this.findRunning();
-          if (!running) {
-            if (state == State.RUNNING) {
-              return this.newMatch().then(tournament => this.getRunningMatch())
-            }
-            return;
+          if (running) {
+            return running;
           }
-          return running;
+
+          if (state === State.RUNNING) {
+            return this.newMatch().then(tournament => this.getRunningMatch())
+          }
+          return;
         });
       });
   }

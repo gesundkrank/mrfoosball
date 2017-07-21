@@ -77,7 +77,7 @@ export class TournamentController {
       });
   }
 
-  static getWinner(match): string {
+  static getWinner(match: Match): string {
     if (!match) {
       return;
     }
@@ -154,7 +154,7 @@ export class TournamentController {
     });
   }
 
-  countWins(matches): { [key: string]: number } {
+  countWins(matches: Match[]): { [key: string]: number } {
     return _.filter(matches, {state: State.FINISHED})
       .reduce((memo, match) => {
         const winner = TournamentController.getWinner(match);

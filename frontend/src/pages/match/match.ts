@@ -91,8 +91,10 @@ export class MatchPage {
                         break;
                       case FinishOptions.Rematch:
                         this.tournamentCtrl.finishTournament()
-                          .then(() => this.tournamentCtrl.newTournament());
-                        this.navCtrl.pop();
+                          .then((oldTournament) => {
+                            this.navCtrl.pop();
+                            return this.tournamentCtrl.newTournament(oldTournament);
+                          });
                     }
                   }
                 )

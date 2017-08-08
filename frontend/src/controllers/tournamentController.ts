@@ -141,17 +141,16 @@ export class TournamentController {
   newMatch(): Promise<void> {
     return this.get()
       .then(tournament => this.http
-        .post(TOURNAMENT_URL + '/' + tournament.id, '')
+        .post(TOURNAMENT_URL + '/match', '')
         .toPromise()
       )
       .then(() => this.pull());
   }
 
-  newTournament() {
+  newTournament(tournament) {
     const headers = new Headers({'Content-Type': 'application/x-www-form-urlencoded'});
     const options = new RequestOptions({headers: headers});
 
-    const tournament = this.tournament;
     let data = new URLSearchParams();
     data.append('playerB1', tournament.teamA.player1.id.toString());
     data.append('playerB2', tournament.teamA.player2.id.toString());
@@ -193,11 +192,15 @@ export class TournamentController {
       });
   }
 
-  finishTournament(): Promise<void> {
-    return this.get()
-      .then((tournament) => {
-        tournament.state = State.FINISHED;
-        return this.push();
+  finishTournament(): Promise<Tournament> {
+    return this.push()
+      .then(() => {
+        const oldTournament = this.tournament;
+        this.tournament = null;
+        return this.http
+          .post(TOURNAMENT_URL + '/finish', '')
+          .toPromise()
+          .then(() => oldTournament);
       });
   }
 

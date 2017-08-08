@@ -78,7 +78,7 @@ export class MatchPage {
     return this.tournamentCtrl.finishMatch()
       .then((tournamentFinished) => {
         if (tournamentFinished) {
-          const title = ['Team', matchWinner, 'is the winner!'].join(' ');
+          const title = "Done";
           const message = [player1.name, 'and', player2.name, 'won!'].join(' ');
           return this.tournamentCtrl.getBestOfN()
             .then((bestOfN) => {

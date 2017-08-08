@@ -1,10 +1,10 @@
 package eu.m6r.kicker;
 
+import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.State;
+import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,28 +14,53 @@ import java.util.stream.Collectors;
 public enum Controller {
     INSTANCE;
 
-    private final Logger logger;
     private final List<Player> players;
 
+    private Tournament activeTournament;
+
     Controller() {
-        this.logger = LogManager.getLogger();
         this.players = new ArrayList<>();
+        activeTournament = null;
     }
 
-    public void startTournament() {
+    public void startTournament() throws TournamentRunningException {
         startTournament(true, 3);
     }
 
-    public void startTournament(final boolean shuffle, final int bestOfN) {
+    public synchronized void startTournament(final boolean shuffle, final int bestOfN)
+            throws TournamentRunningException {
+        if (hasRunningTournament()) {
+            throw new TournamentRunningException();
+        }
+
+        List<Player> playerList = players;
+
+        if (shuffle) {
+            Collections.shuffle(playerList);
+        }
+
         try (final Store store = new Store()) {
-            List<Player> playerList = players;
+            final Team teamA = store.getTeam(playerList.get(0), playerList.get(1));
+            final Team teamB = store.getTeam(playerList.get(2), playerList.get(3));
+            this.activeTournament = new Tournament(bestOfN, teamA, teamB);
+        }
 
-            if (shuffle) {
-                Collections.shuffle(playerList);
+        players.clear();
+    }
+
+    public synchronized void finishTournament() throws InvalidTournamentStateException {
+        for (final Match match : activeTournament.matches) {
+            if (match.state == State.RUNNING) {
+                throw new InvalidTournamentStateException("Can't finish tournament if matches"
+                                                          + "are still running!");
             }
+        }
 
-            store.newTournament(playerList, bestOfN);
-            players.clear();
+        activeTournament.state = State.FINISHED;
+
+        try (final Store store = new Store()) {
+            store.updateTournament(activeTournament);
+            activeTournament = null;
         }
     }
 
@@ -47,22 +72,15 @@ public enum Controller {
     }
 
     public boolean hasRunningTournament() {
-        try (final Store store = new Store()) {
-            return store.hasRunningTournament();
-        }
+        return activeTournament != null;
     }
 
     public Tournament getRunningTournament() {
-        try (final Store store = new Store()) {
-            return store.getRunningTournament();
-        }
+        return activeTournament;
     }
 
     public void updateTournament(final Tournament tournament) {
-        try (final Store store = new Store()) {
-            logger.debug("Updating tournament");
-            store.updateTournament(tournament);
-        }
+        this.activeTournament.matches = tournament.matches;
     }
 
     public boolean cancelRunningTournament() {
@@ -70,16 +88,39 @@ public enum Controller {
             return false;
         }
 
-        try (final Store store = new Store()) {
-            store.deleteTournament(getRunningTournament());
-        }
+        activeTournament = null;
         return true;
     }
 
-    public void newMatch(int tournamentId) throws Store.InvalidTournamentStateException {
-        try (final Store store = new Store()) {
-            store.addMatch(tournamentId);
+    public void newMatch()
+            throws InvalidTournamentStateException, TournamentNotRunningException {
+        if (activeTournament == null) {
+            throw new TournamentNotRunningException();
         }
+
+        int teamAWins = 0;
+        int teamBWins = 0;
+
+        for (final Match match : activeTournament.matches) {
+            if (match.state == State.FINISHED) {
+                if (match.teamA > match.teamB) {
+                    teamAWins++;
+                } else {
+                    teamBWins++;
+                }
+            } else if (match.state == State.RUNNING) {
+                throw new InvalidTournamentStateException("Can't create new match if matches "
+                                                          + "are still running!");
+            }
+        }
+
+        final int maxTeamWins = (activeTournament.bestOfN / 2) + 1;
+
+        if (maxTeamWins <= Math.max(teamAWins, teamBWins)) {
+            throw new InvalidTournamentStateException("Cannot create more matches than bestOfN.");
+        }
+
+        activeTournament.matches.add(new Match());
     }
 
     public String getPlayersString() {
@@ -96,7 +137,8 @@ public enum Controller {
     }
 
     public String addPlayer(Player player)
-            throws TooManyUsersException, PlayerAlreadyInQueueException {
+            throws TooManyUsersException, PlayerAlreadyInQueueException,
+                   TournamentRunningException {
         if (players.contains(player)) {
             throw new PlayerAlreadyInQueueException(player);
         }
@@ -157,4 +199,24 @@ public enum Controller {
         }
     }
 
+    public static class TournamentRunningException extends Exception {
+
+        public TournamentRunningException() {
+            super("A tournament is already running!");
+        }
+    }
+
+    public static class TournamentNotRunningException extends Exception {
+
+        public TournamentNotRunningException() {
+            super("No tournament is running!");
+        }
+    }
+
+    public static class InvalidTournamentStateException extends Exception {
+
+        public InvalidTournamentStateException(final String message) {
+            super(message);
+        }
+    }
 }

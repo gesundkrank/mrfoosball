@@ -35,6 +35,14 @@ import javax.persistence.Table;
 @Entity
 @Table
 public class Tournament {
+    public Tournament() {}
+
+    public Tournament(final int bestOfN, final Team teamA, final Team teamB) {
+        this.bestOfN = bestOfN;
+        this.teamA = teamA;
+        this.teamB = teamB;
+    }
+
 
     @Id
     @GeneratedValue

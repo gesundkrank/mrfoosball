@@ -1,7 +1,6 @@
 package eu.m6r.kicker.api;
 
 import eu.m6r.kicker.Controller;
-import eu.m6r.kicker.Store;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.Tournament;
 
@@ -17,7 +16,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -80,11 +78,22 @@ public class TournamentAPI {
     }
 
     @POST
-    @Path("{tournamentId}")
-    public void newMatch(@PathParam("tournamentId") final int tournamentId) {
+    @Path("match")
+    public void newMatch() {
         try {
-            controller.newMatch(tournamentId);
-        } catch (Store.InvalidTournamentStateException e) {
+            controller.newMatch();
+        } catch (Controller.InvalidTournamentStateException |
+                Controller.TournamentNotRunningException e) {
+            throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+    }
+
+    @POST
+    @Path("finish")
+    public void finishTournament() {
+        try {
+            controller.finishTournament();
+        } catch (Controller.InvalidTournamentStateException e) {
             throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }

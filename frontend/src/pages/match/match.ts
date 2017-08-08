@@ -78,7 +78,7 @@ export class MatchPage {
     return this.tournamentCtrl.finishMatch()
       .then((tournamentFinished) => {
         if (tournamentFinished) {
-          const title = ['Team', matchWinner, 'is the winner!'].join(' ');
+          const title = "Done";
           const message = [player1.name, 'and', player2.name, 'won!'].join(' ');
           return this.tournamentCtrl.getBestOfN()
             .then((bestOfN) => {
@@ -91,8 +91,10 @@ export class MatchPage {
                         break;
                       case FinishOptions.Rematch:
                         this.tournamentCtrl.finishTournament()
-                          .then(() => this.tournamentCtrl.newTournament());
-                        this.navCtrl.pop();
+                          .then((oldTournament) => {
+                            this.navCtrl.pop();
+                            return this.tournamentCtrl.newTournament(oldTournament);
+                          });
                     }
                   }
                 )

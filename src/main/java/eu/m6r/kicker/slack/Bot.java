@@ -152,7 +152,8 @@ public class Bot {
                                 final Player player = getUser(userId);
                                 final String message = controller.addPlayer(player);
                                 sendMessage(message, channel);
-                            } catch (Controller.PlayerAlreadyInQueueException e) {
+                            } catch (Controller.PlayerAlreadyInQueueException |
+                                    Controller.TournamentRunningException e) {
                                 sendMessage(e.getMessage(), channel);
                             }
                         }

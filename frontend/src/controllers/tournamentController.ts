@@ -152,10 +152,19 @@ export class TournamentController {
     const options = new RequestOptions({headers: headers});
 
     let data = new URLSearchParams();
-    data.append('playerB1', tournament.teamA.player1.id.toString());
-    data.append('playerB2', tournament.teamA.player2.id.toString());
-    data.append('playerA1', tournament.teamB.player1.id.toString());
-    data.append('playerA2', tournament.teamB.player2.id.toString());
+
+    let teamA = this.tournament.teamA;
+    let teamB = this.tournament.teamB;
+
+    if (this.tournament.matches.length % 2 == 0) {
+      [teamA, teamB] = [teamB, teamA];
+    }
+
+    data.append('playerB1', teamA.player1.id.toString());
+    data.append('playerB2', teamA.player2.id.toString());
+    data.append('playerA1', teamB.player1.id.toString());
+    data.append('playerA2', teamB.player2.id.toString());
+
     data.append('bestOfN', tournament.bestOfN.toString());
 
     return this.http.post(TOURNAMENT_URL, data, options).toPromise()

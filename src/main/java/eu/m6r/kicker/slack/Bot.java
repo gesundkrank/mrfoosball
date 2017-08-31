@@ -70,8 +70,13 @@ public class Bot {
 
         final WebTarget target = client.target("https://slack.com").path("/api/rtm.connect")
                 .queryParam("token", token);
+
         final RtmInitResponse response =
                 target.request(MediaType.APPLICATION_JSON).get(RtmInitResponse.class);
+
+        if (response == null) {
+            throw new StartSocketSessionException("Failed to parse response object");
+        }
 
         if (!response.ok) {
             throw new StartSocketSessionException(response.error);

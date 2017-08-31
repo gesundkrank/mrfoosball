@@ -68,7 +68,7 @@ public class Bot {
         client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
         client.property(ClientProperties.READ_TIMEOUT, 1000);
 
-        final WebTarget target = client.target("https://slack.com").path("/api/rtm.start")
+        final WebTarget target = client.target("https://slack.com").path("/api/rtm.connect")
                 .queryParam("token", token);
         final RtmInitResponse response =
                 target.request(MediaType.APPLICATION_JSON).get(RtmInitResponse.class);

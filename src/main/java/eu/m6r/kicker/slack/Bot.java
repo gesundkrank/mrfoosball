@@ -155,18 +155,22 @@ public class Bot {
                         for (final String userId : userIds) {
                             try {
                                 final Player player = getUser(userId);
-                                final String message = controller.addPlayer(player);
-                                sendMessage(message, channel);
+                                controller.addPlayer(player);
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {
                                 sendMessage(e.getMessage(), channel);
                             }
                         }
 
+                        final String message;
                         if (!controller.hasRunningTournament()) {
-                            sendMessage(String.format("Current queue: %s",
-                                                      controller.getPlayersString()), channel);
+                            message = String.format("Current queue: %s",
+                                                    controller.getPlayersString());
+                        } else {
+                            message = controller.newTournamentMessage();
                         }
+                        sendMessage(message, channel);
+
                         break;
                     case "reset":
                         controller.resetPlayers();
@@ -198,13 +202,11 @@ public class Bot {
                             try {
                                 for (final String userId : userIds) {
                                     final Player player = getUser(userId);
-                                    final String message =
-                                            controller.addPlayer(player, false);
-                                    sendMessage(message, channel);
+                                    controller.addPlayer(player, false);
                                 }
 
                                 controller.startTournament(false, 3);
-                                sendMessage("New tournament started!", channel);
+                                sendMessage(controller.newTournamentMessage(), channel);
 
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {

@@ -191,7 +191,27 @@ public class Bot {
                             sendMessage("No match running!", channel);
                         }
                         break;
-                    case "stats":
+                    case "fixedMatch":
+                        if (userIds.size() != 4) {
+                            sendMessage("To start a game I need 4 players :(", channel);
+                        } else {
+                            try {
+                                for (final String userId : userIds) {
+                                    final Player player = getUser(userId);
+                                    final String message =
+                                            controller.addPlayer(player, false);
+                                    sendMessage(message, channel);
+                                }
+
+                                controller.startTournament(false, 3);
+                                sendMessage("New tournament started!", channel);
+
+                            } catch (Controller.PlayerAlreadyInQueueException |
+                                    Controller.TournamentRunningException e) {
+                                sendMessage(e.getMessage(), channel);
+                            }
+
+                        }
                         break;
                     default:
                         sendMessage("Je ne parle pas bullshit.", channel);

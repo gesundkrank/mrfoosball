@@ -136,9 +136,15 @@ public enum Controller {
 
     }
 
-    public String addPlayer(Player player)
-            throws TooManyUsersException, PlayerAlreadyInQueueException,
-                   TournamentRunningException {
+    public String addPlayer(Player player) throws TooManyUsersException,
+                                                  PlayerAlreadyInQueueException,
+                                                  TournamentRunningException {
+        return addPlayer(player, true);
+    }
+
+    public String addPlayer(final Player player, final boolean autoStartTournament)
+            throws TournamentRunningException, PlayerAlreadyInQueueException,
+                   TooManyUsersException {
         if (players.contains(player)) {
             throw new PlayerAlreadyInQueueException(player);
         }
@@ -153,7 +159,7 @@ public enum Controller {
 
         players.add(player);
 
-        if (players.size() == 4) {
+        if (players.size() == 4 && autoStartTournament) {
             startTournament();
 
             Tournament tournament = getRunningTournament();

@@ -153,10 +153,10 @@ export class TournamentController {
 
     let data = new URLSearchParams();
 
-    let teamA = this.tournament.teamA;
-    let teamB = this.tournament.teamB;
+    let teamA = tournament.teamA;
+    let teamB = tournament.teamB;
 
-    if (this.tournament.matches.length % 2 == 0) {
+    if (tournament.matches.length % 2 == 0) {
       [teamA, teamB] = [teamB, teamA];
     }
 

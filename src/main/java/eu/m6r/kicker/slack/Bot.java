@@ -189,7 +189,14 @@ public class Bot {
                         }
                         break;
                     case "queue":
-                        sendMessage(controller.getListOfPlayers(), channel);
+                        final String queueMessage;
+                        if (controller.getPlayersInQueue().isEmpty()) {
+                            queueMessage = "Queue is empty!";
+                        } else {
+                            queueMessage = "Current queue: " + controller.getPlayersString();
+                        }
+
+                        sendMessage(queueMessage, channel);
                         break;
                     case "cancel":
                         if (controller.cancelRunningTournament()) {

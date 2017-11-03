@@ -226,7 +226,7 @@ public class Bot {
                         }
                         break;
                     case "help":
-                        sendHelpMessage(channel);
+                        sendHelpMessage(channel, sender);
                         break;
                     default:
                         sendMessage(String.format("I'm sorry <@%s>, I didn't understand that. "
@@ -235,7 +235,7 @@ public class Bot {
                 }
             } catch (final Controller.TooManyUsersException |
                     UserExtractionFailedException e) {
-                sendMessage(e.getMessage(), channel);
+                sendMessage(e.getMessage(), sender);
             }
         } else {
             sendMessage("That doesn't make any sense at all.", channel);
@@ -247,10 +247,12 @@ public class Bot {
         sendMessage(message);
     }
 
-    private void sendHelpMessage(final String channel) {
+    private void sendHelpMessage(final String channel, final String sender) {
         final String text = "Supported slack commands:";
         final Message message = new Message(channel, text, botUserId);
+        message.user = sender;
         message.as_user = true;
+
         final Message.Attachment addCommand =
                 new Message.Attachment("add", "_Adds new player(s) to the queue._");
         final List<Message.Attachment.Field> addFields = new ArrayList<>();
@@ -312,7 +314,7 @@ public class Bot {
         message.attachments.add(cancelCommand);
 
         client.target("https://slack.com")
-                .path("/api/chat.postMessage")
+                .path("/api/chat.postEphemeral")
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .header("Authorization", "Bearer " + token).post(Entity.json(message));
     }

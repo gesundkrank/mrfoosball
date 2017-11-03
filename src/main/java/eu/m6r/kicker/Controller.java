@@ -75,6 +75,13 @@ public enum Controller {
         return activeTournament != null;
     }
 
+    public String newTournamentMessage() {
+        final Tournament tournament = getRunningTournament();
+        return String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
+                             tournament.teamA.player1.id, tournament.teamA.player2.id,
+                             tournament.teamB.player1.id, tournament.teamB.player2.id);
+    }
+
     public Tournament getRunningTournament() {
         return activeTournament;
     }
@@ -136,13 +143,13 @@ public enum Controller {
 
     }
 
-    public String addPlayer(Player player) throws TooManyUsersException,
+    public void addPlayer(Player player) throws TooManyUsersException,
                                                   PlayerAlreadyInQueueException,
                                                   TournamentRunningException {
-        return addPlayer(player, true);
+        addPlayer(player, true);
     }
 
-    public String addPlayer(final Player player, final boolean autoStartTournament)
+    public void addPlayer(final Player player, final boolean autoStartTournament)
             throws TournamentRunningException, PlayerAlreadyInQueueException,
                    TooManyUsersException {
         if (players.contains(player)) {
@@ -154,21 +161,14 @@ public enum Controller {
         }
 
         if (hasRunningTournament()) {
-            return "A tournament is still running!";
+            throw new TournamentRunningException();
         }
 
         players.add(player);
 
         if (players.size() == 4 && autoStartTournament) {
             startTournament();
-
-            Tournament tournament = getRunningTournament();
-            return String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
-                                 tournament.teamA.player1.id, tournament.teamA.player2.id,
-                                 tournament.teamB.player1.id, tournament.teamB.player2.id);
         }
-
-        return String.format("Added %s to the queue.", player.name);
     }
 
     public void resetPlayers() {

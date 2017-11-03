@@ -31,9 +31,11 @@ import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @ClientEndpoint
 public class Bot {
@@ -45,6 +47,7 @@ public class Bot {
     private final String token;
     private final ObjectMapper objectMapper;
     private final Controller controller;
+    private final Client client;
 
     private Session socketSession;
     private String botUserId;
@@ -58,16 +61,16 @@ public class Bot {
             throw new RuntimeException("Slack token cannot be null");
         }
 
+        this.client = ClientBuilder.newClient();
+        client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
+        client.property(ClientProperties.READ_TIMEOUT, 1000);
+
         this.token = token;
         this.objectMapper = new ObjectMapper();
         this.controller = Controller.INSTANCE;
     }
 
     public void startNewSession() throws StartSocketSessionException {
-        final Client client = ClientBuilder.newClient();
-        client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
-        client.property(ClientProperties.READ_TIMEOUT, 1000);
-
         final WebTarget target = client.target("https://slack.com").path("/api/rtm.connect")
                 .queryParam("token", token);
 
@@ -155,18 +158,22 @@ public class Bot {
                         for (final String userId : userIds) {
                             try {
                                 final Player player = getUser(userId);
-                                final String message = controller.addPlayer(player);
-                                sendMessage(message, channel);
+                                controller.addPlayer(player);
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {
                                 sendMessage(e.getMessage(), channel);
                             }
                         }
 
+                        final String message;
                         if (!controller.hasRunningTournament()) {
-                            sendMessage(String.format("Current queue: %s",
-                                                      controller.getPlayersString()), channel);
+                            message = String.format("Current queue: %s",
+                                                    controller.getPlayersString());
+                        } else {
+                            message = controller.newTournamentMessage();
                         }
+                        sendMessage(message, channel);
+
                         break;
                     case "reset":
                         controller.resetPlayers();
@@ -176,13 +183,19 @@ public class Bot {
                         for (final String userId : userIds) {
                             final Player playerToRemove = getUser(userId);
                             controller.removePlayer(playerToRemove);
-                            sendMessage(
-                                    String.format("Removed %s from the queue", playerToRemove.name),
-                                    channel);
+                            sendMessage(String.format("Removed <@%s> from the queue",
+                                                      playerToRemove.name), channel);
                         }
                         break;
                     case "queue":
-                        sendMessage(controller.getListOfPlayers(), channel);
+                        final String queueMessage;
+                        if (controller.getPlayersInQueue().isEmpty()) {
+                            queueMessage = "Queue is empty!";
+                        } else {
+                            queueMessage = "Current queue: " + controller.getPlayersString();
+                        }
+
+                        sendMessage(queueMessage, channel);
                         break;
                     case "cancel":
                         if (controller.cancelRunningTournament()) {
@@ -196,15 +209,14 @@ public class Bot {
                             sendMessage("To start a game I need 4 players :(", channel);
                         } else {
                             try {
+                                controller.resetPlayers();
                                 for (final String userId : userIds) {
                                     final Player player = getUser(userId);
-                                    final String message =
-                                            controller.addPlayer(player, false);
-                                    sendMessage(message, channel);
+                                    controller.addPlayer(player, false);
                                 }
 
                                 controller.startTournament(false, 3);
-                                sendMessage("New tournament started!", channel);
+                                sendMessage(controller.newTournamentMessage(), channel);
 
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {
@@ -213,8 +225,13 @@ public class Bot {
 
                         }
                         break;
+                    case "help":
+                        sendHelpMessage(channel);
+                        break;
                     default:
-                        sendMessage("Je ne parle pas bullshit.", channel);
+                        sendMessage(String.format("I'm sorry <@%s>, I didn't understand that. "
+                                                  + "If you need help just ask for it.", sender),
+                                    channel);
                 }
             } catch (final Controller.TooManyUsersException |
                     UserExtractionFailedException e) {
@@ -227,6 +244,80 @@ public class Bot {
 
     private void sendMessage(final String text, final String channel) {
         final Message message = new Message(channel, text, botUserId);
+        sendMessage(message);
+    }
+
+    private void sendHelpMessage(final String channel) {
+        final String text = "Supported slack commands:";
+        final Message message = new Message(channel, text, botUserId);
+        message.as_user = true;
+        final Message.Attachment addCommand =
+                new Message.Attachment("add", "_Adds new player(s) to the queue._");
+        final List<Message.Attachment.Field> addFields = new ArrayList<>();
+        addFields.add(new Message.Attachment.Field("Add yourself",
+                                                   String.format("<@%s> add", botUserId)));
+        addFields.add(new Message.Attachment.Field(
+                "Add others",
+                String.format("<@%s> add <@U12G6EUSZ> <@U12RUGB7E>", botUserId)));
+        addCommand.fields = addFields;
+
+        message.attachments.add(addCommand);
+
+        final Message.Attachment removeCommand =
+                new Message.Attachment("remove", "_Removes player(s) from the queue._");
+        final List<Message.Attachment.Field> removeFields = new ArrayList<>();
+        removeFields.add(new Message.Attachment.Field("Remove yourself",
+                                                      String.format("<@%s> remove", botUserId)));
+        removeFields.add(new Message.Attachment.Field(
+                "Remove others",
+                String.format("<@%s> remove <@U12GTAA49> <@U5GEP6RMM>", botUserId)));
+        removeCommand.fields = removeFields;
+
+        message.attachments.add(removeCommand);
+
+        final Message.Attachment queueCommand =
+                new Message.Attachment("queue", "_Shows the current queue._");
+        final List<Message.Attachment.Field> queueFields = new ArrayList<>();
+        queueFields.add(new Message.Attachment.Field(String.format("<@%s> queue", botUserId)));
+        queueCommand.fields = queueFields;
+
+        message.attachments.add(queueCommand);
+
+        final Message.Attachment fixedMatchCommand =
+                new Message.Attachment("fixedMatch",
+                                       "_Creates a new match. Keeps the order of the players. "
+                                       + "First and last two players will play together._");
+        final List<Message.Attachment.Field> fixedMatchFields = new ArrayList<>();
+        fixedMatchFields.add(new Message.Attachment.Field(
+                String.format("<@%s> fixedMatch <@U6WRKPL6P> <@U12G6EUSZ> <@U3ZCMB9SR> "
+                              + "<@U2D3PT6JK>", botUserId)));
+        fixedMatchCommand.fields = fixedMatchFields;
+
+        message.attachments.add(fixedMatchCommand);
+
+        final Message.Attachment resetCommand =
+                new Message.Attachment("reset", "_Reset the queue._");
+        final List<Message.Attachment.Field> resetFields = new ArrayList<>();
+        resetFields.add(new Message.Attachment.Field(String.format("<@%s> reset", botUserId)));
+        resetCommand.fields = resetFields;
+
+        message.attachments.add(resetCommand);
+
+        final Message.Attachment cancelCommand =
+                new Message.Attachment("cancel", "_Cancel a running match._");
+        final List<Message.Attachment.Field> cancelFields = new ArrayList<>();
+        cancelFields.add(new Message.Attachment.Field(String.format("<@%s> cancel", botUserId)));
+        cancelCommand.fields = cancelFields;
+
+        message.attachments.add(cancelCommand);
+
+        client.target("https://slack.com")
+                .path("/api/chat.postMessage")
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer " + token).post(Entity.json(message));
+    }
+
+    private void sendMessage(final Message message) {
         try {
             final String messageText = objectMapper.writeValueAsString(message);
             socketSession.getAsyncRemote().sendText(messageText);
@@ -236,7 +327,6 @@ public class Bot {
     }
 
     private Player getUser(final String userId) throws UserExtractionFailedException {
-        final Client client = ClientBuilder.newClient();
         final WebTarget target = client.target("https://slack.com")
                 .path("/api/users.info")
                 .queryParam("token", token)

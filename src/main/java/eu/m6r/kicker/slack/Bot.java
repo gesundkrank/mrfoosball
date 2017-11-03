@@ -203,6 +203,7 @@ public class Bot {
                             sendMessage("To start a game I need 4 players :(", channel);
                         } else {
                             try {
+                                controller.resetPlayers();
                                 for (final String userId : userIds) {
                                     final Player player = getUser(userId);
                                     controller.addPlayer(player, false);

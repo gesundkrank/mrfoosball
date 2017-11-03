@@ -183,9 +183,8 @@ public class Bot {
                         for (final String userId : userIds) {
                             final Player playerToRemove = getUser(userId);
                             controller.removePlayer(playerToRemove);
-                            sendMessage(
-                                    String.format("Removed %s from the queue", playerToRemove.name),
-                                    channel);
+                            sendMessage(String.format("Removed <@%s> from the queue",
+                                                      playerToRemove.name), channel);
                         }
                         break;
                     case "queue":

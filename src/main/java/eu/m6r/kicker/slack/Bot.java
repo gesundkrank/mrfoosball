@@ -108,7 +108,7 @@ public class Bot {
 
     @OnMessage
     public void onMessage(final String messageString, final Session session) throws IOException {
-        if (!messageString.contains("\"type\":\"message\"")) {
+        if (!messageString.startsWith("{\"type\":\"message\"")) {
             return;
         }
 

@@ -1,6 +1,7 @@
 package eu.m6r.kicker;
 
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
@@ -10,9 +11,11 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.query.NativeQuery;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.persistence.TypedQuery;
 
@@ -47,10 +50,19 @@ public class Store implements Closeable {
         this.session = sessionFactory.openSession();
     }
 
+    public Player getPlayer(final Player player) {
+        final Player storedPlayer = session.get(Player.class, player.id);
+        if (storedPlayer != null) {
+            player.trueSkillMean = storedPlayer.trueSkillMean;
+            player.trueSkillStandardDeviation = storedPlayer.trueSkillStandardDeviation;
+        } else {
+            session.save(player);
+            return getPlayer(player);
+        }
+        return player;
+    }
 
     public Player getPlayer(final String id) {
-        final Player player = new Player();
-        player.id = id;
         return session.get(Player.class, id);
     }
 
@@ -79,15 +91,30 @@ public class Store implements Closeable {
     }
 
     public List<Tournament> getTournaments() {
-        TypedQuery<Tournament> query = session.createNamedQuery(
-                "get_tournaments_with_state", Tournament.class)
+        final TypedQuery<Tournament> query = session
+                .createNamedQuery("get_tournaments_with_state", Tournament.class)
                 .setParameter("state", State.FINISHED);
         return query.getResultList();
     }
 
-    public void updateTournament(final Tournament tournament) {
+    public List<PlayerSkill> playerSkills() {
+        final TypedQuery<Player> playerSkillQuery = session
+                .createNamedQuery("get_players_ordered_by_skill", Player.class);
+        return playerSkillQuery.getResultList()
+                .stream()
+                .map(PlayerSkill::new)
+                .collect(Collectors.toList());
+    }
+
+    public void saveTournament(final Tournament tournament) {
         Transaction tx = session.beginTransaction();
-        session.saveOrUpdate(tournament);
+        session.update(tournament.teamA);
+        session.update(tournament.teamA.player1);
+        session.update(tournament.teamA.player2);
+        session.update(tournament.teamB);
+        session.update(tournament.teamB.player1);
+        session.update(tournament.teamB.player2);
+        session.save(tournament);
         tx.commit();
     }
 

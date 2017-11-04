@@ -1,6 +1,8 @@
 package eu.m6r.kicker.api;
 
+import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.Stats;
+import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.TeamStat;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,39 +24,8 @@ public class StatsAPI {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String getStats() {
-        return "[\n"
-               + "  {\n"
-               + "    \"rank\": 1,\n"
-               + "    \"name\": \"Thomas\",\n"
-               + "    \"scored\": 100,\n"
-               + "    \"received\": 24,\n"
-               + "    \"difference\": 76,\n"
-               + "    \"tournaments\": 3,\n"
-               + "    \"matches\": 34,\n"
-               + "    \"kriechen\": 2\n"
-               + "  },\n"
-               + "  {\n"
-               + "    \"rank\": 2,\n"
-               + "    \"name\": \"Thomas\",\n"
-               + "    \"scored\": 100,\n"
-               + "    \"received\": 24,\n"
-               + "    \"difference\": 76,\n"
-               + "    \"tournaments\": 3,\n"
-               + "    \"matches\": 34,\n"
-               + "    \"kriechen\": 2\n"
-               + "  },\n"
-               + "  {\n"
-               + "    \"rank\": 3,\n"
-               + "    \"name\": \"Thomas\",\n"
-               + "    \"scored\": 100,\n"
-               + "    \"received\": 24,\n"
-               + "    \"difference\": 76,\n"
-               + "    \"tournaments\": 3,\n"
-               + "    \"matches\": 34,\n"
-               + "    \"kriechen\": 2\n"
-               + "  }\n"
-               + "]";
+    public List<PlayerSkill> getStats() {
+        return Controller.INSTANCE.playerSkills();
     }
 
     @GET

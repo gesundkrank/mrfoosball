@@ -67,6 +67,15 @@ export class MatchPage {
     return this.match[this.teamPositions[color]];
   }
 
+  getSkill(team: Team) {
+    if (!this.match) {
+      return 0;
+    }
+
+    return Math.round((team.player1.trueSkillMean - 3 * team.player1.trueSkillStandardDeviation) +
+                      (team.player2.trueSkillMean - 3 * team.player2.trueSkillStandardDeviation));
+  }
+
   cancelMatch() {
     this.tournamentCtrl.cancelMatch()
       .then(() => this.navCtrl.pop())

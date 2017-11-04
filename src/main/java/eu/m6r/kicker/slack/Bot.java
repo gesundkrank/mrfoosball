@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
@@ -242,11 +243,6 @@ public class Bot {
         }
     }
 
-    private void sendMessage(final String text, final String channel) {
-        final Message message = new Message(channel, text, botUserId);
-        sendMessage(message);
-    }
-
     private void sendHelpMessage(final String channel, final String sender) {
         final String text = "Supported slack commands:";
         final Message message = new Message(channel, text, botUserId);
@@ -312,11 +308,19 @@ public class Bot {
         cancelCommand.fields = cancelFields;
 
         message.attachments.add(cancelCommand);
+        postEphemeral(message);
+    }
 
+    private void postEphemeral(final Message message) {
         client.target("https://slack.com")
                 .path("/api/chat.postEphemeral")
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .header("Authorization", "Bearer " + token).post(Entity.json(message));
+    }
+
+    private void sendMessage(final String text, final String channel) {
+        final Message message = new Message(channel, text, botUserId);
+        sendMessage(message);
     }
 
     private void sendMessage(final Message message) {

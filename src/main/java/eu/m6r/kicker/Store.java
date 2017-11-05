@@ -13,11 +13,13 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 
 import java.io.Closeable;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 
@@ -99,12 +101,20 @@ public class Store implements Closeable {
     }
 
     public List<PlayerSkill> playerSkills() {
-        final TypedQuery<Player> playerSkillQuery = session
-                .createNamedQuery("get_players_ordered_by_skill", Player.class);
-        return playerSkillQuery.getResultList()
-                .stream()
-                .map(PlayerSkill::new)
-                .collect(Collectors.toList());
+        final List<Object[]> list = session
+                .createNativeQuery("SELECT player.id AS id, name, avatarImage, "
+                                   + "COUNT(tournament.id) AS games, "
+                                   + "(trueSkillMean - 3 * trueSkillStandardDeviation) AS skill "
+                                   + "FROM player LEFT JOIN tournament "
+                                   + "ON player.id IN (teama_player1_id, teama_player2_id, "
+                                   + "teamb_player1_id, teamb_player2_id) GROUP BY player.id "
+                                   + "ORDER BY skill DESC")
+                .addScalar("id", StandardBasicTypes.STRING)
+                .addScalar("name", StandardBasicTypes.STRING)
+                .addScalar("avatarImage", StandardBasicTypes.STRING)
+                .addScalar("games", StandardBasicTypes.INTEGER)
+                .addScalar("skill", StandardBasicTypes.DOUBLE).list();
+        return list.stream().map(PlayerSkill::new).collect(Collectors.toList());
     }
 
     public void saveTournament(final Tournament tournament) {

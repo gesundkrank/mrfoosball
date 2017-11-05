@@ -27,6 +27,9 @@
             <ion-col class="header">
               Skill
             </ion-col>
+            <ion-col class="header">
+              Games
+            </ion-col>
           </ion-row>
           <ion-row *ngFor="let playerSkill of stats; let i = index " [attr.data-index]="i">
             <ion-col>
@@ -42,6 +45,9 @@
             </ion-col>
             <ion-col>
               {{ roundSkill(playerSkill?.skill) }}
+            </ion-col>
+            <ion-col>
+              {{ playerSkill?.games }}
             </ion-col>
           </ion-row>
         </ion-grid>

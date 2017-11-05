@@ -211,7 +211,6 @@ public enum Controller {
             store.resetPlayerSkills();
 
             for (final Tournament tournament : getTournaments()) {
-                System.out.println("tournament = " + tournament);
                 final Tournament updatedTournament = trueSkillCalculator.updateRatings(tournament);
                 store.getTeam(updatedTournament.teamA.player1, updatedTournament.teamA.player2);
                 store.getTeam(updatedTournament.teamB.player1, updatedTournament.teamB.player2);

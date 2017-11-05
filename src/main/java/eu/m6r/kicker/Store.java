@@ -5,6 +5,7 @@ import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
 
 import org.hibernate.Session;
@@ -115,6 +116,17 @@ public class Store implements Closeable {
         session.update(tournament.teamB.player1);
         session.update(tournament.teamB.player2);
         session.save(tournament);
+        tx.commit();
+    }
+
+    public void resetPlayerSkills() {
+        final Transaction tx = session.beginTransaction();
+        session.createQuery("UPDATE Player SET trueSkillMean = :mean, "
+                            + "trueSkillStandardDeviation = :standardDeviation")
+                .setParameter("mean", TrueSkillCalculator.DEFAULT_INITIAL_MEAN)
+                .setParameter("standardDeviation",
+                              TrueSkillCalculator.DEFAULT_INITIAL_STANDARD_DEVIATION)
+                .executeUpdate();
         tx.commit();
     }
 

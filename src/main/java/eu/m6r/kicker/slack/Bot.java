@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerSkill;
+import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
@@ -228,6 +229,11 @@ public class Bot {
                         break;
                     case "help":
                         sendHelpMessage(channel, sender);
+                        break;
+
+                    case "calcSkills":
+                        controller.recalculateSkills();
+                        sendMessage("done", channel);
                         break;
                     default:
                         sendMessage(String.format("I'm sorry <@%s>, I didn't understand that. "

@@ -1,5 +1,7 @@
 package eu.m6r.kicker;
 
+import de.gesundkrank.jskills.SkillCalculator;
+
 import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerSkill;
@@ -64,8 +66,7 @@ public enum Controller {
         activeTournament.state = State.FINISHED;
 
         try (final Store store = new Store()) {
-            final Tournament
-                    updatedTournament =
+            final Tournament updatedTournament =
                     trueSkillCalculator.updateRatings(activeTournament);
             store.saveTournament(updatedTournament);
             activeTournament = null;
@@ -202,6 +203,19 @@ public enum Controller {
     public List<PlayerSkill> playerSkills() {
         try (final Store store = new Store()) {
             return store.playerSkills();
+        }
+    }
+
+    public void recalculateSkills() {
+        try (final Store store = new Store()) {
+            store.resetPlayerSkills();
+
+            for (final Tournament tournament : getTournaments()) {
+                System.out.println("tournament = " + tournament);
+                final Tournament updatedTournament = trueSkillCalculator.updateRatings(tournament);
+                store.getTeam(updatedTournament.teamA.player1, updatedTournament.teamA.player2);
+                store.getTeam(updatedTournament.teamB.player1, updatedTournament.teamB.player2);
+            }
         }
     }
 

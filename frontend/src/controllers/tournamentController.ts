@@ -177,7 +177,9 @@ export class TournamentController {
   }
 
   countWins(matches: Match[]): { [key: string]: number } {
-    return _.filter(matches, {state: State.FINISHED})
+    return _.filter(matches, function (match) {
+      return match.state == State.FINISHED || match.state == State[State.FINISHED];
+    })
       .reduce((memo, match) => {
         const winner = TournamentController.getWinner(match);
         memo[winner] += 1;

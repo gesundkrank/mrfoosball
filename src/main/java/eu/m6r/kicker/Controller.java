@@ -80,6 +80,12 @@ public enum Controller {
         }
     }
 
+    public List<Tournament> getTournaments(int last) {
+        try (final Store store = new Store()) {
+            return store.getLastTournaments(last);
+        }
+    }
+
     public boolean hasRunningTournament() {
         return activeTournament != null;
     }

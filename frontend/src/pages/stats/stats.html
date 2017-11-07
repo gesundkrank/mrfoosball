@@ -62,6 +62,34 @@
             {{ player?.name }}
           </ion-item>
         </ion-list>
+        <ion-item>Last Games</ion-item>
+        <ion-grid class="lastGames">
+          <ion-row *ngFor="let tournament of lastTournaments">
+            <ion-col>
+              <ion-avatar>
+                <img src="{{ tournament.teamA.player1.avatarImage }}">
+              </ion-avatar>
+            </ion-col>
+            <ion-col>
+              <ion-avatar>
+                <img src="{{ tournament.teamA.player2.avatarImage }}">
+              </ion-avatar>
+            </ion-col>
+            <ion-col text-center class="gameResult">
+              {{ winsTeamA(tournament) }} - {{ winsTeamB(tournament) }}
+            </ion-col>
+            <ion-col>
+              <ion-avatar>
+                <img src="{{ tournament.teamB.player1.avatarImage }}">
+              </ion-avatar>
+            </ion-col>
+            <ion-col >
+              <ion-avatar align-items-center>
+                <img src="{{ tournament.teamB.player2.avatarImage }}">
+              </ion-avatar>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
       </ion-col>
     </ion-row>
   </ion-grid>

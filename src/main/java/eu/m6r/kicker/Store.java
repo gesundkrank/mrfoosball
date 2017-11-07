@@ -100,6 +100,14 @@ public class Store implements Closeable {
         return query.getResultList();
     }
 
+    public List<Tournament> getLastTournaments(int num) {
+        final TypedQuery<Tournament> query = session
+                .createNamedQuery("get_tournaments_with_state", Tournament.class)
+                .setParameter("state", State.FINISHED)
+                .setMaxResults(num);
+        return query.getResultList();
+    }
+
     public List<PlayerSkill> playerSkills() {
         final List<Object[]> list = session
                 .createNativeQuery("SELECT player.id AS id, name, avatarImage, "

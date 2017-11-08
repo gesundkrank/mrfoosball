@@ -1,3 +1,21 @@
 page-stats {
+  ion-avatar > img {
+    border-radius: 100%;
+    max-height: 40px;
+  }
 
+  .center {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+  }
+
+  .gameResult {
+    font-size: 20px;
+    padding-top: 12px;
+  }
+
+  .lastGames img {
+    margin: auto;
+  }
 }

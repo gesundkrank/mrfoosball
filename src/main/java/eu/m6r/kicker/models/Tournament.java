@@ -26,10 +26,9 @@ import javax.persistence.Table;
                 name = "get_tournaments",
                 query = "FROM Tournament"
         ),
-
         @NamedQuery(
                 name = "get_tournaments_with_state",
-                query = "FROM Tournament WHERE state = :state"
+                query = "FROM Tournament WHERE state = :state ORDER BY id DESC"
         )
 })
 @Entity

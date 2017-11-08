@@ -17,6 +17,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -29,8 +30,12 @@ public class TournamentAPI {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Tournament> getTournament() {
-        return controller.getTournaments();
+    public List<Tournament> getTournament(@QueryParam("num") Integer num) {
+        if (num == null) {
+            return controller.getTournaments();
+        }
+
+        return controller.getTournaments(num);
     }
 
     @PUT

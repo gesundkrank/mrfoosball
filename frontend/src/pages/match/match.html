@@ -47,6 +47,13 @@
           <ion-grid>
             <ion-row>
               <ion-col>
+                <p>
+                  Team Skill: {{ getSkill(leftTeam) }}
+                </p>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col>
                 <div class="player-avatar">
                   <img src="{{ leftTeam?.player1.avatarImage }}">
                 </div>
@@ -100,6 +107,13 @@
           (click)="addGoal('right')"
         >
           <ion-grid>
+            <ion-row>
+              <ion-col>
+                <p>
+                  Team Skill: {{ getSkill(rightTeam) }}
+                </p>
+              </ion-col>
+            </ion-row>
             <ion-row>
               <ion-col>
                 <div class="player-avatar">

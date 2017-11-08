@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.PlayerSkill;
+import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
@@ -228,6 +230,11 @@ public class Bot {
                     case "help":
                         sendHelpMessage(channel, sender);
                         break;
+
+                    case "calcSkills":
+                        controller.recalculateSkills();
+                        sendMessage("done", channel);
+                        break;
                     default:
                         sendMessage(String.format("I'm sorry <@%s>, I didn't understand that. "
                                                   + "If you need help just ask for it.", sender),
@@ -240,11 +247,6 @@ public class Bot {
         } else {
             sendMessage("That doesn't make any sense at all.", channel);
         }
-    }
-
-    private void sendMessage(final String text, final String channel) {
-        final Message message = new Message(channel, text, botUserId);
-        sendMessage(message);
     }
 
     private void sendHelpMessage(final String channel, final String sender) {
@@ -312,11 +314,19 @@ public class Bot {
         cancelCommand.fields = cancelFields;
 
         message.attachments.add(cancelCommand);
+        postEphemeral(message);
+    }
 
+    private void postEphemeral(final Message message) {
         client.target("https://slack.com")
                 .path("/api/chat.postEphemeral")
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .header("Authorization", "Bearer " + token).post(Entity.json(message));
+    }
+
+    private void sendMessage(final String text, final String channel) {
+        final Message message = new Message(channel, text, botUserId);
+        sendMessage(message);
     }
 
     private void sendMessage(final Message message) {

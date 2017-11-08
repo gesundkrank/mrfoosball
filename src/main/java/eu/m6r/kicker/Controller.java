@@ -1,10 +1,14 @@
 package eu.m6r.kicker;
 
+import de.gesundkrank.jskills.SkillCalculator;
+
 import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,11 +18,13 @@ import java.util.stream.Collectors;
 public enum Controller {
     INSTANCE;
 
+    private final TrueSkillCalculator trueSkillCalculator;
     private final List<Player> players;
 
     private Tournament activeTournament;
 
     Controller() {
+        this.trueSkillCalculator = new TrueSkillCalculator();
         this.players = new ArrayList<>();
         activeTournament = null;
     }
@@ -37,6 +43,7 @@ public enum Controller {
 
         if (shuffle) {
             Collections.shuffle(playerList);
+            playerList = trueSkillCalculator.getBestMatch(playerList);
         }
 
         try (final Store store = new Store()) {
@@ -59,15 +66,23 @@ public enum Controller {
         activeTournament.state = State.FINISHED;
 
         try (final Store store = new Store()) {
-            store.updateTournament(activeTournament);
+            final Tournament updatedTournament =
+                    trueSkillCalculator.updateRatings(activeTournament);
+            store.saveTournament(updatedTournament);
             activeTournament = null;
         }
+
     }
 
     public List<Tournament> getTournaments() {
         try (final Store store = new Store()) {
-
             return store.getTournaments();
+        }
+    }
+
+    public List<Tournament> getTournaments(int last) {
+        try (final Store store = new Store()) {
+            return store.getLastTournaments(last);
         }
     }
 
@@ -135,17 +150,17 @@ public enum Controller {
                 .collect(Collectors.joining(", "));
     }
 
-    public void addPlayer(final String playerId)
-            throws TooManyUsersException, PlayerAlreadyInQueueException {
+    public void addPlayer(final String playerId) throws TooManyUsersException,
+                                                        PlayerAlreadyInQueueException,
+                                                        TournamentRunningException {
         try (final Store store = new Store()) {
-            players.add(store.getPlayer(playerId));
+            addPlayer(store.getPlayer(playerId), false);
         }
-
     }
 
     public void addPlayer(Player player) throws TooManyUsersException,
-                                                  PlayerAlreadyInQueueException,
-                                                  TournamentRunningException {
+                                                PlayerAlreadyInQueueException,
+                                                TournamentRunningException {
         addPlayer(player, true);
     }
 
@@ -162,6 +177,14 @@ public enum Controller {
 
         if (hasRunningTournament()) {
             throw new TournamentRunningException();
+        }
+
+        try (final Store store = new Store()) {
+            final Player storedPlayer = store.getPlayer(player);
+            if (storedPlayer != null) {
+                player.trueSkillMean = storedPlayer.trueSkillMean;
+                player.trueSkillStandardDeviation = storedPlayer.trueSkillStandardDeviation;
+            }
         }
 
         players.add(player);
@@ -183,10 +206,22 @@ public enum Controller {
         return new ArrayList<>(players);
     }
 
-    public String getListOfPlayers() {
-        List<String> playerNames = players.stream().map(player -> player.name)
-                .collect(Collectors.toList());
-        return String.join(",", playerNames);
+    public List<PlayerSkill> playerSkills() {
+        try (final Store store = new Store()) {
+            return store.playerSkills();
+        }
+    }
+
+    public void recalculateSkills() {
+        try (final Store store = new Store()) {
+            store.resetPlayerSkills();
+
+            for (final Tournament tournament : getTournaments()) {
+                final Tournament updatedTournament = trueSkillCalculator.updateRatings(tournament);
+                store.getTeam(updatedTournament.teamA.player1, updatedTournament.teamA.player2);
+                store.getTeam(updatedTournament.teamB.player1, updatedTournament.teamB.player2);
+            }
+        }
     }
 
     public static class TooManyUsersException extends Exception {

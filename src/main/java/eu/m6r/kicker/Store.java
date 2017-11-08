@@ -1,19 +1,25 @@
 package eu.m6r.kicker;
 
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.query.NativeQuery;
+import org.hibernate.type.StandardBasicTypes;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 
@@ -47,10 +53,19 @@ public class Store implements Closeable {
         this.session = sessionFactory.openSession();
     }
 
+    public Player getPlayer(final Player player) {
+        final Player storedPlayer = session.get(Player.class, player.id);
+        if (storedPlayer != null) {
+            player.trueSkillMean = storedPlayer.trueSkillMean;
+            player.trueSkillStandardDeviation = storedPlayer.trueSkillStandardDeviation;
+        } else {
+            session.save(player);
+            return getPlayer(player);
+        }
+        return player;
+    }
 
     public Player getPlayer(final String id) {
-        final Player player = new Player();
-        player.id = id;
         return session.get(Player.class, id);
     }
 
@@ -79,15 +94,57 @@ public class Store implements Closeable {
     }
 
     public List<Tournament> getTournaments() {
-        TypedQuery<Tournament> query = session.createNamedQuery(
-                "get_tournaments_with_state", Tournament.class)
+        final TypedQuery<Tournament> query = session
+                .createNamedQuery("get_tournaments_with_state", Tournament.class)
                 .setParameter("state", State.FINISHED);
         return query.getResultList();
     }
 
-    public void updateTournament(final Tournament tournament) {
+    public List<Tournament> getLastTournaments(int num) {
+        final TypedQuery<Tournament> query = session
+                .createNamedQuery("get_tournaments_with_state", Tournament.class)
+                .setParameter("state", State.FINISHED)
+                .setMaxResults(num);
+        return query.getResultList();
+    }
+
+    public List<PlayerSkill> playerSkills() {
+        final List<Object[]> list = session
+                .createNativeQuery("SELECT player.id AS id, name, avatarImage, "
+                                   + "COUNT(tournament.id) AS games, "
+                                   + "(trueSkillMean - 3 * trueSkillStandardDeviation) AS skill "
+                                   + "FROM player LEFT JOIN tournament "
+                                   + "ON player.id IN (teama_player1_id, teama_player2_id, "
+                                   + "teamb_player1_id, teamb_player2_id) GROUP BY player.id "
+                                   + "ORDER BY skill DESC")
+                .addScalar("id", StandardBasicTypes.STRING)
+                .addScalar("name", StandardBasicTypes.STRING)
+                .addScalar("avatarImage", StandardBasicTypes.STRING)
+                .addScalar("games", StandardBasicTypes.INTEGER)
+                .addScalar("skill", StandardBasicTypes.DOUBLE).list();
+        return list.stream().map(PlayerSkill::new).collect(Collectors.toList());
+    }
+
+    public void saveTournament(final Tournament tournament) {
         Transaction tx = session.beginTransaction();
-        session.saveOrUpdate(tournament);
+        session.update(tournament.teamA);
+        session.update(tournament.teamA.player1);
+        session.update(tournament.teamA.player2);
+        session.update(tournament.teamB);
+        session.update(tournament.teamB.player1);
+        session.update(tournament.teamB.player2);
+        session.save(tournament);
+        tx.commit();
+    }
+
+    public void resetPlayerSkills() {
+        final Transaction tx = session.beginTransaction();
+        session.createQuery("UPDATE Player SET trueSkillMean = :mean, "
+                            + "trueSkillStandardDeviation = :standardDeviation")
+                .setParameter("mean", TrueSkillCalculator.DEFAULT_INITIAL_MEAN)
+                .setParameter("standardDeviation",
+                              TrueSkillCalculator.DEFAULT_INITIAL_STANDARD_DEVIATION)
+                .executeUpdate();
         tx.commit();
     }
 

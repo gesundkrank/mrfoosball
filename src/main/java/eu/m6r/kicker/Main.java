@@ -54,7 +54,8 @@ public class Main {
             try {
                 final Properties properties = Properties.getInstance();
 
-                final Bot bot = new Bot(properties.getSlackToken());
+                final Bot bot = new Bot(properties.getSlackToken(),
+                                        properties.getInactiveTimeout());
                 bot.startNewSession();
 
                 final int port = properties.getPort();

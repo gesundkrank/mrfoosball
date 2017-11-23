@@ -2,6 +2,7 @@ package eu.m6r.kicker.models;
 
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -42,12 +43,13 @@ public class Tournament {
         this.teamB = teamB;
     }
 
-
     @Id
     @GeneratedValue
     public int id;
 
     public int bestOfN = 1;
+
+    public Date date = new Date();
 
     @ManyToOne
     public Team teamA;

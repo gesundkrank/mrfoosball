@@ -75,4 +75,8 @@ public class Properties {
     public String getHbm2Ddl() {
         return properties.getProperty("connectionHbm2ddl", "validate");
     }
+
+    public long getInactiveTimeout() {
+        return Long.parseLong(properties.getProperty("inactiveTimeout", "60"));
+    }
 }

@@ -1,7 +1,5 @@
 package eu.m6r.kicker;
 
-import de.gesundkrank.jskills.SkillCalculator;
-
 import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerSkill;
@@ -9,6 +7,9 @@ import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,12 +19,14 @@ import java.util.stream.Collectors;
 public enum Controller {
     INSTANCE;
 
+    private final Logger logger;
     private final TrueSkillCalculator trueSkillCalculator;
     private final List<Player> players;
 
     private Tournament activeTournament;
 
     Controller() {
+        this.logger = LogManager.getLogger();
         this.trueSkillCalculator = new TrueSkillCalculator();
         this.players = new ArrayList<>();
         activeTournament = null;
@@ -150,6 +153,10 @@ public enum Controller {
                 .collect(Collectors.joining(", "));
     }
 
+    public boolean playerInQueue(final Player player) {
+        return players.contains(player);
+    }
+
     public void addPlayer(final String playerId) throws TooManyUsersException,
                                                         PlayerAlreadyInQueueException,
                                                         TournamentRunningException {
@@ -200,6 +207,7 @@ public enum Controller {
 
     public void removePlayer(Player player) {
         players.remove(player);
+        logger.info("Removed {} from the queue", player);
     }
 
     public List<Player> getPlayersInQueue() {

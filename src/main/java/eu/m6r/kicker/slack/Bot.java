@@ -5,9 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Player;
-import eu.m6r.kicker.models.PlayerSkill;
-import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.models.Message;
+import eu.m6r.kicker.slack.models.PresenceChange;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
 
@@ -18,7 +17,11 @@ import org.glassfish.jersey.client.ClientProperties;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +40,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @ClientEndpoint
 public class Bot {
@@ -50,12 +52,15 @@ public class Bot {
     private final ObjectMapper objectMapper;
     private final Controller controller;
     private final Client client;
+    private final Map<Player, Timer> awayTimers;
+    private final long inactiveTimeoutMinutes;
 
     private Session socketSession;
     private String botUserId;
     private Pattern botUserIdPattern;
 
-    public Bot(final String token) {
+    public Bot(final String token, final long inactiveTimeoutMinutes) {
+        this.inactiveTimeoutMinutes = inactiveTimeoutMinutes;
         this.logger = LogManager.getLogger();
 
         if (token == null) {
@@ -70,6 +75,7 @@ public class Bot {
         this.token = token;
         this.objectMapper = new ObjectMapper();
         this.controller = Controller.INSTANCE;
+        this.awayTimers = new HashMap<>();
     }
 
     public void startNewSession() throws StartSocketSessionException {
@@ -110,20 +116,25 @@ public class Bot {
 
     @OnMessage
     public void onMessage(final String messageString, final Session session) throws IOException {
-        if (!messageString.startsWith("{\"type\":\"message\"")) {
-            return;
-        }
+        if (messageString.startsWith("{\"type\":\"message\"")) {
+            final Message message = objectMapper.readValue(messageString, Message.class);
 
-        final Message message = objectMapper.readValue(messageString, Message.class);
+            if (message.text == null) {
+                return;
+            }
+            final Matcher matcher = botUserIdPattern.matcher(message.text);
 
-        if (message.text == null) {
-            return;
-        }
-        final Matcher matcher = botUserIdPattern.matcher(message.text);
+            if (message.type != null && message.type.equals("message") && matcher.find()) {
+                final String command = message.text.substring(matcher.end()).trim();
+                onCommand(command, message.channel, message.user);
+            }
+        } else if (messageString.startsWith("{\"type\":\"presence_change\"")) {
+            final PresenceChange presenceChange =
+                    objectMapper.readValue(messageString, PresenceChange.class);
 
-        if (message.type != null && message.type.equals("message") && matcher.find()) {
-            final String command = message.text.substring(matcher.end()).trim();
-            onCommand(command, message.channel, message.user);
+            if (presenceChange != null) {
+                onPresenceChange(presenceChange);
+            }
         }
     }
 
@@ -246,6 +257,36 @@ public class Bot {
             }
         } else {
             sendMessage("That doesn't make any sense at all.", channel);
+        }
+    }
+
+    private void onPresenceChange(final PresenceChange presenceChange) {
+        try {
+            switch (presenceChange.presence) {
+                case "away":
+                    playerAway(getUser(presenceChange.user));
+                    break;
+                case "active":
+                    playerActive(getUser(presenceChange.user));
+            }
+        } catch (UserExtractionFailedException e) {
+            logger.debug("unknown user {}", presenceChange.user);
+        }
+    }
+
+    private void playerAway(final Player player) {
+        if (!awayTimers.containsKey(player) && controller.playerInQueue(player)) {
+            final Timer timer = new Timer();
+            timer.schedule(new AwayTimerTask(player), inactiveTimeoutMinutes * 60000);
+            awayTimers.put(player, timer);
+        }
+    }
+
+    private void playerActive(final Player player) {
+        if (awayTimers.containsKey(player)) {
+            final Timer timer = awayTimers.get(player);
+            timer.cancel();
+            awayTimers.remove(player);
         }
     }
 
@@ -375,5 +416,24 @@ public class Bot {
                   cause);
         }
     }
+
+    private class AwayTimerTask extends TimerTask {
+
+        private final Player player;
+
+
+        AwayTimerTask(final Player player) {
+            this.player = player;
+        }
+
+        @Override
+        public void run() {
+            if (controller.playerInQueue(player)) {
+                controller.removePlayer(player);
+
+            }
+        }
+    }
+
 
 }

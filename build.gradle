@@ -1,24 +1,32 @@
 import java.text.SimpleDateFormat
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "se.transmode.gradle:gradle-docker:1.2" // <- Here
+    }
+}
+
 plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.3'
     id 'com.moowork.node' version '1.1.1'
     id 'nebula.ospackage' version '4.3.0'
     id 'org.ajoberstar.grgit' version '1.6.0'
+
 }
 
 apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'docker'
 
-def mainClass = 'eu.m6r.kicker.Main'
+group = "eu.m6r.kicker"
+mainClassName = 'eu.m6r.kicker.Main'
 
 repositories {
     mavenCentral()
-}
-
-jar {
-    manifest {
-        attributes 'Main-Class': mainClass
-    }
 }
 
 dependencies {
@@ -75,36 +83,20 @@ task buildApp(dependsOn: [shadowJar, copyFrontend])
 
 task runApp(type: JavaExec, dependsOn: [buildFrontend, buildApp]) {
     classpath = files('build/libs/kicker-all.jar')
-    main = mainClass
+    main = mainClassName
     standardInput = System.in
 }
 
-task debianizeApp(type: Deb, dependsOn: [buildProductionFrontend, buildApp]) {
-    def df = new SimpleDateFormat("yyyyMMdd'T'HHmmss")
-    df.setTimeZone(TimeZone.getTimeZone("UTC"))
-
-    packageName = 'kicker'
-    version = "${df.format(new Date())}.git${grgit.head().abbreviatedId}"
-
-    preUninstall file('src/main/debian/preUninstall.sh')
-    preInstall file('src/main/debian/preInstall.sh')
-    postInstall file('src/main/debian/postInstall.sh')
-
-    into '/opt/kicker'
-
-    from('build/libs/kicker-all.jar') {
-        into 'lib'
-        user 'kicker'
+task buildDocker(type: Docker) {
+    baseImage = 'openjdk:8'
+    push = project.hasProperty('push')
+    tag = '867503539023.dkr.ecr.eu-west-1.amazonaws.com/kicker'
+    addFile {
+        from ('build/libs/kicker-all.jar')
     }
-
-    from('src/main/debian/conf') {
-        into 'conf'
-        user 'kicker'
-    }
-
-    from('src/main/debian/upstart/kicker') {
-        into '/etc/init.d'
-        fileMode 0755
-    }
+    entryPoint(['java', '-jar', '/kicker-all.jar'])
+    exposePort(8080)
 }
+
+buildDocker.dependsOn(buildProductionFrontend, buildApp)
 

@@ -24,10 +24,13 @@ This creates a fat jar (`build/lib/kicker-all.jar`) containing the Java backend 
 ./gradlew runApp
 ```
 
-## Debianize
+## Dockerize
 ```bash
-./gradlew debianizeApp
+./gradlew -Ppush buildDocker
 ```
 
-Creates the `.deb` package in `build/distributions/`.
+Creates the docker package and pushes it to the registry.
+
+To get access to the registry do `aws ecr get-login --no-include-email` and execute the returned 
+docker command.
 

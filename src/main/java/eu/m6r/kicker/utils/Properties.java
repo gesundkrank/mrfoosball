@@ -39,8 +39,9 @@ public class Properties {
             }
         } catch (IOException e) {
             logger.error("Failed to load configuration.", e);
-            throw new IOError(e);
         }
+
+        this.properties.putAll(System.getenv());
     }
 
     public int getPort() {

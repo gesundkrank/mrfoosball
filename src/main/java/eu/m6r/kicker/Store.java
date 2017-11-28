@@ -8,6 +8,9 @@ import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -46,11 +49,19 @@ public class Store implements Closeable {
         sessionFactory = configuration.buildSessionFactory();
     }
 
+    private final Logger logger;
     private final Session session;
 
 
-    public Store() {
-        this.session = sessionFactory.openSession();
+    public Store() throws HibernateException {
+        this.logger = LogManager.getLogger();
+
+        try {
+            this.session = sessionFactory.openSession();
+        } catch (Exception e) {
+            logger.error(e);
+            throw e;
+        }
     }
 
     public Player getPlayer(final Player player) {
@@ -110,19 +121,53 @@ public class Store implements Closeable {
 
     public List<PlayerSkill> playerSkills() {
         final List<Object[]> list = session
-                .createNativeQuery("SELECT player.id AS id, name, avatarImage, "
-                                   + "COUNT(tournament.id) AS games, "
-                                   + "(trueSkillMean - 3 * trueSkillStandardDeviation) AS skill "
-                                   + "FROM player LEFT JOIN tournament "
-                                   + "ON player.id IN (teama_player1_id, teama_player2_id, "
-                                   + "teamb_player1_id, teamb_player2_id) "
-                                   + "GROUP BY player.id "
-                                   + "HAVING MAX(tournament.date) > (NOW() - INTERVAL  '60 days') "
-                                   + "ORDER BY skill DESC")
+                .createNativeQuery("SELECT player.id AS id, name, avatarImage, \n"
+                                   + "SUM(games.games) AS games, \n"
+                                   + "SUM(wins.wins) AS wins,\n"
+                                   + "(trueSkillMean - 3 * trueSkillStandardDeviation) AS skill \n"
+                                   + "FROM player \n"
+                                   + "INNER JOIN (\n"
+                                   + "  SELECT player.id AS player_id FROM player\n"
+                                   + "  LEFT JOIN tournament \n"
+                                   + "  ON player.id IN (teama_player1_id, teama_player2_id, teamb_player1_id, teamb_player2_id)\n"
+                                   + "  GROUP BY player.id\n"
+                                   + "  HAVING MAX(tournament.date) > (NOW() - INTERVAL  '60 days') \n"
+                                   + ") AS has_recent_tournaments ON player.id = has_recent_tournaments.player_id\n"
+                                   + "LEFT JOIN (\n"
+                                   + "  SELECT player.id AS player_id, COUNT(tournament.id) AS games FROM player\n"
+                                   + "  LEFT JOIN tournament \n"
+                                   + "  ON player.id IN (teama_player1_id, teama_player2_id, teamb_player1_id, teamb_player2_id)\n"
+                                   + "  GROUP BY player_id\n"
+                                   + ") AS games ON player.id = games.player_id \n"
+                                   + "LEFT JOIN (\n"
+                                   + "  SELECT player.id AS player_id, COUNT(*) AS wins FROM player LEFT JOIN (\n"
+                                   + "    SELECT \n"
+                                   + "      (CASE WHEN COALESCE(wins_a, 0) > COALESCE(wins_b, 0) THEN teama_player1_id ELSE teamb_player1_id END) AS winner_1,\n"
+                                   + "      (CASE WHEN COALESCE(wins_a, 0) > COALESCE(wins_b, 0) THEN teama_player2_id ELSE teamb_player2_id END) AS winner_2\n"
+                                   + "      FROM tournament LEFT JOIN (\n"
+                                   + "      SELECT tournament_id, COUNT(matches_id) AS wins_a \n"
+                                   + "      FROM tournament_match \n"
+                                   + "      INNER JOIN match ON matches_id = match.id\n"
+                                   + "      WHERE teama > teamb\n"
+                                   + "      GROUP BY tournament_id\n"
+                                   + "    ) AS team_a ON tournament.id = team_a.tournament_id\n"
+                                   + "    LEFT JOIN (\n"
+                                   + "      SELECT tournament_id, COUNT(matches_id) AS wins_b \n"
+                                   + "      FROM tournament_match \n"
+                                   + "      INNER JOIN match ON matches_id = match.id\n"
+                                   + "      WHERE teama < teamb\n"
+                                   + "      GROUP BY tournament_id\n"
+                                   + "    ) AS team_b ON tournament.id = team_b.tournament_id\n"
+                                   + "  ) AS winners ON player.id IN (winner_1, winner_2)\n"
+                                   + "  GROUP BY player_id\n"
+                                   + ") AS wins ON player.id = wins.player_id\n"
+                                   + "GROUP BY player.id \n"
+                                   + "ORDER BY skill DESC;")
                 .addScalar("id", StandardBasicTypes.STRING)
                 .addScalar("name", StandardBasicTypes.STRING)
                 .addScalar("avatarImage", StandardBasicTypes.STRING)
                 .addScalar("games", StandardBasicTypes.INTEGER)
+                .addScalar("wins", StandardBasicTypes.INTEGER)
                 .addScalar("skill", StandardBasicTypes.DOUBLE).list();
         return list.stream().map(PlayerSkill::new).collect(Collectors.toList());
     }

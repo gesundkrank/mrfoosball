@@ -3,5 +3,6 @@ export class PlayerSkill {
   name: String;
   avatarImage: String;
   games: number;
+  wins: number;
   skill: number;
 }

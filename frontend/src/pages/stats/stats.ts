@@ -103,5 +103,8 @@ export class StatsPage {
     return this.wins(tournament)['teamB'];
   }
 
+  winRate(playerSkill: PlayerSkill): string {
+    return ((playerSkill.wins / playerSkill.games) * 100).toFixed(2) + " %";
+  }
 
 }

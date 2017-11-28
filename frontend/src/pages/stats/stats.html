@@ -28,7 +28,7 @@
               Skill
             </ion-col>
             <ion-col class="header">
-              Games
+              Win Rate
             </ion-col>
           </ion-row>
           <ion-row *ngFor="let playerSkill of stats; let i = index " [attr.data-index]="i">
@@ -47,7 +47,7 @@
               {{ roundSkill(playerSkill?.skill) }}
             </ion-col>
             <ion-col>
-              {{ playerSkill?.games }}
+              {{ winRate(playerSkill) }}
             </ion-col>
           </ion-row>
         </ion-grid>

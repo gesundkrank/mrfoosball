@@ -86,8 +86,8 @@ export class StatsPage {
     this.navCtrl.push(MatchPage);
   }
 
-  roundSkill(skill) {
-    return Math.round(skill);
+  roundSkill(skill: number) {
+    return skill.toFixed(2);
   }
 
   private wins(tournament: Tournament): { [key: string]: number } {

@@ -76,7 +76,12 @@
               </ion-avatar>
             </ion-col>
             <ion-col text-center class="gameResult">
-              {{ winsTeamA(tournament) }} - {{ winsTeamB(tournament) }}
+              <div>{{ winsTeamA(tournament) }} - {{ winsTeamB(tournament) }}</div>
+              <ion-grid>
+                <ion-row *ngFor="let match of tournament.matches">
+                  <ion-col>{{ match.teamA }} - {{ match.teamB }}</ion-col>
+                </ion-row>
+              </ion-grid>
             </ion-col>
             <ion-col>
               <ion-avatar>

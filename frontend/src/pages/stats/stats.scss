@@ -13,6 +13,11 @@ page-stats {
   .gameResult {
     font-size: 20px;
     padding-top: 12px;
+
+    ion-col {
+      font-size: 14px;
+      padding: 2px;
+    }
   }
 
   .lastGames img {

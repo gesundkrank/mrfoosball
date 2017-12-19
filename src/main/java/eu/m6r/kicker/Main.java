@@ -40,7 +40,9 @@ public class Main {
         LOGGER.info("Starting web server on {}.", uri);
 
         final HttpServer httpServer = GrizzlyHttpServerFactory.createHttpServer(uri, rc);
-        final HttpHandler httpHandler = new CLStaticHttpHandler(Main.class.getClassLoader(), "www/");
+        final HttpHandler
+                httpHandler =
+                new CLStaticHttpHandler(Main.class.getClassLoader(), "www/");
         httpServer.getServerConfiguration().addHttpHandler(httpHandler, "/frontend");
         return httpServer;
     }
@@ -48,27 +50,24 @@ public class Main {
     /**
      * Main method.
      */
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args)
+            throws Bot.StartSocketSessionException, InterruptedException {
         LOGGER.info("Starting kicker app.");
         try {
-            try {
-                final Properties properties = Properties.getInstance();
+            final Properties properties = Properties.getInstance();
 
-                final Bot bot = new Bot(properties.getSlackToken(),
-                                        properties.getInactiveTimeout());
-                bot.startNewSession();
+            final Bot bot = new Bot(properties.getSlackToken(),
+                                    properties.getInactiveTimeout());
+            bot.startNewSession();
 
-                final int port = properties.getPort();
+            final int port = properties.getPort();
 
-                startServer(port);
+            startServer(port);
 
-                //Keeps process running
-                Thread.currentThread().join();
-            } finally {
-                LOGGER.info("Shutting down kicker app.");
-            }
-        } catch (Throwable e) {
-            LOGGER.error(e.getMessage(), e);
+            //Keeps process running
+            Thread.currentThread().join();
+        } finally {
+            LOGGER.info("Shutting down kicker app.");
         }
     }
 }

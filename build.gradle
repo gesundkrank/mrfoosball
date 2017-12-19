@@ -11,8 +11,6 @@ buildscript {
 plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.3'
     id 'com.moowork.node' version '1.1.1'
-    id 'nebula.ospackage' version '4.3.0'
-    id 'org.ajoberstar.grgit' version '1.6.0'
 }
 
 apply plugin: 'java'

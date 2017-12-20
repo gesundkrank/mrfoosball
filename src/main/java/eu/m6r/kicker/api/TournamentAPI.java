@@ -7,6 +7,7 @@ import eu.m6r.kicker.models.Tournament;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -25,8 +26,13 @@ import javax.ws.rs.core.Response;
 @Path("/api/tournament")
 public class TournamentAPI {
 
-    private final Logger logger = LogManager.getLogger();
-    private final Controller controller = Controller.INSTANCE;
+    private final Logger logger;
+    private final Controller controller;
+
+    public TournamentAPI() throws IOException {
+        this.logger = LogManager.getLogger();
+        this.controller = Controller.getInstance();
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -106,6 +112,11 @@ public class TournamentAPI {
     @GET
     @Path("queue")
     public List<Player> getPlayersInQueue() {
-        return controller.getPlayersInQueue();
+        try {
+            return controller.getPlayersInQueue();
+        } catch (IOException e) {
+            logger.error("Failed to get players in queue.", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 }

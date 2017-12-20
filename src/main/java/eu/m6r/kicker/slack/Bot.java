@@ -13,12 +13,9 @@ import eu.m6r.kicker.utils.ZookeeperClient;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 import org.glassfish.jersey.client.ClientProperties;
 
 import java.io.IOException;
@@ -75,7 +72,7 @@ public class Bot implements Watcher {
 
     public Bot(final String token, final long inactiveTimeoutMinutes,
                final ZookeeperClient zookeeperClient)
-            throws KeeperException, InterruptedException, StartSocketSessionException {
+            throws KeeperException, InterruptedException, StartSocketSessionException, IOException {
         this.inactiveTimeoutMinutes = inactiveTimeoutMinutes;
         this.logger = LogManager.getLogger();
 
@@ -90,21 +87,23 @@ public class Bot implements Watcher {
 
         this.token = token;
         this.objectMapper = new ObjectMapper();
-        this.controller = Controller.INSTANCE;
+        this.controller = Controller.getInstance();
         this.awayTimers = new HashMap<>();
         this.zookeeperClient = zookeeperClient;
 
-        logger.info("Creating lock for ID {}", BOT_ID);
 
         zookeeperClient.createPath(ZOO_KEEPER_PARENT_PATH);
         this.lockNode = zookeeperClient.createEphemeralSequential(ZOO_KEEPER_PATH, BOT_ID);
 
+        logger.info("Creating lock {} for ID {}", lockNode, BOT_ID);
+
         if (zookeeperClient.checkLock(lockNode, this)) {
+            logger.info("Obtained lock {} and starting new slack session.", lockNode);
             startNewSession();
         }
     }
 
-    public void startNewSession() throws StartSocketSessionException {
+    private void startNewSession() throws StartSocketSessionException {
         final WebTarget target = client.target("https://slack.com").path("/api/rtm.connect")
                 .queryParam("token", token);
 
@@ -138,8 +137,11 @@ public class Bot implements Watcher {
 
     @Override
     public void process(WatchedEvent event) {
+        logger.info("Zookeeper event: {}", event);
+
         try {
             if (this.socketSession == null && zookeeperClient.checkLock(lockNode, this)) {
+                logger.info("Obtained lock {} and starting new slack session.", lockNode);
                 startNewSession();
             }
         } catch (KeeperException | InterruptedException | StartSocketSessionException e) {
@@ -185,7 +187,8 @@ public class Bot implements Watcher {
         }
     }
 
-    private void onCommand(final String command, final String channel, final String sender) {
+    private void onCommand(final String command, final String channel, final String sender)
+            throws IOException {
         final Matcher commandMatcher = COMMAND_PATTERN.matcher(command);
         if (commandMatcher.find()) {
             final String action = commandMatcher.group();
@@ -297,7 +300,7 @@ public class Bot implements Watcher {
         }
     }
 
-    private void onPresenceChange(final PresenceChange presenceChange) {
+    private void onPresenceChange(final PresenceChange presenceChange) throws IOException {
         try {
             switch (presenceChange.presence) {
                 case "away":
@@ -311,7 +314,7 @@ public class Bot implements Watcher {
         }
     }
 
-    private void playerAway(final Player player) {
+    private void playerAway(final Player player) throws IOException {
         if (!awayTimers.containsKey(player) && controller.playerInQueue(player)) {
             final Timer timer = new Timer();
             timer.schedule(new AwayTimerTask(player), inactiveTimeoutMinutes * 60000);
@@ -465,9 +468,12 @@ public class Bot implements Watcher {
 
         @Override
         public void run() {
-            if (controller.playerInQueue(player)) {
-                controller.removePlayer(player);
-
+            try {
+                if (controller.playerInQueue(player)) {
+                    controller.removePlayer(player);
+                }
+            } catch (IOException e) {
+                logger.error("Failed to remove {} from queue.", player);
             }
         }
     }

@@ -8,6 +8,7 @@ import eu.m6r.kicker.models.TeamStat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.ws.rs.GET;
@@ -19,13 +20,20 @@ import javax.ws.rs.core.MediaType;
 @Path("api/stats")
 public class StatsAPI {
 
-    private final Logger logger = LogManager.getLogger();
-    private final Stats stats = new Stats();
+    private final Logger logger;
+    private final Stats stats;
+    private final Controller controller;
+
+    public StatsAPI() throws IOException {
+        this.logger = LogManager.getLogger();
+        this.stats = new Stats();
+        this.controller = Controller.getInstance();
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<PlayerSkill> getStats() {
-        return Controller.INSTANCE.playerSkills();
+        return controller.playerSkills();
     }
 
     @GET

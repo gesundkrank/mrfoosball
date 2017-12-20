@@ -9,9 +9,16 @@ import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.PresenceChange;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
+import eu.m6r.kicker.utils.ZookeeperClient;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.glassfish.jersey.client.ClientProperties;
 
 import java.io.IOException;
@@ -22,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,10 +50,14 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
 @ClientEndpoint
-public class Bot {
+public class Bot implements Watcher {
 
     private final static Pattern COMMAND_PATTERN = Pattern.compile("\\w+");
     private final static Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
+    private final static String ZOO_KEEPER_PARENT_PATH =
+            ZookeeperClient.ZOOKEEPER_ROOT_PATH + "/bot";
+    private final static String ZOO_KEEPER_PATH = ZOO_KEEPER_PARENT_PATH + "/slack_";
+    private final static String BOT_ID = UUID.randomUUID().toString();
 
     private final Logger logger;
     private final String token;
@@ -54,12 +66,16 @@ public class Bot {
     private final Client client;
     private final Map<Player, Timer> awayTimers;
     private final long inactiveTimeoutMinutes;
+    private final ZookeeperClient zookeeperClient;
+    private final String lockNode;
 
     private Session socketSession;
     private String botUserId;
     private Pattern botUserIdPattern;
 
-    public Bot(final String token, final long inactiveTimeoutMinutes) {
+    public Bot(final String token, final long inactiveTimeoutMinutes,
+               final ZookeeperClient zookeeperClient)
+            throws KeeperException, InterruptedException, StartSocketSessionException {
         this.inactiveTimeoutMinutes = inactiveTimeoutMinutes;
         this.logger = LogManager.getLogger();
 
@@ -76,6 +92,16 @@ public class Bot {
         this.objectMapper = new ObjectMapper();
         this.controller = Controller.INSTANCE;
         this.awayTimers = new HashMap<>();
+        this.zookeeperClient = zookeeperClient;
+
+        logger.info("Creating lock for ID {}", BOT_ID);
+
+        zookeeperClient.createPath(ZOO_KEEPER_PARENT_PATH);
+        this.lockNode = zookeeperClient.createEphemeralSequential(ZOO_KEEPER_PATH, BOT_ID);
+
+        if (zookeeperClient.checkLock(lockNode, this)) {
+            startNewSession();
+        }
     }
 
     public void startNewSession() throws StartSocketSessionException {
@@ -107,6 +133,17 @@ public class Bot {
             this.socketSession = socketClient.connectToServer(this, URI.create(response.url));
         } catch (final DeploymentException | IOException e) {
             throw new StartSocketSessionException(e);
+        }
+    }
+
+    @Override
+    public void process(WatchedEvent event) {
+        try {
+            if (this.socketSession == null && zookeeperClient.checkLock(lockNode, this)) {
+                startNewSession();
+            }
+        } catch (KeeperException | InterruptedException | StartSocketSessionException e) {
+            logger.error("Failed to process zookeeper event.", e);
         }
     }
 

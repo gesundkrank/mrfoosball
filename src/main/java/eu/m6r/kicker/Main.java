@@ -2,15 +2,18 @@ package eu.m6r.kicker;
 
 import eu.m6r.kicker.slack.Bot;
 import eu.m6r.kicker.utils.Properties;
+import eu.m6r.kicker.utils.ZookeeperClient;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
+import java.io.IOException;
 import java.net.URI;
 
 /**
@@ -51,14 +54,17 @@ public class Main {
      * Main method.
      */
     public static void main(String[] args)
-            throws Bot.StartSocketSessionException, InterruptedException {
+            throws Bot.StartSocketSessionException, InterruptedException, IOException,
+                   KeeperException {
         LOGGER.info("Starting kicker app.");
         try {
             final Properties properties = Properties.getInstance();
 
-            final Bot bot = new Bot(properties.getSlackToken(),
-                                    properties.getInactiveTimeout());
-            bot.startNewSession();
+            final ZookeeperClient zookeeperClient =
+                    new ZookeeperClient(properties.zookeeperHosts());
+
+            new Bot(properties.getSlackToken(), properties.getInactiveTimeout(),
+                    zookeeperClient);
 
             final int port = properties.getPort();
 

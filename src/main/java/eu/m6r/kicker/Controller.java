@@ -7,72 +7,88 @@ import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
+import eu.m6r.kicker.utils.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public enum Controller {
-    INSTANCE;
+public class Controller {
+
+    private static Controller INSTANCE;
 
     private final Logger logger;
     private final TrueSkillCalculator trueSkillCalculator;
-    private final List<Player> players;
+    private final PlayerQueue queue;
+    private final RunningTournament runningTournament;
 
-    private Tournament activeTournament;
+    public static Controller getInstance() throws IOException {
+        if (INSTANCE == null) {
+            INSTANCE = new Controller();
+        }
 
-    Controller() {
-        this.logger = LogManager.getLogger();
-        this.trueSkillCalculator = new TrueSkillCalculator();
-        this.players = new ArrayList<>();
-        activeTournament = null;
+        return INSTANCE;
     }
 
-    public void startTournament() throws TournamentRunningException {
+    private Controller() throws IOException {
+        this.logger = LogManager.getLogger();
+        this.trueSkillCalculator = new TrueSkillCalculator();
+
+        final String zookeeperHosts = Properties.getInstance().zookeeperHosts();
+        this.queue = new PlayerQueue(zookeeperHosts);
+        this.runningTournament = new RunningTournament(zookeeperHosts);
+
+    }
+
+    public void startTournament() throws TournamentRunningException, IOException {
         startTournament(true, 3);
     }
 
-    public synchronized void startTournament(final boolean shuffle, final int bestOfN)
-            throws TournamentRunningException {
+    public synchronized Tournament startTournament(final boolean shuffle, final int bestOfN)
+            throws TournamentRunningException, IOException {
         if (hasRunningTournament()) {
             throw new TournamentRunningException();
         }
 
-        List<Player> playerList = players;
+        List<Player> playerList = queue.get();
 
         if (shuffle) {
             Collections.shuffle(playerList);
             playerList = trueSkillCalculator.getBestMatch(playerList);
         }
 
+        queue.clear();
+
         try (final Store store = new Store()) {
             final Team teamA = store.getTeam(playerList.get(0), playerList.get(1));
             final Team teamB = store.getTeam(playerList.get(2), playerList.get(3));
-            this.activeTournament = new Tournament(bestOfN, teamA, teamB);
+            final Tournament tournament = new Tournament(bestOfN, teamA, teamB);
+            runningTournament.save(tournament);
+            return tournament;
         }
 
-        players.clear();
     }
 
-    public synchronized void finishTournament() throws InvalidTournamentStateException {
-        for (final Match match : activeTournament.matches) {
+    public synchronized void finishTournament()
+            throws InvalidTournamentStateException, IOException, TournamentNotRunningException {
+        final Tournament runningTournament = this.runningTournament.get();
+        for (final Match match : runningTournament.matches) {
             if (match.state == State.RUNNING) {
                 throw new InvalidTournamentStateException("Can't finish tournament if matches"
                                                           + "are still running!");
             }
         }
 
-        activeTournament.state = State.FINISHED;
+        runningTournament.state = State.FINISHED;
 
         try (final Store store = new Store()) {
             final Tournament updatedTournament =
-                    trueSkillCalculator.updateRatings(activeTournament);
+                    trueSkillCalculator.updateRatings(runningTournament);
             store.saveTournament(updatedTournament);
-            activeTournament = null;
         }
 
     }
@@ -89,44 +105,52 @@ public enum Controller {
         }
     }
 
-    public boolean hasRunningTournament() {
-        return activeTournament != null;
+    public boolean hasRunningTournament() throws IOException {
+        try {
+            runningTournament.get();
+            return true;
+        } catch (TournamentNotRunningException e) {
+            return false;
+        }
     }
 
-    public String newTournamentMessage() {
+    public String newTournamentMessage() throws IOException, TournamentNotRunningException {
         final Tournament tournament = getRunningTournament();
         return String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
                              tournament.teamA.player1.id, tournament.teamA.player2.id,
                              tournament.teamB.player1.id, tournament.teamB.player2.id);
     }
 
-    public Tournament getRunningTournament() {
-        return activeTournament;
+    public Tournament getRunningTournament() throws IOException, TournamentNotRunningException {
+        return runningTournament.get();
     }
 
-    public void updateTournament(final Tournament tournament) {
-        this.activeTournament.matches = tournament.matches;
+    public void updateTournament(final Tournament tournament)
+            throws IOException, TournamentNotRunningException {
+        final Tournament storedTournament = runningTournament.get();
+        storedTournament.matches = tournament.matches;
+
+        runningTournament.save(storedTournament);
     }
 
-    public boolean cancelRunningTournament() {
+    public boolean cancelRunningTournament() throws IOException {
         if (!hasRunningTournament()) {
             return false;
         }
 
-        activeTournament = null;
+        runningTournament.clear();
         return true;
     }
 
-    public void newMatch()
-            throws InvalidTournamentStateException, TournamentNotRunningException {
-        if (activeTournament == null) {
-            throw new TournamentNotRunningException();
-        }
+    public void newMatch() throws InvalidTournamentStateException, TournamentNotRunningException,
+                                  IOException {
 
         int teamAWins = 0;
         int teamBWins = 0;
 
-        for (final Match match : activeTournament.matches) {
+        final Tournament tournament = runningTournament.get();
+
+        for (final Match match : tournament.matches) {
             if (match.state == State.FINISHED) {
                 if (match.teamA > match.teamB) {
                     teamAWins++;
@@ -139,27 +163,28 @@ public enum Controller {
             }
         }
 
-        final int maxTeamWins = (activeTournament.bestOfN / 2) + 1;
+        final int maxTeamWins = (tournament.bestOfN / 2) + 1;
 
         if (maxTeamWins <= Math.max(teamAWins, teamBWins)) {
             throw new InvalidTournamentStateException("Cannot create more matches than bestOfN.");
         }
 
-        activeTournament.matches.add(new Match());
+        tournament.matches.add(new Match());
+        runningTournament.save(tournament);
     }
 
-    public String getPlayersString() {
-        return players.stream().map(p -> String.format("<@%s>", p.id))
+    public String getPlayersString() throws IOException {
+        return queue.get().stream().map(p -> String.format("<@%s>", p.id))
                 .collect(Collectors.joining(", "));
     }
 
-    public boolean playerInQueue(final Player player) {
-        return players.contains(player);
+    public boolean playerInQueue(final Player player) throws IOException {
+        return queue.get().contains(player);
     }
 
     public void addPlayer(final String playerId) throws TooManyUsersException,
                                                         PlayerAlreadyInQueueException,
-                                                        TournamentRunningException {
+                                                        TournamentRunningException, IOException {
         try (final Store store = new Store()) {
             addPlayer(store.getPlayer(playerId), false);
         }
@@ -167,20 +192,13 @@ public enum Controller {
 
     public void addPlayer(Player player) throws TooManyUsersException,
                                                 PlayerAlreadyInQueueException,
-                                                TournamentRunningException {
+                                                TournamentRunningException, IOException {
         addPlayer(player, true);
     }
 
     public void addPlayer(final Player player, final boolean autoStartTournament)
             throws TournamentRunningException, PlayerAlreadyInQueueException,
-                   TooManyUsersException {
-        if (players.contains(player)) {
-            throw new PlayerAlreadyInQueueException(player);
-        }
-
-        if (players.size() == 4) {
-            throw new TooManyUsersException(player);
-        }
+                   TooManyUsersException, IOException {
 
         if (hasRunningTournament()) {
             throw new TournamentRunningException();
@@ -194,24 +212,24 @@ public enum Controller {
             }
         }
 
-        players.add(player);
+        queue.add(player);
 
-        if (players.size() == 4 && autoStartTournament) {
+        if (queue.get().size() == 4 && autoStartTournament) {
             startTournament();
         }
     }
 
-    public void resetPlayers() {
-        players.clear();
+    public void resetPlayers() throws IOException {
+        queue.clear();
     }
 
-    public void removePlayer(Player player) {
-        players.remove(player);
+    public void removePlayer(Player player) throws IOException {
+        queue.remove(player);
         logger.info("Removed {} from the queue", player);
     }
 
-    public List<Player> getPlayersInQueue() {
-        return new ArrayList<>(players);
+    public List<Player> getPlayersInQueue() throws IOException {
+        return queue.get();
     }
 
     public List<PlayerSkill> playerSkills() {

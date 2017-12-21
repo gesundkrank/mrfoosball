@@ -5,6 +5,7 @@ import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.TeamStat;
 import eu.m6r.kicker.models.Tournament;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,8 +16,8 @@ public class Stats {
 
     private final Controller controller;
 
-    public Stats() {
-        this.controller = Controller.INSTANCE;
+    public Stats() throws IOException {
+        this.controller = Controller.getInstance();
     }
 
     public List<TeamStat> calcTeamStats() {

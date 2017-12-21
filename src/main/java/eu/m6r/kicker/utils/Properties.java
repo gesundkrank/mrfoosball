@@ -42,6 +42,8 @@ public class Properties {
         }
 
         this.properties.putAll(System.getenv());
+
+        logger.info("Properties: {}", this.properties);
     }
 
     public int getPort() {
@@ -79,5 +81,9 @@ public class Properties {
 
     public long getInactiveTimeout() {
         return Long.parseLong(properties.getProperty("inactiveTimeout", "60"));
+    }
+
+    public String zookeeperHosts() {
+        return properties.getProperty("zookeeperHosts");
     }
 }

@@ -7,6 +7,7 @@ import eu.m6r.kicker.models.Tournament;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -25,8 +26,13 @@ import javax.ws.rs.core.Response;
 @Path("/api/tournament")
 public class TournamentAPI {
 
-    private final Logger logger = LogManager.getLogger();
-    private final Controller controller = Controller.INSTANCE;
+    private final Logger logger;
+    private final Controller controller;
+
+    public TournamentAPI() throws IOException {
+        this.logger = LogManager.getLogger();
+        this.controller = Controller.getInstance();
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -41,12 +47,21 @@ public class TournamentAPI {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     public void updateTournament(final Tournament tournament) {
-        controller.updateTournament(tournament);
+        try {
+            controller.updateTournament(tournament);
+        } catch (IOException | Controller.TournamentNotRunningException e) {
+            logger.error("Failed to update tournament", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @DELETE
     public void cancelTournament() {
-        controller.cancelRunningTournament();
+        try {
+            controller.cancelRunningTournament();
+        } catch (IOException e) {
+            logger.info("Tried to cancel non running match.");
+        }
     }
 
     @POST
@@ -75,8 +90,14 @@ public class TournamentAPI {
     @Path("running")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getRunningTournament() {
-        if (controller.hasRunningTournament()) {
-            return Response.ok(controller.getRunningTournament()).build();
+        try {
+            if (controller.hasRunningTournament()) {
+                return Response.ok(controller.getRunningTournament()).build();
+            }
+        } catch (IOException e) {
+            logger.error("Failed to get running tournament.", e);
+        } catch (Controller.TournamentNotRunningException e) {
+            logger.debug("No tournament running.");
         }
 
         return Response.noContent().build();
@@ -88,7 +109,8 @@ public class TournamentAPI {
         try {
             controller.newMatch();
         } catch (Controller.InvalidTournamentStateException |
-                Controller.TournamentNotRunningException e) {
+                Controller.TournamentNotRunningException | IOException e) {
+            logger.error("Failed to create new match!", e);
             throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
         }
     }
@@ -98,14 +120,21 @@ public class TournamentAPI {
     public void finishTournament() {
         try {
             controller.finishTournament();
-        } catch (Controller.InvalidTournamentStateException e) {
-            throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (Controller.InvalidTournamentStateException |
+                Controller.TournamentNotRunningException | IOException e) {
+            logger.error("Failed to finish tournament!", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GET
     @Path("queue")
     public List<Player> getPlayersInQueue() {
-        return controller.getPlayersInQueue();
+        try {
+            return controller.getPlayersInQueue();
+        } catch (IOException e) {
+            logger.error("Failed to get players in queue.", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
     }
 }

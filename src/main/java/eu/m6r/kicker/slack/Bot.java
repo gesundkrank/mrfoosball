@@ -5,13 +5,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.PresenceChange;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
+import eu.m6r.kicker.utils.ZookeeperClient;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.glassfish.jersey.client.ClientProperties;
 
 import java.io.IOException;
@@ -22,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,10 +48,14 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
 @ClientEndpoint
-public class Bot {
+public class Bot implements Watcher {
 
     private final static Pattern COMMAND_PATTERN = Pattern.compile("\\w+");
     private final static Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
+    private final static String ZOO_KEEPER_PARENT_PATH =
+            ZookeeperClient.ZOOKEEPER_ROOT_PATH + "/bot";
+    private final static String ZOO_KEEPER_PATH = ZOO_KEEPER_PARENT_PATH + "/slack_";
+    private final static String BOT_ID = UUID.randomUUID().toString();
 
     private final Logger logger;
     private final String token;
@@ -54,12 +64,16 @@ public class Bot {
     private final Client client;
     private final Map<Player, Timer> awayTimers;
     private final long inactiveTimeoutMinutes;
+    private final ZookeeperClient zookeeperClient;
+    private final String lockNode;
 
     private Session socketSession;
     private String botUserId;
     private Pattern botUserIdPattern;
 
-    public Bot(final String token, final long inactiveTimeoutMinutes) {
+    public Bot(final String token, final long inactiveTimeoutMinutes,
+               final ZookeeperClient zookeeperClient)
+            throws KeeperException, InterruptedException, StartSocketSessionException, IOException {
         this.inactiveTimeoutMinutes = inactiveTimeoutMinutes;
         this.logger = LogManager.getLogger();
 
@@ -74,11 +88,22 @@ public class Bot {
 
         this.token = token;
         this.objectMapper = new ObjectMapper();
-        this.controller = Controller.INSTANCE;
+        this.controller = Controller.getInstance();
         this.awayTimers = new HashMap<>();
+        this.zookeeperClient = zookeeperClient;
+
+        zookeeperClient.createPath(ZOO_KEEPER_PARENT_PATH);
+        this.lockNode = zookeeperClient.createEphemeralSequential(ZOO_KEEPER_PATH, BOT_ID);
+
+        logger.info("Creating lock {} for ID {}", lockNode, BOT_ID);
+
+        if (zookeeperClient.checkLock(lockNode, this)) {
+            logger.info("Obtained lock {} and starting new slack session.", lockNode);
+            startNewSession();
+        }
     }
 
-    public void startNewSession() throws StartSocketSessionException {
+    private void startNewSession() throws StartSocketSessionException {
         final WebTarget target = client.target("https://slack.com").path("/api/rtm.connect")
                 .queryParam("token", token);
 
@@ -107,6 +132,20 @@ public class Bot {
             this.socketSession = socketClient.connectToServer(this, URI.create(response.url));
         } catch (final DeploymentException | IOException e) {
             throw new StartSocketSessionException(e);
+        }
+    }
+
+    @Override
+    public void process(WatchedEvent event) {
+        logger.info("Zookeeper event: {}", event);
+
+        try {
+            if (this.socketSession == null && zookeeperClient.checkLock(lockNode, this)) {
+                logger.info("Obtained lock {} and starting new slack session.", lockNode);
+                startNewSession();
+            }
+        } catch (KeeperException | InterruptedException | StartSocketSessionException e) {
+            logger.error("Failed to process zookeeper event.", e);
         }
     }
 
@@ -148,7 +187,8 @@ public class Bot {
         }
     }
 
-    private void onCommand(final String command, final String channel, final String sender) {
+    private void onCommand(final String command, final String channel, final String sender)
+            throws IOException {
         final Matcher commandMatcher = COMMAND_PATTERN.matcher(command);
         if (commandMatcher.find()) {
             final String action = commandMatcher.group();
@@ -178,15 +218,13 @@ public class Bot {
                             }
                         }
 
-                        final String message;
-                        if (!controller.hasRunningTournament()) {
-                            message = String.format("Current queue: %s",
-                                                    controller.getPlayersString());
-                        } else {
-                            message = controller.newTournamentMessage();
+                        try {
+                            final Tournament tournament = controller.getRunningTournament();
+                            sendNewTournamentMessage(tournament, channel);
+                        } catch (Controller.TournamentNotRunningException e) {
+                            sendMessage(String.format("Current queue: %s",
+                                                      controller.getPlayersString()), channel);
                         }
-                        sendMessage(message, channel);
-
                         break;
                     case "reset":
                         controller.resetPlayers();
@@ -228,8 +266,8 @@ public class Bot {
                                     controller.addPlayer(player, false);
                                 }
 
-                                controller.startTournament(false, 3);
-                                sendMessage(controller.newTournamentMessage(), channel);
+                                final Tournament tournament = controller.startTournament(false, 3);
+                                sendNewTournamentMessage(tournament, channel);
 
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {
@@ -260,7 +298,7 @@ public class Bot {
         }
     }
 
-    private void onPresenceChange(final PresenceChange presenceChange) {
+    private void onPresenceChange(final PresenceChange presenceChange) throws IOException {
         try {
             switch (presenceChange.presence) {
                 case "away":
@@ -274,7 +312,7 @@ public class Bot {
         }
     }
 
-    private void playerAway(final Player player) {
+    private void playerAway(final Player player) throws IOException {
         if (!awayTimers.containsKey(player) && controller.playerInQueue(player)) {
             final Timer timer = new Timer();
             timer.schedule(new AwayTimerTask(player), inactiveTimeoutMinutes * 60000);
@@ -398,6 +436,13 @@ public class Bot {
         }
     }
 
+    private void sendNewTournamentMessage(final Tournament tournament, final String channel) {
+        String message = String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
+                                       tournament.teamA.player1.id, tournament.teamA.player2.id,
+                                       tournament.teamB.player1.id, tournament.teamB.player2.id);
+        sendMessage(message, channel);
+    }
+
     public static class StartSocketSessionException extends Exception {
 
         StartSocketSessionException(final Throwable cause) {
@@ -428,9 +473,12 @@ public class Bot {
 
         @Override
         public void run() {
-            if (controller.playerInQueue(player)) {
-                controller.removePlayer(player);
-
+            try {
+                if (controller.playerInQueue(player)) {
+                    controller.removePlayer(player);
+                }
+            } catch (IOException e) {
+                logger.error("Failed to remove {} from queue.", player);
             }
         }
     }

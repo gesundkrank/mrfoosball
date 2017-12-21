@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.PresenceChange;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
@@ -90,7 +91,6 @@ public class Bot implements Watcher {
         this.controller = Controller.getInstance();
         this.awayTimers = new HashMap<>();
         this.zookeeperClient = zookeeperClient;
-
 
         zookeeperClient.createPath(ZOO_KEEPER_PARENT_PATH);
         this.lockNode = zookeeperClient.createEphemeralSequential(ZOO_KEEPER_PATH, BOT_ID);
@@ -218,15 +218,13 @@ public class Bot implements Watcher {
                             }
                         }
 
-                        final String message;
-                        if (!controller.hasRunningTournament()) {
-                            message = String.format("Current queue: %s",
-                                                    controller.getPlayersString());
-                        } else {
-                            message = controller.newTournamentMessage();
+                        try {
+                            final Tournament tournament = controller.getRunningTournament();
+                            sendNewTournamentMessage(tournament, channel);
+                        } catch (Controller.TournamentNotRunningException e) {
+                            sendMessage(String.format("Current queue: %s",
+                                                      controller.getPlayersString()), channel);
                         }
-                        sendMessage(message, channel);
-
                         break;
                     case "reset":
                         controller.resetPlayers();
@@ -268,8 +266,8 @@ public class Bot implements Watcher {
                                     controller.addPlayer(player, false);
                                 }
 
-                                controller.startTournament(false, 3);
-                                sendMessage(controller.newTournamentMessage(), channel);
+                                final Tournament tournament = controller.startTournament(false, 3);
+                                sendNewTournamentMessage(tournament, channel);
 
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {
@@ -436,6 +434,13 @@ public class Bot implements Watcher {
         } catch (final ResponseProcessingException | IOException e) {
             throw new UserExtractionFailedException(userId, e);
         }
+    }
+
+    private void sendNewTournamentMessage(final Tournament tournament, final String channel) {
+        String message = String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
+                                       tournament.teamA.player1.id, tournament.teamA.player2.id,
+                                       tournament.teamB.player1.id, tournament.teamB.player2.id);
+        sendMessage(message, channel);
     }
 
     public static class StartSocketSessionException extends Exception {

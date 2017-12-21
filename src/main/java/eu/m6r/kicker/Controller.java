@@ -24,8 +24,7 @@ public class Controller {
     private final Logger logger;
     private final TrueSkillCalculator trueSkillCalculator;
     private final PlayerQueue queue;
-
-    private Tournament activeTournament;
+    private final RunningTournament runningTournament;
 
     public static Controller getInstance() throws IOException {
         if (INSTANCE == null) {
@@ -38,16 +37,18 @@ public class Controller {
     private Controller() throws IOException {
         this.logger = LogManager.getLogger();
         this.trueSkillCalculator = new TrueSkillCalculator();
-        this.queue = new PlayerQueue(Properties.getInstance().zookeeperHosts());
 
-        activeTournament = null;
+        final String zookeeperHosts = Properties.getInstance().zookeeperHosts();
+        this.queue = new PlayerQueue(zookeeperHosts);
+        this.runningTournament = new RunningTournament(zookeeperHosts);
+
     }
 
     public void startTournament() throws TournamentRunningException, IOException {
         startTournament(true, 3);
     }
 
-    public synchronized void startTournament(final boolean shuffle, final int bestOfN)
+    public synchronized Tournament startTournament(final boolean shuffle, final int bestOfN)
             throws TournamentRunningException, IOException {
         if (hasRunningTournament()) {
             throw new TournamentRunningException();
@@ -60,30 +61,34 @@ public class Controller {
             playerList = trueSkillCalculator.getBestMatch(playerList);
         }
 
+        queue.clear();
+
         try (final Store store = new Store()) {
             final Team teamA = store.getTeam(playerList.get(0), playerList.get(1));
             final Team teamB = store.getTeam(playerList.get(2), playerList.get(3));
-            this.activeTournament = new Tournament(bestOfN, teamA, teamB);
+            final Tournament tournament = new Tournament(bestOfN, teamA, teamB);
+            runningTournament.save(tournament);
+            return tournament;
         }
 
-        queue.clear();
     }
 
-    public synchronized void finishTournament() throws InvalidTournamentStateException {
-        for (final Match match : activeTournament.matches) {
+    public synchronized void finishTournament()
+            throws InvalidTournamentStateException, IOException, TournamentNotRunningException {
+        final Tournament runningTournament = this.runningTournament.get();
+        for (final Match match : runningTournament.matches) {
             if (match.state == State.RUNNING) {
                 throw new InvalidTournamentStateException("Can't finish tournament if matches"
                                                           + "are still running!");
             }
         }
 
-        activeTournament.state = State.FINISHED;
+        runningTournament.state = State.FINISHED;
 
         try (final Store store = new Store()) {
             final Tournament updatedTournament =
-                    trueSkillCalculator.updateRatings(activeTournament);
+                    trueSkillCalculator.updateRatings(runningTournament);
             store.saveTournament(updatedTournament);
-            activeTournament = null;
         }
 
     }
@@ -100,44 +105,52 @@ public class Controller {
         }
     }
 
-    public boolean hasRunningTournament() {
-        return activeTournament != null;
+    public boolean hasRunningTournament() throws IOException {
+        try {
+            runningTournament.get();
+            return true;
+        } catch (TournamentNotRunningException e) {
+            return false;
+        }
     }
 
-    public String newTournamentMessage() {
+    public String newTournamentMessage() throws IOException, TournamentNotRunningException {
         final Tournament tournament = getRunningTournament();
         return String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
                              tournament.teamA.player1.id, tournament.teamA.player2.id,
                              tournament.teamB.player1.id, tournament.teamB.player2.id);
     }
 
-    public Tournament getRunningTournament() {
-        return activeTournament;
+    public Tournament getRunningTournament() throws IOException, TournamentNotRunningException {
+        return runningTournament.get();
     }
 
-    public void updateTournament(final Tournament tournament) {
-        this.activeTournament.matches = tournament.matches;
+    public void updateTournament(final Tournament tournament)
+            throws IOException, TournamentNotRunningException {
+        final Tournament storedTournament = runningTournament.get();
+        storedTournament.matches = tournament.matches;
+
+        runningTournament.save(storedTournament);
     }
 
-    public boolean cancelRunningTournament() {
+    public boolean cancelRunningTournament() throws IOException {
         if (!hasRunningTournament()) {
             return false;
         }
 
-        activeTournament = null;
+        runningTournament.clear();
         return true;
     }
 
-    public void newMatch()
-            throws InvalidTournamentStateException, TournamentNotRunningException {
-        if (activeTournament == null) {
-            throw new TournamentNotRunningException();
-        }
+    public void newMatch() throws InvalidTournamentStateException, TournamentNotRunningException,
+                                  IOException {
 
         int teamAWins = 0;
         int teamBWins = 0;
 
-        for (final Match match : activeTournament.matches) {
+        final Tournament tournament = runningTournament.get();
+
+        for (final Match match : tournament.matches) {
             if (match.state == State.FINISHED) {
                 if (match.teamA > match.teamB) {
                     teamAWins++;
@@ -150,13 +163,14 @@ public class Controller {
             }
         }
 
-        final int maxTeamWins = (activeTournament.bestOfN / 2) + 1;
+        final int maxTeamWins = (tournament.bestOfN / 2) + 1;
 
         if (maxTeamWins <= Math.max(teamAWins, teamBWins)) {
             throw new InvalidTournamentStateException("Cannot create more matches than bestOfN.");
         }
 
-        activeTournament.matches.add(new Match());
+        tournament.matches.add(new Match());
+        runningTournament.save(tournament);
     }
 
     public String getPlayersString() throws IOException {

@@ -12,19 +12,25 @@ slackToken=xoxb-1564223413123-adkjADAsjdladdj
 connectionHbm2ddl=create-drop
 ```
 
-## Build App
-This creates a fat jar (`build/lib/kicker-all.jar`) containing the Java backend and the compiled fronted
-```
-./gradlew buildApp
-```
-
-## Run App
+## Run App Locally
 
 ```bash
-./gradlew runApp
+./gradlew composeUp
 ```
 
-## Dockerize
+To see the logs of the container do 
+
+```bash
+docker logs `docker ps --filter 'name=kicker_kicker' --format '{{.ID}}'`
+``` 
+
+To shut down all containers exec
+
+```
+./gradlew composeDown
+```
+
+## Dockerize Production Version
 ```bash
 ./gradlew -Ppush buildDocker
 ```

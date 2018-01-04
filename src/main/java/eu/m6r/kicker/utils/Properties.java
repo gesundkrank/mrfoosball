@@ -55,16 +55,15 @@ public class Properties {
     }
 
     public String getConnectionUrl() {
-        return properties.getProperty("connectionUrl",
-                                      "jdbc:h2:mem:db1;DB_CLOSE_DELAY=-1;MVCC=TRUE");
+        return properties.getProperty("connectionUrl");
     }
 
     public String getConnectionDriverClass() {
-        return properties.getProperty("connectionDriverClass", "org.h2.Driver");
+        return properties.getProperty("connectionDriverClass", "org.postgresql.Driver");
     }
 
     public String getConnectionDialect() {
-        return properties.getProperty("connectionDialect", "org.hibernate.dialect.H2Dialect");
+        return properties.getProperty("connectionDialect", "org.hibernate.dialect.PostgreSQLDialect");
     }
 
     public String getConnectionUsername() {

@@ -4,18 +4,20 @@ buildscript {
     }
 
     dependencies {
-        classpath "se.transmode.gradle:gradle-docker:1.2" // <- Here
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
+        classpath 'com.avast.gradle:gradle-docker-compose-plugin:0.6.9'
     }
 }
 
 plugins {
     id 'com.github.johnrengelman.shadow' version '1.2.3'
-    id 'com.moowork.node' version '1.1.1'
+    id 'com.moowork.node' version '1.2.0'
 }
 
 apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'docker'
+apply plugin: 'docker-compose'
 
 group = "eu.m6r.kicker"
 mainClassName = 'eu.m6r.kicker.Main'
@@ -59,6 +61,7 @@ task installFrontend(type: NpmTask) {
 
 task cleanFrontend(type: Delete, dependsOn: installFrontend) {
     delete 'build/resources/main/www'
+    delete 'frontend/www'
 }
 
 task buildFrontend(type: NpmTask, dependsOn: cleanFrontend) {
@@ -78,13 +81,7 @@ copyFrontend.shouldRunAfter buildFrontend, buildProductionFrontend
 
 task buildApp(dependsOn: [shadowJar, copyFrontend])
 
-task runApp(type: JavaExec, dependsOn: [buildFrontend, buildApp]) {
-    classpath = files('build/libs/kicker-all.jar')
-    main = mainClassName
-    standardInput = System.in
-}
-
-task buildDocker(type: Docker) {
+task buildDocker(type: Docker, dependsOn: [buildProductionFrontend, buildApp]) {
     baseImage = 'openjdk:8'
     push = project.hasProperty('push')
     tag = '867503539023.dkr.ecr.eu-west-1.amazonaws.com/kicker'
@@ -95,5 +92,15 @@ task buildDocker(type: Docker) {
     exposePort(8080)
 }
 
-buildDocker.dependsOn(buildProductionFrontend, buildApp)
+task dockerTest(type:Docker, dependsOn: [buildFrontend, buildApp]) {
+    baseImage = 'openjdk:8'
+    tag = 'kicker'
+    addFile {
+        from ('build/libs/kicker-all.jar')
+        from ('kicker.properties')
+    }
+    entryPoint(['java', '-jar', '/kicker-all.jar'])
+    exposePort(8080)
+}
 
+composeUp.dependsOn(dockerTest)

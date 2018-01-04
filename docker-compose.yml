@@ -1,0 +1,21 @@
+version: '3'
+services:
+  kicker:
+    image: kicker
+    depends_on:
+      - zookeeper
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      connectionHbm2ddl: create-drop
+      connectionUrl: jdbc:postgresql://postgres:5432/postgres
+      connectionUsername: postgres
+      zookeeperHosts: zookeeper
+
+  zookeeper:
+    image: zookeeper:3.4.11
+
+  postgres:
+      image: postgres:9.6.5
+

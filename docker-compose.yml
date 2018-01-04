@@ -12,6 +12,7 @@ services:
       connectionUrl: jdbc:postgresql://postgres:5432/postgres
       connectionUsername: postgres
       zookeeperHosts: zookeeper
+      slackToken: $SLACK_TOKEN
 
   zookeeper:
     image: zookeeper:3.4.11

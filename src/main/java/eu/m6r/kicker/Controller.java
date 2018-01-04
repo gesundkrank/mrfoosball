@@ -190,9 +190,9 @@ public class Controller {
         }
     }
 
-    public void addPlayer(Player player) throws TooManyUsersException,
-                                                PlayerAlreadyInQueueException,
-                                                TournamentRunningException, IOException {
+    public void addPlayer(final Player player) throws TooManyUsersException,
+                                                      PlayerAlreadyInQueueException,
+                                                      TournamentRunningException, IOException {
         addPlayer(player, true);
     }
 
@@ -223,7 +223,7 @@ public class Controller {
         queue.clear();
     }
 
-    public void removePlayer(Player player) throws IOException {
+    public void removePlayer(final Player player) throws IOException {
         queue.remove(player);
         logger.info("Removed {} from the queue", player);
     }

@@ -8,7 +8,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      connectionHbm2ddl: create-drop
+      connectionHbm2ddl: update
       connectionUrl: jdbc:postgresql://postgres:5432/postgres
       connectionUsername: postgres
       zookeeperHosts: zookeeper

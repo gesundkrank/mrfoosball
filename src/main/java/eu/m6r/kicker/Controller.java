@@ -91,6 +91,7 @@ public class Controller {
             store.saveTournament(updatedTournament);
         }
 
+        this.runningTournament.clear();
     }
 
     public List<Tournament> getTournaments() {

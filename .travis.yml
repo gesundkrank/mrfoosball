@@ -7,3 +7,8 @@ jdk:
   - oraclejdk8
 
 script: ./gradlew buildDocker
+
+notifications:
+  email: false
+  slack:
+    secure: Pp5UD5u5uRTDgSDmfh9y1OaMPW9Xs1Spy3wnFOBlKZQedw/r/jmT2Cb/lhxoQ5M6mSdBRKbZ7Zf1aHv2g3yf7m/k0eZvLo3PEMWMEv5XQWTB7RxE50q9tL5e7eNG8K9Vq3si2bIuHV4C2tBxklCFLYuEBHLcCI7iYz0zWHuGQWdCuCGIogvvcsdYpUXsVHTAirE+3Xw4CvaHfL17QKH4OlkjCgApqgVAdyz2dOPIlypoCwkvSnrw7k3gIGLmMXj/UrWffaXSPm5ISXSqzsATh/eZs2Ru6hz44I9u+/+WUQSKwqJxEbx8S1a17F0L4z9B6Kfbj2LaCrGWbe7s+42skmQlDsITnicXt49ZdWlaLM2Qtnkjm2cv78E7GVgPXuaCmeEQ+N39Krc17HRcG1WAYM3XAjIs2JcZKEBgBjbg3iyeB/z8y5CgLPex/npbzlbenh+N/zgXjwH/v9GKwkObSGpBp8RRImKSUzaRoMkW2xt81e6YHLEwwmNNd6/yjsvjJ8SVkVxtlX76ej4CqB+G0WXUTOi+kN4OPBHwvOx0Ctt77Snn/fDDTQYZkBW719Of6Plp9Aj+rlYl3o++KEX/x/u1Ec5HomHliy+eEudgBzN3uESsL6Pz5pVWMLQg9+WBdaa1rVhAWgtrk/ZHHmTMhLj/FObdxQc9kZzZS95ruDY=

@@ -7,3 +7,6 @@ jdk:
   - oraclejdk8
 
 script: ./gradlew buildDocker
+
+notifications:
+  email: false

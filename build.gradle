@@ -88,7 +88,7 @@ task buildDocker(type: Docker, dependsOn: [buildProductionFrontend, buildApp]) {
     addFile {
         from ('build/libs/kicker-all.jar')
     }
-    entryPoint(['java', '-jar', '/kicker-all.jar'])
+    defaultCommand(['java', '-jar', '/kicker-all.jar'])
     exposePort(8080)
 }
 
@@ -99,7 +99,7 @@ task dockerTest(type:Docker, dependsOn: [buildFrontend, buildApp]) {
         from ('build/libs/kicker-all.jar')
         from ('kicker.properties')
     }
-    entryPoint(['java', '-jar', '/kicker-all.jar'])
+    defaultCommand(['java', '-jar', '/kicker-all.jar'])
     exposePort(8080)
 }
 

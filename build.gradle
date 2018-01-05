@@ -89,7 +89,8 @@ task buildApp(dependsOn: [shadowJar, copyFrontend])
 task buildDocker(type: Docker, dependsOn: [buildProductionFrontend, buildApp]) {
     baseImage = 'openjdk:8'
     push = project.hasProperty('push')
-    tag = '867503539023.dkr.ecr.eu-west-1.amazonaws.com/kicker'
+    tag = project.findProperty('repository') ?: 'kicker'
+    tagVersion = project.findProperty('tag')
     addFile {
         from ('build/libs/kicker.jar')
     }

@@ -55,6 +55,10 @@ node {
     download = true
 }
 
+shadowJar {
+    classifier = null
+}
+
 task installFrontend(type: NpmTask) {
     args = ['--prefix', 'frontend', 'install']
 }
@@ -86,9 +90,9 @@ task buildDocker(type: Docker, dependsOn: [buildProductionFrontend, buildApp]) {
     push = project.hasProperty('push')
     tag = '867503539023.dkr.ecr.eu-west-1.amazonaws.com/kicker'
     addFile {
-        from ('build/libs/kicker-all.jar')
+        from ('build/libs/kicker.jar')
     }
-    defaultCommand(['java', '-jar', '/kicker-all.jar'])
+    defaultCommand(['java', '-jar', '/kicker.jar'])
     exposePort(8080)
 }
 
@@ -96,10 +100,10 @@ task dockerTest(type:Docker, dependsOn: [buildFrontend, buildApp]) {
     baseImage = 'openjdk:8'
     tag = 'kicker'
     addFile {
-        from ('build/libs/kicker-all.jar')
+        from ('build/libs/kicker.jar')
         from ('kicker.properties')
     }
-    defaultCommand(['java', '-jar', '/kicker-all.jar'])
+    defaultCommand(['java', '-jar', '/kicker.jar'])
     exposePort(8080)
 }
 

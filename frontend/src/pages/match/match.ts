@@ -1,4 +1,4 @@
-import {AlertController} from "ionic-angular";
+import {AlertController, NavParams} from "ionic-angular";
 import {NavController} from "ionic-angular";
 import {Component} from "@angular/core";
 
@@ -28,12 +28,15 @@ export class MatchPage {
 
   constructor(
     readonly navCtrl: NavController,
+    private readonly navParams: NavParams,
     private readonly alertCtrl: AlertController,
     private readonly tournamentCtrl: TournamentController,
   ) {
     this.teamPositions = {};
     this.leftWins = 0;
     this.rightWins = 0;
+    const id = this.navParams.get("id");
+    this.tournamentCtrl.setId(id);
   }
 
   ionViewDidEnter() {

@@ -13,8 +13,6 @@ public class Match {
     @Id
     @GeneratedValue
     public int id;
-
-
     public Date date = new Date();
     public int teamA = 0;
     public int teamB = 0;

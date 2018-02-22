@@ -1,42 +1,21 @@
 package eu.m6r.kicker.slack;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import eu.m6r.kicker.Controller;
-import eu.m6r.kicker.models.Player;
-import eu.m6r.kicker.models.Tournament;
-import eu.m6r.kicker.slack.models.Message;
-import eu.m6r.kicker.slack.models.PresenceChange;
-import eu.m6r.kicker.slack.models.RtmInitResponse;
-import eu.m6r.kicker.slack.models.SlackUser;
-import eu.m6r.kicker.utils.ZookeeperClient;
-
-import javax.websocket.OnError;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.glassfish.jersey.client.ClientProperties;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.OnClose;
+import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
@@ -46,6 +25,21 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.glassfish.jersey.client.ClientProperties;
+
+import eu.m6r.kicker.Controller;
+import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.slack.models.ChannelJoined;
+import eu.m6r.kicker.slack.models.Message;
+import eu.m6r.kicker.slack.models.RtmInitResponse;
+import eu.m6r.kicker.slack.models.SlackUser;
+import eu.m6r.kicker.utils.ZookeeperClient;
 
 @ClientEndpoint
 public class Bot implements Watcher {
@@ -62,8 +56,6 @@ public class Bot implements Watcher {
     private final ObjectMapper objectMapper;
     private final Controller controller;
     private final Client client;
-    private final Map<Player, Timer> awayTimers;
-    private final long inactiveTimeoutMinutes;
     private final ZookeeperClient zookeeperClient;
     private final String lockNode;
 
@@ -71,10 +63,8 @@ public class Bot implements Watcher {
     private String botUserId;
     private Pattern botUserIdPattern;
 
-    public Bot(final String token, final long inactiveTimeoutMinutes,
-               final ZookeeperClient zookeeperClient)
+    public Bot(final String token, final ZookeeperClient zookeeperClient)
             throws KeeperException, InterruptedException, StartSocketSessionException, IOException {
-        this.inactiveTimeoutMinutes = inactiveTimeoutMinutes;
         this.logger = LogManager.getLogger();
 
         if (token == null) {
@@ -89,7 +79,6 @@ public class Bot implements Watcher {
         this.token = token;
         this.objectMapper = new ObjectMapper();
         this.controller = Controller.getInstance();
-        this.awayTimers = new HashMap<>();
         this.zookeeperClient = zookeeperClient;
 
         zookeeperClient.createPath(ZOO_KEEPER_PARENT_PATH);
@@ -151,7 +140,17 @@ public class Bot implements Watcher {
 
     @OnMessage
     public void onMessage(final String messageString, final Session session) throws IOException {
-        if (messageString.startsWith("{\"type\":\"message\"")) {
+        logger.info(messageString);
+
+        if (messageString.startsWith("{\"type\":\"channel_joined\"")) {
+            final ChannelJoined channelJoined =
+                    objectMapper.readValue(messageString, ChannelJoined.class);
+            final String id = controller
+                    .joinChannel(channelJoined.channel.id, channelJoined.channel.name);
+            sendChannelJoinedMessage(channelJoined.channel.id, id);
+
+
+        } else if (messageString.startsWith("{\"type\":\"message\"")) {
             final Message message = objectMapper.readValue(messageString, Message.class);
 
             if (message.text == null) {
@@ -162,13 +161,6 @@ public class Bot implements Watcher {
             if (message.type != null && message.type.equals("message") && matcher.find()) {
                 final String command = message.text.substring(matcher.end()).trim();
                 onCommand(command, message.channel, message.user);
-            }
-        } else if (messageString.startsWith("{\"type\":\"presence_change\"")) {
-            final PresenceChange presenceChange =
-                    objectMapper.readValue(messageString, PresenceChange.class);
-
-            if (presenceChange != null) {
-                onPresenceChange(presenceChange);
             }
         }
     }
@@ -185,12 +177,13 @@ public class Bot implements Watcher {
         System.exit(1);
     }
 
-    private void onCommand(final String command, final String channel, final String sender)
+    private void onCommand(final String command, final String slackChannelId, final String sender)
             throws IOException {
         final Matcher commandMatcher = COMMAND_PATTERN.matcher(command);
         if (commandMatcher.find()) {
             final String action = commandMatcher.group();
             final Matcher userMatcher = USER_PATTERN.matcher(command);
+            final String channelId = controller.getChannelId(slackChannelId);
 
             List<String> userIds = new ArrayList<>();
 
@@ -209,120 +202,92 @@ public class Bot implements Watcher {
                         for (final String userId : userIds) {
                             try {
                                 final Player player = getUser(userId);
-                                controller.addPlayer(player);
+                                controller.addPlayer(channelId, player);
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {
-                                sendMessage(e.getMessage(), channel);
+                                sendMessage(e.getMessage(), slackChannelId);
                             }
                         }
 
                         try {
-                            final Tournament tournament = controller.getRunningTournament();
-                            sendNewTournamentMessage(tournament, channel);
+                            final Tournament tournament =
+                                    controller.getRunningTournament(channelId);
+                            sendNewTournamentMessage(tournament, slackChannelId);
                         } catch (Controller.TournamentNotRunningException e) {
                             sendMessage(String.format("Current queue: %s",
-                                                      controller.getPlayersString()), channel);
+                                                      controller.getPlayersString(channelId)),
+                                        slackChannelId);
                         }
                         break;
                     case "reset":
-                        controller.resetPlayers();
-                        sendMessage("Cleared queue.", channel);
+                        controller.resetPlayers(channelId);
+                        sendMessage("Cleared queue.", slackChannelId);
                         break;
                     case "remove":
                         for (final String userId : userIds) {
                             final Player playerToRemove = getUser(userId);
-                            controller.removePlayer(playerToRemove);
+                            controller.removePlayer(channelId, playerToRemove);
                             sendMessage(String.format("Removed <@%s> from the queue",
-                                                      playerToRemove.id), channel);
+                                                      playerToRemove.id), slackChannelId);
                         }
                         break;
                     case "queue":
                         final String queueMessage;
-                        if (controller.getPlayersInQueue().isEmpty()) {
+                        if (controller.getPlayersInQueue(channelId).isEmpty()) {
                             queueMessage = "Queue is empty!";
                         } else {
-                            queueMessage = "Current queue: " + controller.getPlayersString();
+                            queueMessage = "Current queue: " +
+                                           controller.getPlayersString(channelId);
                         }
 
-                        sendMessage(queueMessage, channel);
+                        sendMessage(queueMessage, slackChannelId);
                         break;
                     case "cancel":
-                        if (controller.cancelRunningTournament()) {
-                            sendMessage("Canceled the running match!", channel);
+                        if (controller.cancelRunningTournament(channelId)) {
+                            sendMessage("Canceled the running match!", slackChannelId);
                         } else {
-                            sendMessage("No match running!", channel);
+                            sendMessage("No match running!", slackChannelId);
                         }
                         break;
                     case "fixedMatch":
                         if (userIds.size() != 4) {
-                            sendMessage("To start a game I need 4 players :(", channel);
+                            sendMessage("To start a game I need 4 players :(", slackChannelId);
                         } else {
                             try {
-                                controller.resetPlayers();
+                                controller.resetPlayers(channelId);
                                 for (final String userId : userIds) {
                                     final Player player = getUser(userId);
-                                    controller.addPlayer(player, false);
+                                    controller.addPlayer(channelId, player, false);
                                 }
 
-                                final Tournament tournament = controller.startTournament(false, 3);
-                                sendNewTournamentMessage(tournament, channel);
+                                final Tournament tournament = controller
+                                        .startTournament(channelId, false, 3);
+                                sendNewTournamentMessage(tournament, slackChannelId);
 
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {
-                                sendMessage(e.getMessage(), channel);
+                                sendMessage(e.getMessage(), slackChannelId);
                             }
 
                         }
                         break;
-                    case "help":
-                        sendHelpMessage(channel, sender);
+                    case "url":
+                        sendMessage(controller.getChannelUrl(channelId), slackChannelId);
                         break;
-
-                    case "calcSkills":
-                        controller.recalculateSkills();
-                        sendMessage("done", channel);
+                    case "help":
+                        sendHelpMessage(slackChannelId, sender);
                         break;
                     default:
                         sendMessage(String.format("I'm sorry <@%s>, I didn't understand that. "
                                                   + "If you need help just ask for it.", sender),
-                                    channel);
+                                    slackChannelId);
                 }
             } catch (final Controller.TooManyUsersException |
                     UserExtractionFailedException e) {
                 sendMessage(e.getMessage(), sender);
             }
         } else {
-            sendMessage("That doesn't make any sense at all.", channel);
-        }
-    }
-
-    private void onPresenceChange(final PresenceChange presenceChange) throws IOException {
-        try {
-            switch (presenceChange.presence) {
-                case "away":
-                    playerAway(getUser(presenceChange.user));
-                    break;
-                case "active":
-                    playerActive(getUser(presenceChange.user));
-            }
-        } catch (UserExtractionFailedException e) {
-            logger.debug("unknown user {}", presenceChange.user);
-        }
-    }
-
-    private void playerAway(final Player player) throws IOException {
-        if (!awayTimers.containsKey(player) && controller.playerInQueue(player)) {
-            final Timer timer = new Timer();
-            timer.schedule(new AwayTimerTask(player), inactiveTimeoutMinutes * 60000);
-            awayTimers.put(player, timer);
-        }
-    }
-
-    private void playerActive(final Player player) {
-        if (awayTimers.containsKey(player)) {
-            final Timer timer = awayTimers.get(player);
-            timer.cancel();
-            awayTimers.remove(player);
+            sendMessage("That doesn't make any sense at all.", slackChannelId);
         }
     }
 
@@ -434,6 +399,14 @@ public class Bot implements Watcher {
         }
     }
 
+    private void sendChannelJoinedMessage(final String channel, final String id) {
+        final String url = controller.getChannelUrl(id);
+        final String message =
+                String.format("Nice to meet you! I'm your new favourite kicker-bot. Go to %s to "
+                              + "find your team stats and to enter your results.", url);
+        sendMessage(message, channel);
+    }
+
     private void sendNewTournamentMessage(final Tournament tournament, final String channel) {
         String message = String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
                                        tournament.teamA.player1.id, tournament.teamA.player2.id,
@@ -459,27 +432,4 @@ public class Bot implements Watcher {
                   cause);
         }
     }
-
-    private class AwayTimerTask extends TimerTask {
-
-        private final Player player;
-
-
-        AwayTimerTask(final Player player) {
-            this.player = player;
-        }
-
-        @Override
-        public void run() {
-            try {
-                if (controller.playerInQueue(player)) {
-                    controller.removePlayer(player);
-                }
-            } catch (IOException e) {
-                logger.error("Failed to remove {} from queue.", player);
-            }
-        }
-    }
-
-
 }

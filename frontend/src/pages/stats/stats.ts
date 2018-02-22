@@ -1,34 +1,32 @@
 import {Component} from "@angular/core";
-import {NavController} from "ionic-angular";
+import {NavController, NavParams} from "ionic-angular";
 import {Http} from "@angular/http";
 import {MatchPage} from "../match/match";
 import {TournamentController} from "../../controllers/tournamentController";
 import {Player, Tournament} from "../../models/tournament";
 import {PlayerSkill} from "../../models/playerSkill";
 
-const QUEUE_URL = '/api/tournament/queue';
-const STAT_URL = '/api/stats';
-const TOURNAMENTS_URL = '/api/tournament?num=10';
-
 @Component({
-  selector: 'page-stats',
-  templateUrl: 'stats.html'
-})
+             selector: 'page-stats',
+             templateUrl: 'stats.html'
+           })
 export class StatsPage {
 
+  id: string;
   queue: Array<Player>;
   stats: Array<PlayerSkill>;
   lastTournaments: Array<Tournament>;
 
-  constructor(
-    public http: Http,
-    private readonly navCtrl: NavController,
-    private readonly tournamentController: TournamentController,
-  ) {
+  constructor(public http: Http,
+              private readonly navCtrl: NavController,
+              private readonly navParams: NavParams,
+              private readonly tournamentController: TournamentController,) {
     //
   }
 
   ionViewDidEnter() {
+    this.id = this.navParams.get("id");
+    this.tournamentController.setId(this.id);
     this.checkTournament();
     this.loadPlayerStats();
     this.loadLastTournaments();
@@ -56,7 +54,7 @@ export class StatsPage {
   }
 
   loadQueue() {
-    this.http.get(QUEUE_URL)
+    this.http.get("/api/tournament/" + this.id + "/queue")
       .map(res => res.json())
       .toPromise()
       .then(queue => {
@@ -65,7 +63,7 @@ export class StatsPage {
   }
 
   loadPlayerStats() {
-    this.http.get(STAT_URL)
+    this.http.get('/api/stats/' + this.id)
       .map(res => res.json())
       .toPromise()
       .then(stats => {
@@ -74,7 +72,7 @@ export class StatsPage {
   }
 
   loadLastTournaments() {
-    this.http.get(TOURNAMENTS_URL)
+    this.http.get('/api/tournament/' + this.id + '?num=10')
       .map(res => res.json())
       .toPromise()
       .then(lastTournaments => {
@@ -83,7 +81,7 @@ export class StatsPage {
   }
 
   newMatch() {
-    this.navCtrl.push(MatchPage);
+    this.navCtrl.push(MatchPage, {'id': this.id});
   }
 
   roundSkill(skill: number) {

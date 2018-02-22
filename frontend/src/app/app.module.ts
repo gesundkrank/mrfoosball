@@ -8,10 +8,12 @@ import {MyApp} from "./app.component";
 import {MatchPage} from "../pages/match/match";
 import {TournamentController} from "../controllers/tournamentController";
 import {StatsPage} from "../pages/stats/stats";
+import {IndexPage} from "../pages/index";
 
 @NgModule({
   declarations: [
     MyApp,
+    IndexPage,
     MatchPage,
     StatsPage,
   ],
@@ -21,6 +23,7 @@ import {StatsPage} from "../pages/stats/stats";
   bootstrap: [IonicApp],
   entryComponents: [
     MyApp,
+    IndexPage,
     MatchPage,
     StatsPage,
   ],

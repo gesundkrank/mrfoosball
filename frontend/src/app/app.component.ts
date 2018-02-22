@@ -1,10 +1,10 @@
 import {Component} from "@angular/core";
 
-import {StatsPage} from "../pages/stats/stats";
+import {IndexPage} from "../pages/index";
 
 @Component({
-  templateUrl: 'app.html'
-})
+             templateUrl: 'app.html'
+           })
 export class MyApp {
-  rootPage = StatsPage;
+  rootPage = IndexPage;
 }

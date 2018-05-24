@@ -12,6 +12,7 @@ import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
 import eu.m6r.kicker.utils.ZookeeperClient;
 
+import javax.websocket.OnError;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
@@ -37,7 +38,6 @@ import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 import javax.ws.rs.client.Client;
@@ -149,10 +149,6 @@ public class Bot implements Watcher {
         }
     }
 
-    @OnOpen
-    public void onOpen(final Session session) {
-    }
-
     @OnMessage
     public void onMessage(final String messageString, final Session session) throws IOException {
         if (messageString.startsWith("{\"type\":\"message\"")) {
@@ -179,12 +175,14 @@ public class Bot implements Watcher {
 
     @OnClose
     public void onClose(final Session session, final CloseReason closeReason) {
-        logger.warn("Session closed: {}", closeReason);
-        try {
-            startNewSession();
-        } catch (final StartSocketSessionException e) {
-            logger.error("Reopening closed session failed.", e);
-        }
+        logger.error("Session closed: {}", closeReason);
+        System.exit(1);
+    }
+
+    @OnError
+    public void onError(final Session session, final Throwable throwable) {
+        logger.error("Websocket error.", throwable);
+        System.exit(1);
     }
 
     private void onCommand(final String command, final String channel, final String sender)

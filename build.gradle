@@ -28,7 +28,8 @@ repositories {
 
 dependencies {
     compile 'org.glassfish.jersey.containers:jersey-container-grizzly2-http:2.27',
-            'org.glassfish.jersey.media:jersey-media-moxy:2.27'
+            'org.glassfish.jersey.media:jersey-media-moxy:2.27',
+            'org.glassfish.jersey.inject:jersey-hk2:2.27'
     // https://mvnrepository.com/artifact/org.hibernate/hibernate-core
     compile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.8.Final'
     // https://mvnrepository.com/artifact/javax.websocket/javax.websocket-client-api

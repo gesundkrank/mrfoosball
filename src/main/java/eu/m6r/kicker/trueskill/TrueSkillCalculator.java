@@ -62,21 +62,21 @@ public class TrueSkillCalculator {
                                          rankTeamA(tournament),
                                          rankTeamB(tournament));
 
-            final Rating newRatingWinner1 = newRatings.get(iPlayerA1);
-            playerA1.trueSkillMean = newRatingWinner1.getMean();
-            playerA1.trueSkillStandardDeviation = newRatingWinner1.getStandardDeviation();
+            final Rating newRatingA1 = newRatings.get(iPlayerA1);
+            playerA1.trueSkillMean = newRatingA1.getMean();
+            playerA1.trueSkillStandardDeviation = newRatingA1.getStandardDeviation();
 
-            final Rating newRatingWinner2 = newRatings.get(iPlayerA2);
-            playerA2.trueSkillMean = newRatingWinner2.getMean();
-            playerA2.trueSkillStandardDeviation = newRatingWinner2.getStandardDeviation();
+            final Rating newRatingA2 = newRatings.get(iPlayerA2);
+            playerA2.trueSkillMean = newRatingA2.getMean();
+            playerA2.trueSkillStandardDeviation = newRatingA2.getStandardDeviation();
 
-            final Rating newRatingLooser1 = newRatings.get(iPlayerB1);
-            playerB1.trueSkillMean = newRatingLooser1.getMean();
-            playerB1.trueSkillStandardDeviation = newRatingLooser1.getStandardDeviation();
+            final Rating newRatingB1 = newRatings.get(iPlayerB1);
+            playerB1.trueSkillMean = newRatingB1.getMean();
+            playerB1.trueSkillStandardDeviation = newRatingB1.getStandardDeviation();
 
-            final Rating newRatingLooser2 = newRatings.get(iPlayerB2);
-            playerB2.trueSkillMean = newRatingLooser2.getMean();
-            playerB2.trueSkillStandardDeviation = newRatingLooser2.getStandardDeviation();
+            final Rating newRatingB2 = newRatings.get(iPlayerB2);
+            playerB2.trueSkillMean = newRatingB2.getMean();
+            playerB2.trueSkillStandardDeviation = newRatingB2.getStandardDeviation();
 
             tournament.teamA.player1 = playerA1;
             tournament.teamA.player2 = playerA2;

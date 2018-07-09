@@ -63,6 +63,11 @@ public class Tournament {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     public List<Match> matches = new ArrayList<>();
 
+    public Double teamAPlayer1SkillChange;
+    public Double teamAPlayer2SkillChange;
+    public Double teamBPlayer1SkillChange;
+    public Double teamBPlayer2SkillChange;
+
     @Override
     public String toString() {
         return String.format("id=%d, teamA=%s, teamB=%s, state=%s, matches=%s", id, teamA,

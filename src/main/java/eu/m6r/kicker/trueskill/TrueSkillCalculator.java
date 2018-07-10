@@ -45,6 +45,11 @@ public class TrueSkillCalculator {
             eu.m6r.kicker.models.Player playerB1 = store.getPlayer(tournament.teamB.player1);
             eu.m6r.kicker.models.Player playerB2 = store.getPlayer(tournament.teamB.player2);
 
+            double skillA1 = playerSkill(tournament.teamA.player1);
+            double skillA2 = playerSkill(tournament.teamA.player2);
+            double skillB1 = playerSkill(tournament.teamB.player1);
+            double skillB2 = playerSkill(tournament.teamB.player2);
+
             final List<ITeam> teams = new ArrayList<>();
 
             final IPlayer iPlayerA1 = new Player<>(playerA1.id);
@@ -62,29 +67,39 @@ public class TrueSkillCalculator {
                                          rankTeamA(tournament),
                                          rankTeamB(tournament));
 
-            final Rating newRatingWinner1 = newRatings.get(iPlayerA1);
-            playerA1.trueSkillMean = newRatingWinner1.getMean();
-            playerA1.trueSkillStandardDeviation = newRatingWinner1.getStandardDeviation();
+            final Rating newRatingA1 = newRatings.get(iPlayerA1);
+            playerA1.trueSkillMean = newRatingA1.getMean();
+            playerA1.trueSkillStandardDeviation = newRatingA1.getStandardDeviation();
 
-            final Rating newRatingWinner2 = newRatings.get(iPlayerA2);
-            playerA2.trueSkillMean = newRatingWinner2.getMean();
-            playerA2.trueSkillStandardDeviation = newRatingWinner2.getStandardDeviation();
+            final Rating newRatingA2 = newRatings.get(iPlayerA2);
+            playerA2.trueSkillMean = newRatingA2.getMean();
+            playerA2.trueSkillStandardDeviation = newRatingA2.getStandardDeviation();
 
-            final Rating newRatingLooser1 = newRatings.get(iPlayerB1);
-            playerB1.trueSkillMean = newRatingLooser1.getMean();
-            playerB1.trueSkillStandardDeviation = newRatingLooser1.getStandardDeviation();
+            final Rating newRatingB1 = newRatings.get(iPlayerB1);
+            playerB1.trueSkillMean = newRatingB1.getMean();
+            playerB1.trueSkillStandardDeviation = newRatingB1.getStandardDeviation();
 
-            final Rating newRatingLooser2 = newRatings.get(iPlayerB2);
-            playerB2.trueSkillMean = newRatingLooser2.getMean();
-            playerB2.trueSkillStandardDeviation = newRatingLooser2.getStandardDeviation();
+            final Rating newRatingB2 = newRatings.get(iPlayerB2);
+            playerB2.trueSkillMean = newRatingB2.getMean();
+            playerB2.trueSkillStandardDeviation = newRatingB2.getStandardDeviation();
 
             tournament.teamA.player1 = playerA1;
             tournament.teamA.player2 = playerA2;
             tournament.teamB.player1 = playerB1;
             tournament.teamB.player2 = playerB2;
 
+            tournament.teamAPlayer1SkillChange = newRatingA1.getConservativeRating() - skillA1;
+            tournament.teamAPlayer2SkillChange = newRatingA2.getConservativeRating() - skillA2;
+            tournament.teamBPlayer1SkillChange = newRatingB1.getConservativeRating() - skillB1;
+            tournament.teamBPlayer2SkillChange = newRatingB2.getConservativeRating() - skillB2;
+
             return tournament;
         }
+    }
+
+    public double playerSkill(final eu.m6r.kicker.models.Player player) {
+        final Rating rating = new Rating(player.trueSkillMean, player.trueSkillStandardDeviation);
+        return rating.getConservativeRating();
     }
 
     private ITeam toTeam(final IPlayer iPlayer1,

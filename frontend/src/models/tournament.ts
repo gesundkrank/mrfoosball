@@ -33,5 +33,9 @@ export class Tournament {
   teamA: Team;
   teamB: Team;
   state: State;
-  matches: Match[]
+  matches: Match[];
+  teamAPlayer1SkillChange: number;
+  teamAPlayer2SkillChange: number;
+  teamBPlayer1SkillChange: number;
+  teamBPlayer2SkillChange: number;
 }

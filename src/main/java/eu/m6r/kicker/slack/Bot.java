@@ -233,7 +233,7 @@ public class Bot implements Watcher {
                             final Player playerToRemove = getUser(userId);
                             controller.removePlayer(playerToRemove);
                             sendMessage(String.format("Removed <@%s> from the queue",
-                                                      playerToRemove.name), channel);
+                                                      playerToRemove.id), channel);
                         }
                         break;
                     case "queue":

@@ -2,6 +2,7 @@ package eu.m6r.kicker.api;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.Stats;
+import eu.m6r.kicker.api.annotations.CheckChannelId;
 import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.TeamStat;
 
@@ -19,6 +20,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 @Path("api/stats/{channelId}")
+@CheckChannelId
 public class StatsAPI {
 
     private final Logger logger;

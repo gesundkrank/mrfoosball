@@ -5,6 +5,7 @@ import {MatchPage} from "../match/match";
 import {TournamentController} from "../../controllers/tournamentController";
 import {Player, Tournament} from "../../models/tournament";
 import {PlayerSkill} from "../../models/playerSkill";
+import {IndexPage} from "../index";
 
 @Component({
              selector: 'page-stats',
@@ -51,6 +52,11 @@ export class StatsPage {
             }, 5000);
           }
         }
+      })
+      .catch((err) => {
+        console.log("Failed to load tournament: ", this.id);
+        window.history.pushState(null, null, '/');
+        this.navCtrl.push(IndexPage)
       })
   }
 

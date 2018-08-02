@@ -72,6 +72,13 @@ public class Store implements Closeable {
         return query.getSingleResult();
     }
 
+    public boolean channelExists(final String id) {
+        final TypedQuery<Channel> query = session
+                .createNamedQuery("get_channel", Channel.class)
+                .setParameter("id", id);
+        return !query.getResultList().isEmpty();
+    }
+
     public Channel getChannelBySlackId(final String slackId) {
         final TypedQuery<Channel> query = session
                 .createNamedQuery("get_channel_by_slack_id", Channel.class)

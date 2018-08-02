@@ -1,6 +1,7 @@
 package eu.m6r.kicker.api;
 
 import eu.m6r.kicker.Controller;
+import eu.m6r.kicker.api.annotations.CheckChannelId;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.Tournament;
 
@@ -25,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/api/tournament/{channelId}")
+@CheckChannelId
 public class TournamentAPI {
 
     private final Logger logger;

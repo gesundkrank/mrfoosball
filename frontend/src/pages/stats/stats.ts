@@ -26,6 +26,7 @@ export class StatsPage {
 
   ionViewDidEnter() {
     this.id = this.navParams.get("id");
+    window.history.pushState(null, null, '/' + this.id);
     this.tournamentController.setId(this.id);
     this.checkTournament();
     this.loadPlayerStats();

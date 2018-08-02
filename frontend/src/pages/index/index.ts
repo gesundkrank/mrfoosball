@@ -12,7 +12,7 @@ export class IndexPage {
 
     const splits = location.search.substring(1).split("=");
     if (splits && splits.length == 2 && splits[0] == 'id') {
-      this.navCtrl.push(StatsPage, {"id": splits[1]})
+      this.navCtrl.push(StatsPage, {"id": splits[1]});
     }
   }
 

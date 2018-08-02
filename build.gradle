@@ -5,7 +5,7 @@ buildscript {
 
     dependencies {
         classpath 'se.transmode.gradle:gradle-docker:1.2'
-        classpath 'com.avast.gradle:gradle-docker-compose-plugin:0.6.9'
+        classpath 'com.avast.gradle:gradle-docker-compose-plugin:0.8.3'
     }
 }
 
@@ -93,20 +93,25 @@ task buildDocker(type: Docker, dependsOn: [buildProductionFrontend, buildApp]) {
     tag = project.findProperty('repository') ?: 'kicker'
     tagVersion = project.findProperty('tag')
     addFile {
-        from ('build/libs/kicker.jar')
+        from('build/libs/kicker.jar')
     }
-    defaultCommand(['java', '-jar', '/kicker.jar'])
+    entryPoint(['java', '-jar', '/kicker.jar'])
     exposePort(8080)
 }
 
-task dockerTest(type:Docker, dependsOn: [buildFrontend, buildApp]) {
+task dockerTest(type: Docker, dependsOn: [buildFrontend, buildApp]) {
     baseImage = 'openjdk:8'
     tag = 'kicker'
     addFile {
-        from ('build/libs/kicker.jar')
-        from ('kicker.properties')
+        from('build/libs/kicker.jar')
+        from('kicker.properties')
     }
-    defaultCommand(['java', '-Dorg.jboss.logging.provider="log4j2"','-jar', '/kicker.jar'])
+
+    setEnvironment('DOCKERIZE_VERSION', 'v0.6.1')
+    runCommand('wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz ' +
+                '    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz ' +
+                '    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz')
+    entryPoint([ 'dockerize', '-wait', 'tcp://postgres:5432','java', '-Dorg.jboss.logging.provider=log4j2', '-jar', '/kicker.jar'])
     exposePort(8080)
 }
 

@@ -57,6 +57,7 @@ dependencies {
 
 node {
     download = true
+    version = '10.8.0'
 }
 
 shadowJar {

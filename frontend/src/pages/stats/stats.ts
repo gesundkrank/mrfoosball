@@ -1,11 +1,11 @@
 import {Component} from "@angular/core";
 import {NavController, NavParams} from "ionic-angular";
-import {Http} from "@angular/http";
 import {MatchPage} from "../match/match";
 import {TournamentController} from "../../controllers/tournamentController";
 import {Player, Tournament} from "../../models/tournament";
 import {PlayerSkill} from "../../models/playerSkill";
 import {IndexPage} from "../index";
+import {HttpClient} from "@angular/common/http";
 
 @Component({
              selector: 'page-stats',
@@ -18,7 +18,7 @@ export class StatsPage {
   stats: Array<PlayerSkill>;
   lastTournaments: Array<Tournament>;
 
-  constructor(public http: Http,
+  constructor(public http: HttpClient,
               private readonly navCtrl: NavController,
               private readonly navParams: NavParams,
               private readonly tournamentController: TournamentController,) {
@@ -35,10 +35,10 @@ export class StatsPage {
   }
 
   handleError(error) {
-    console.log('Failed to load data: ', error.json());
+    console.log('Failed to load data: ', error);
 
     if (this.navCtrl.getActive().name !== IndexPage.name) {
-      this.navCtrl.push(IndexPage, error.json())
+      this.navCtrl.push(IndexPage, error.error)
     }
   }
 
@@ -65,33 +65,27 @@ export class StatsPage {
   }
 
   loadQueue() {
-    this.http.get("/api/tournament/" + this.id + "/queue")
-      .map(res => res.json())
-      .toPromise()
-      .then(queue => {
-        this.queue = queue;
-      })
-      .catch(err => this.handleError(err));
+    this.http.get<Array<Player>>("/api/tournament/" + this.id + "/queue")
+      .subscribe(
+        (queue: Array<Player>) => this.queue = queue,
+        error => this.handleError(error)
+      );
   }
 
   loadPlayerStats() {
-    this.http.get('/api/stats/' + this.id)
-      .map(res => res.json())
-      .toPromise()
-      .then(stats => {
-        this.stats = stats;
-      })
-      .catch(err => this.handleError(err));
+    this.http.get<Array<PlayerSkill>>('/api/stats/' + this.id)
+      .subscribe(
+        (stats: Array<PlayerSkill>) => this.stats = stats,
+        error => this.handleError(error)
+      );
   }
 
   loadLastTournaments() {
-    this.http.get('/api/tournament/' + this.id + '?num=10')
-      .map(res => res.json())
-      .toPromise()
-      .then(lastTournaments => {
-        this.lastTournaments = lastTournaments;
-      })
-      .catch(err => this.handleError(err));
+    this.http.get<Array<Tournament>>('/api/tournament/' + this.id + '?num=10')
+      .subscribe(
+        (lastTournaments: Array<Tournament>) => this.lastTournaments = lastTournaments,
+        error => this.handleError(error)
+      );
   }
 
   newMatch() {

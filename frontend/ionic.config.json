@@ -1,6 +1,5 @@
 {
-  "name": "kickerFrontend",
-  "app_id": "",
-  "v2": true,
-  "typescript": true
+  "name": "kicker-app",
+  "integrations": {},
+  "type": "ionic-angular"
 }

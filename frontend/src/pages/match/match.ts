@@ -80,7 +80,7 @@ export class MatchPage {
   }
 
   cancelMatch() {
-    this.tournamentCtrl.cancelMatch()
+    this.tournamentCtrl.cancelMatch().toPromise()
       .then(() => this.navCtrl.pop())
       .then(() => this.update());
   }
@@ -94,15 +94,14 @@ export class MatchPage {
           const message = [player1.name, 'and', player2.name, 'won!'].join(' ');
           return this.tournamentCtrl.getBestOfN()
             .then((bestOfN) => {
-              this.showPlayBestOfNAlert(title, message)
+              return this.showPlayBestOfNAlert(title, message)
                 .then((finishOption) => {
                     switch (finishOption) {
                       case FinishOptions.Finish:
                         this.navCtrl.pop();
-                        this.tournamentCtrl.finishTournament();
-                        break;
+                        return this.tournamentCtrl.finishTournament();
                       case FinishOptions.Rematch:
-                        this.tournamentCtrl.finishTournament()
+                        return this.tournamentCtrl.finishTournament()
                           .then((oldTournament) => {
                             this.navCtrl.pop();
                             return this.tournamentCtrl.newTournament(oldTournament);

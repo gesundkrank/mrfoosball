@@ -1,4 +1,4 @@
-export class Player {
+export interface Player {
   id: String;
   name: String;
   avatarImage: String;
@@ -17,17 +17,17 @@ export class Team {
 }
 
 export enum State {
-  RUNNING,
-  FINISHED,
+  RUNNING = "RUNNING",
+  FINISHED = "FINISHED",
 }
 
-export class Match {
+export interface Match {
   teamA: number;
   teamB: number;
   state: State;
 }
 
-export class Tournament {
+export interface Tournament {
   id: number;
   bestOfN: number;
   teamA: Team;

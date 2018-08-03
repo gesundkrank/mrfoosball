@@ -74,7 +74,7 @@ public class Bot implements Watcher {
 
         this.client = ClientBuilder.newClient();
         client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
-        client.property(ClientProperties.READ_TIMEOUT, 1000);
+        client.property(ClientProperties.READ_TIMEOUT, 10000);
 
         this.token = token;
         this.objectMapper = new ObjectMapper();
@@ -272,7 +272,7 @@ public class Bot implements Watcher {
                         }
                         break;
                     case "url":
-                        sendMessage(controller.getChannelUrl(channelId), slackChannelId);
+                        sendChannelUrlMessage(channelId, slackChannelId, sender);
                         break;
                     case "help":
                         sendHelpMessage(slackChannelId, sender);
@@ -293,8 +293,7 @@ public class Bot implements Watcher {
 
     private void sendHelpMessage(final String channel, final String sender) {
         final String text = "Supported slack commands:";
-        final Message message = new Message(channel, text, botUserId);
-        message.user = sender;
+        final Message message = new Message(channel, text, sender);
         message.as_user = true;
 
         final Message.Attachment addCommand =
@@ -359,9 +358,25 @@ public class Bot implements Watcher {
         postEphemeral(message);
     }
 
+    private Message.Attachment getQRCodeAttachment(final String channelId) {
+        final Message.Attachment attachment =
+                new Message.Attachment("Your Channel QR-Code",
+                                       "You can scan this code from on " +
+                                       controller.getBaseUrl());
+        attachment.image_url = controller.getChannelQRCodeUrl(channelId);
+        return attachment;
+    }
+
     private void postEphemeral(final Message message) {
         client.target("https://slack.com")
                 .path("/api/chat.postEphemeral")
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .header("Authorization", "Bearer " + token).post(Entity.json(message));
+    }
+
+    private void postMessage(final Message message) {
+        client.target("https://slack.com")
+                .path("/api/chat.postMessage")
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .header("Authorization", "Bearer " + token).post(Entity.json(message));
     }
@@ -401,10 +416,21 @@ public class Bot implements Watcher {
 
     private void sendChannelJoinedMessage(final String channel, final String id) {
         final String url = controller.getChannelUrl(id);
-        final String message =
+        final String messageText =
                 String.format("Nice to meet you! I'm your new favourite kicker-bot. Go to %s to "
                               + "find your team stats and to enter your results.", url);
-        sendMessage(message, channel);
+        final Message message = new Message(channel, messageText, botUserId);
+        message.as_user = true;
+        message.attachments.add(getQRCodeAttachment(channel));
+        postMessage(message);
+    }
+
+    private void sendChannelUrlMessage(final String channel, final String id, final String userId) {
+        final String url = controller.getChannelUrl(channel);
+        final Message message = new Message(id, url, userId);
+        message.as_user = true;
+        message.attachments.add(getQRCodeAttachment(channel));
+        postEphemeral(message);
     }
 
     private void sendNewTournamentMessage(final Tournament tournament, final String channel) {

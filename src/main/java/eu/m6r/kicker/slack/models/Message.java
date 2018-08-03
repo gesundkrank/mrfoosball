@@ -19,7 +19,7 @@ public class Message {
     public Message() {
     }
 
-    public Message(String channel, String text, String user) {
+    public Message(final String channel, final String text, final String user) {
         this.channel = channel;
         this.type = "message";
         this.text = text;
@@ -32,11 +32,16 @@ public class Message {
         public String title;
         public String text;
         public String color = "#ff0080";
+        public String image_url;
 
         public List<String> mrkdwn_in = new ArrayList<>();
         public List<Field> fields = new ArrayList<>();
 
         public Attachment() {
+        }
+
+        public Attachment(final String title) {
+            this.title = title;
         }
 
         public Attachment(final String title, final String text) {

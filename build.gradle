@@ -50,6 +50,9 @@ dependencies {
     compile group: 'de.gesundkrank.jskills', name: 'jskills', version: '1.1'
     // https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper
     compile group: 'org.apache.zookeeper', name: 'zookeeper', version: '3.4.11'
+    // https://mvnrepository.com/artifact/com.google.zxing/core
+    compile group: 'com.google.zxing', name: 'core', version: '3.3.3'
+
 }
 
 node {
@@ -102,10 +105,6 @@ task buildDocker(type: Docker, dependsOn: [buildProductionFrontend, buildApp]) {
 task dockerTest(type: Docker, dependsOn: [buildFrontend, buildApp]) {
     baseImage = 'openjdk:8'
     tag = 'kicker'
-    addFile {
-        from('build/libs/kicker.jar')
-        from('kicker.properties')
-    }
 
     setEnvironment('DOCKERIZE_VERSION', 'v0.6.1')
     runCommand('wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz ' +
@@ -113,6 +112,11 @@ task dockerTest(type: Docker, dependsOn: [buildFrontend, buildApp]) {
                 '    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz')
     entryPoint([ 'dockerize', '-wait', 'tcp://postgres:5432','java', '-Dorg.jboss.logging.provider=log4j2', '-jar', '/kicker.jar'])
     exposePort(8080)
+
+    addFile {
+        from('build/libs/kicker.jar')
+        from('kicker.properties')
+    }
 }
 
 composeUp.dependsOn(dockerTest)

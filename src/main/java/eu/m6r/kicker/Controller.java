@@ -27,6 +27,7 @@ public class Controller {
     private final TrueSkillCalculator trueSkillCalculator;
     private final PlayerQueues queues;
     private final RunningTournaments runningTournaments;
+    private final String baseUrl;
 
     public static Controller getInstance() throws IOException {
         if (INSTANCE == null) {
@@ -40,9 +41,11 @@ public class Controller {
         this.logger = LogManager.getLogger();
         this.trueSkillCalculator = new TrueSkillCalculator();
 
-        final String zookeeperHosts = Properties.getInstance().zookeeperHosts();
+        final Properties properties = Properties.getInstance();
+        final String zookeeperHosts = properties.zookeeperHosts();
         this.queues = new PlayerQueues(zookeeperHosts);
         this.runningTournaments = new RunningTournaments(zookeeperHosts);
+        this.baseUrl = properties.getAppUrl();
 
     }
 
@@ -264,6 +267,14 @@ public class Controller {
         try (final Store store = new Store()) {
             return store.getChannelBySlackId(slackChannelId).id;
         }
+    }
+
+    public String getChannelQRCodeUrl(final String channelId) {
+        return String.format("%s/api/channel/%s/qrcode", baseUrl, channelId);
+    }
+
+    public String getBaseUrl() {
+        return baseUrl;
     }
 
     public static class TooManyUsersException extends Exception {

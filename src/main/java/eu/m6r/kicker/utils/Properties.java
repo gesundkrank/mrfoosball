@@ -91,6 +91,10 @@ public class Properties {
                properties.containsKey("testTeamName");
     }
 
+    public int getQRCodeSize() {
+        return Integer.parseInt(properties.getProperty("qrCodeSize", "400"));
+    }
+
     public String getTestChannelId() {
         return properties.getProperty("testTeamId");
     }

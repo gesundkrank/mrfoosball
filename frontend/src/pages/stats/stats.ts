@@ -34,6 +34,14 @@ export class StatsPage {
     this.loadLastTournaments();
   }
 
+  handleError(error) {
+    console.log('Failed to load data: ', error.json());
+
+    if (this.navCtrl.getActive().name !== IndexPage.name) {
+      this.navCtrl.push(IndexPage, error.json())
+    }
+  }
+
   refresh(refresher) {
     this.checkTournament(false)
       .then(() => refresher.complete());
@@ -53,11 +61,7 @@ export class StatsPage {
           }
         }
       })
-      .catch((err) => {
-        console.log("Failed to load tournament: ", this.id);
-        window.history.pushState(null, null, '/');
-        this.navCtrl.push(IndexPage)
-      })
+      .catch(err => this.handleError(err));
   }
 
   loadQueue() {
@@ -66,7 +70,8 @@ export class StatsPage {
       .toPromise()
       .then(queue => {
         this.queue = queue;
-      });
+      })
+      .catch(err => this.handleError(err));
   }
 
   loadPlayerStats() {
@@ -75,7 +80,8 @@ export class StatsPage {
       .toPromise()
       .then(stats => {
         this.stats = stats;
-      });
+      })
+      .catch(err => this.handleError(err));
   }
 
   loadLastTournaments() {
@@ -84,7 +90,8 @@ export class StatsPage {
       .toPromise()
       .then(lastTournaments => {
         this.lastTournaments = lastTournaments;
-      });
+      })
+      .catch(err => this.handleError(err));
   }
 
   newMatch() {

@@ -10,7 +10,7 @@ public class RootAPI {
 
     @GET
     public Response redirectToFrontend() {
-        return Response.status(Response.Status.MOVED_PERMANENTLY)
+        return Response.status(Response.Status.TEMPORARY_REDIRECT)
                 .header("Location", "/frontend/index.html")
                 .build();
     }
@@ -18,7 +18,7 @@ public class RootAPI {
     @GET
     @Path("{id}")
     public Response redirectToFrontend(@PathParam("id") final String id) {
-        return Response.status(Response.Status.MOVED_PERMANENTLY)
+        return Response.status(Response.Status.TEMPORARY_REDIRECT)
                 .header("Location", "/frontend/index.html?id=" + id)
                 .build();
     }

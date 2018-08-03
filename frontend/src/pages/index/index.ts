@@ -1,5 +1,5 @@
 import {Component} from "@angular/core";
-import {NavController} from "ionic-angular";
+import {NavController, ToastController} from "ionic-angular";
 import {StatsPage} from "../stats/stats";
 
 @Component({
@@ -7,15 +7,33 @@ import {StatsPage} from "../stats/stats";
              templateUrl: 'index.html'
            })
 export class IndexPage {
-  constructor(private readonly navCtrl: NavController){
-    // userParams is an object we have in our nav-parameters
+  error: string;
 
-    const splits = location.search.substring(1).split("=");
-    if (splits && splits.length == 2 && splits[0] == 'id') {
-      this.navCtrl.push(StatsPage, {"id": splits[1]});
-    }
+  constructor(private readonly navCtrl: NavController,
+              private readonly toastCtrl: ToastController) {
   }
 
   ionViewDidEnter() {
+    const splits = location.search.substring(1).split("=");
+    if (splits && splits.length == 2 && splits[0] == 'id') {
+      this.navCtrl.push(StatsPage, {"id": splits[1]});
+    } else {
+      window.history.pushState(null, null, '/');
+
+      this.error = this.navCtrl.getActive().getNavParams().get('error');
+      if (this.error) {
+        this.presentToast()
+      }
+    }
+  }
+
+  presentToast() {
+    const toast = this.toastCtrl
+      .create({
+                message: this.error,
+                duration: 10000,
+                position: 'top'
+              });
+    toast.present();
   }
 }

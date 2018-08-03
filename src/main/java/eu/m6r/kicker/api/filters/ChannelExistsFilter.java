@@ -3,9 +3,9 @@ package eu.m6r.kicker.api.filters;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
@@ -27,15 +27,15 @@ public class ChannelExistsFilter implements ContainerRequestFilter {
             try (final Store store = new Store()) {
                 final String channelId = matcher.group();
                 if (!store.channelExists(channelId)) {
-//                    requestContext.abortWith(Response.status(Response.Status.NOT_FOUND).build());
-                    throw new WebApplicationException(
-                            String.format("Channel %s does not exist.", channelId),
-                            Response.Status.NOT_FOUND);
+                    final Response notFoundResponse = Response
+                            .status(Response.Status.NOT_FOUND)
+                            .entity(String.format("{ \"error\": \"Channel %s does not exist.\"}",
+                                                  channelId))
+                            .type(MediaType.APPLICATION_JSON_TYPE)
+                            .build();
+                    requestContext.abortWith(notFoundResponse);
                 }
-                return;
             }
         }
-
-        requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).build());
     }
 }

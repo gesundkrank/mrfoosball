@@ -7,6 +7,17 @@
 </ion-header>
 
 <ion-content padding>
-
+  <ion-grid>
+    <ion-row>
+      <ion-col col-12>
+        <button ion-button (click)="presentEnterChannelIdAlert($event)">
+          Enter Channel Id
+        </button>
+        <button ion-button (click)="presentQRCodeScannerModal($event)">
+          Scan QR Code
+        </button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
   <img src="/frontend/assets/kicker_background.png">
 </ion-content>

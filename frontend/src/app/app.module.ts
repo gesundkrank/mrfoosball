@@ -6,6 +6,8 @@ import {MatchPage} from "../pages/match/match";
 import {TournamentController} from "../controllers/tournamentController";
 import {StatsPage} from "../pages/stats/stats";
 import {IndexPage} from "../pages/index";
+import {ZXingScannerModule} from "@zxing/ngx-scanner";
+import {QRScannerPage} from "../pages/qr-scanner/qr-scanner";
 import {BrowserModule} from '@angular/platform-browser';
 import {HttpClientModule} from "@angular/common/http";
 
@@ -15,11 +17,13 @@ import {HttpClientModule} from "@angular/common/http";
     IndexPage,
     MatchPage,
     StatsPage,
+    QRScannerPage,
   ],
   imports: [
     BrowserModule,
     HttpClientModule,
     IonicModule.forRoot(MyApp),
+    ZXingScannerModule,
   ],
   bootstrap: [IonicApp],
   entryComponents: [
@@ -27,6 +31,7 @@ import {HttpClientModule} from "@angular/common/http";
     IndexPage,
     MatchPage,
     StatsPage,
+    QRScannerPage,
   ],
   providers: [
     {provide: ErrorHandler, useClass: IonicErrorHandler},

@@ -73,8 +73,8 @@ public class Bot implements Watcher {
         }
 
         this.client = ClientBuilder.newClient();
-        client.property(ClientProperties.CONNECT_TIMEOUT, 1000);
-        client.property(ClientProperties.READ_TIMEOUT, 10000);
+        client.property(ClientProperties.CONNECT_TIMEOUT, 30000);
+        client.property(ClientProperties.READ_TIMEOUT, 30000);
 
         this.token = token;
         this.objectMapper = new ObjectMapper();

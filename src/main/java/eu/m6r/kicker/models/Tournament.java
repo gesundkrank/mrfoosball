@@ -79,4 +79,17 @@ public class Tournament {
                              teamB,
                              state, matches);
     }
+
+    public Team winner() {
+        if (state == State.RUNNING) {
+            return null;
+        }
+
+        int sumMatches = 0;
+        for (final Match match : matches) {
+            sumMatches += match.teamA > match.teamB ? 1 : -1;
+        }
+
+        return sumMatches > 0 ? teamA : teamB;
+    }
 }

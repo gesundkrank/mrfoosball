@@ -7,6 +7,8 @@ import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.slack.MessageWriter;
+import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
 
@@ -28,6 +30,7 @@ public class Controller {
     private final PlayerQueues queues;
     private final RunningTournaments runningTournaments;
     private final String baseUrl;
+    private final MessageWriter messageWriter;
 
     public static Controller getInstance() throws IOException {
         if (INSTANCE == null) {
@@ -46,7 +49,7 @@ public class Controller {
         this.queues = new PlayerQueues(zookeeperHosts);
         this.runningTournaments = new RunningTournaments(zookeeperHosts);
         this.baseUrl = properties.getAppUrl();
-
+        this.messageWriter = new MessageWriter(properties.getSlackToken());
     }
 
     public String joinChannel(final String slackId, final String slackName) {
@@ -114,6 +117,17 @@ public class Controller {
         }
 
         this.runningTournaments.clear(channelId);
+
+        final Team winner = runningTournament.winner();
+        final Message message =
+                new Message(runningTournament.channel.slackId,
+                            String.format("The game is over. Congratulations to <@%s> and <@%s>!",
+                                          winner.player1.id,
+                                          winner.player2.id), null);
+        message.as_user = true;
+
+        messageWriter.postMessage(message);
+
     }
 
     public List<Tournament> getTournaments(final String channelId) {

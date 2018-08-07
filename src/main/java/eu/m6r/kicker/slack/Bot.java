@@ -21,7 +21,6 @@ import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -58,6 +57,7 @@ public class Bot implements Watcher {
     private final Client client;
     private final ZookeeperClient zookeeperClient;
     private final String lockNode;
+    private final MessageWriter messageWriter;
 
     private Session socketSession;
     private String botUserId;
@@ -80,6 +80,7 @@ public class Bot implements Watcher {
         this.objectMapper = new ObjectMapper();
         this.controller = Controller.getInstance();
         this.zookeeperClient = zookeeperClient;
+        this.messageWriter = new MessageWriter(token);
 
         zookeeperClient.createPath(ZOO_KEEPER_PARENT_PATH);
         this.lockNode = zookeeperClient.createEphemeralSequential(ZOO_KEEPER_PATH, BOT_ID);
@@ -355,7 +356,7 @@ public class Bot implements Watcher {
         cancelCommand.fields = cancelFields;
 
         message.attachments.add(cancelCommand);
-        postEphemeral(message);
+        messageWriter.postEphemeral(message);
     }
 
     private Message.Attachment getQRCodeAttachment(final String channelId) {
@@ -365,20 +366,6 @@ public class Bot implements Watcher {
                                        controller.getBaseUrl());
         attachment.image_url = controller.getChannelQRCodeUrl(channelId);
         return attachment;
-    }
-
-    private void postEphemeral(final Message message) {
-        client.target("https://slack.com")
-                .path("/api/chat.postEphemeral")
-                .request(MediaType.APPLICATION_JSON_TYPE)
-                .header("Authorization", "Bearer " + token).post(Entity.json(message));
-    }
-
-    private void postMessage(final Message message) {
-        client.target("https://slack.com")
-                .path("/api/chat.postMessage")
-                .request(MediaType.APPLICATION_JSON_TYPE)
-                .header("Authorization", "Bearer " + token).post(Entity.json(message));
     }
 
     private void sendMessage(final String text, final String channel) {
@@ -422,7 +409,7 @@ public class Bot implements Watcher {
         final Message message = new Message(channel, messageText, botUserId);
         message.as_user = true;
         message.attachments.add(getQRCodeAttachment(channel));
-        postMessage(message);
+        messageWriter.postMessage(message);
     }
 
     private void sendChannelUrlMessage(final String channel, final String id, final String userId) {
@@ -430,7 +417,7 @@ public class Bot implements Watcher {
         final Message message = new Message(id, url, userId);
         message.as_user = true;
         message.attachments.add(getQRCodeAttachment(channel));
-        postEphemeral(message);
+        messageWriter.postEphemeral(message);
     }
 
     private void sendNewTournamentMessage(final Tournament tournament, final String channel) {

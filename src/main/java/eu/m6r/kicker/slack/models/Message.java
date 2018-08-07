@@ -71,6 +71,39 @@ public class Message {
                 this.title = title;
                 this.value = value;
             }
+
+            @Override
+            public String toString() {
+                return "Field{" +
+                       "title='" + title + '\'' +
+                       ", value='" + value + '\'' +
+                       ", isShort=" + isShort +
+                       '}';
+            }
         }
+
+        @Override
+        public String toString() {
+            return "Attachment{" +
+                   "title='" + title + '\'' +
+                   ", text='" + text + '\'' +
+                   ", color='" + color + '\'' +
+                   ", image_url='" + image_url + '\'' +
+                   ", mrkdwn_in=" + mrkdwn_in +
+                   ", fields=" + fields +
+                   '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+               "channel='" + channel + '\'' +
+               ", type='" + type + '\'' +
+               ", text='" + text + '\'' +
+               ", user='" + user + '\'' +
+               ", as_user=" + as_user +
+               ", attachments=" + attachments +
+               '}';
     }
 }

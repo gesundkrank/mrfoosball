@@ -65,6 +65,10 @@ shadowJar {
     classifier = null
 }
 
+task tslint(type: NpmTask) {
+    args = ['--prefix', 'frontend', 'run-script', 'tslint']
+}
+
 task installFrontend(type: NpmTask) {
     args = ['--prefix', 'frontend', 'install']
 }
@@ -78,7 +82,7 @@ task buildFrontend(type: NpmTask, dependsOn: cleanFrontend) {
     args = ['--prefix', 'frontend', 'run', 'build']
 }
 
-task buildProductionFrontend(type: NpmTask, dependsOn: cleanFrontend) {
+task buildProductionFrontend(type: NpmTask, dependsOn: [cleanFrontend, tslint]) {
     args = ['--prefix', 'frontend', 'run', 'buildProduction']
 }
 

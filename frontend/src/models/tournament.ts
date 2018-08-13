@@ -1,7 +1,7 @@
 export interface Player {
-  id: String;
-  name: String;
-  avatarImage: String;
+  id: string;
+  name: string;
+  avatarImage: string;
   trueSkillMean: number;
   trueSkillStandardDeviation: number;
 }
@@ -12,13 +12,13 @@ export class Team {
 
   rating() {
     return Math.round((this.player1.trueSkillMean - 3 * this.player1.trueSkillStandardDeviation) +
-                      (this.player2.trueSkillMean - 3 * this.player2.trueSkillStandardDeviation))
+                      (this.player2.trueSkillMean - 3 * this.player2.trueSkillStandardDeviation));
   }
 }
 
 export enum State {
-  RUNNING = "RUNNING",
-  FINISHED = "FINISHED",
+  RUNNING = 'RUNNING',
+  FINISHED = 'FINISHED',
 }
 
 export interface Match {

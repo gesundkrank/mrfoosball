@@ -1,7 +1,7 @@
 export class PlayerSkill {
-  id: String;
-  name: String;
-  avatarImage: String;
+  id: string;
+  name: string;
+  avatarImage: string;
   games: number;
   wins: number;
   skill: number;

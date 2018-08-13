@@ -69,13 +69,19 @@
               <ion-avatar>
                 <img src="{{ tournament.teamA.player1.avatarImage }}">
               </ion-avatar>
-              <div class="scoreChange" [ngClass]="{'plus': tournament.teamAPlayer1SkillChange > 0, 'minus': tournament.teamAPlayer1SkillChange < 0}">{{ roundSkill(tournament.teamAPlayer1SkillChange) }}</div>
+              <div class="scoreChange"
+                   [ngClass]="{'plus': tournament.teamAPlayer1SkillChange > 0, 'minus': tournament.teamAPlayer1SkillChange < 0}">
+                {{ roundSkill(tournament.teamAPlayer1SkillChange) }}
+              </div>
             </ion-col>
             <ion-col>
               <ion-avatar>
                 <img src="{{ tournament.teamA.player2.avatarImage }}">
               </ion-avatar>
-              <div class="scoreChange" [ngClass]="{'plus': tournament.teamAPlayer2SkillChange > 0, 'minus': tournament.teamAPlayer2SkillChange < 0}">{{ roundSkill(tournament.teamAPlayer2SkillChange) }}</div>
+              <div class="scoreChange"
+                   [ngClass]="{'plus': tournament.teamAPlayer2SkillChange > 0, 'minus': tournament.teamAPlayer2SkillChange < 0}">
+                {{ roundSkill(tournament.teamAPlayer2SkillChange) }}
+              </div>
             </ion-col>
             <ion-col text-center class="gameResult">
               <div>{{ winsTeamA(tournament) }} - {{ winsTeamB(tournament) }}</div>
@@ -88,13 +94,19 @@
             <ion-col>
               <ion-avatar>
                 <img src="{{ tournament.teamB.player1.avatarImage }}">
-                <div class="scoreChange" [ngClass]="{'plus': tournament.teamBPlayer1SkillChange > 0, 'minus': tournament.teamBPlayer1SkillChange < 0}">{{ roundSkill(tournament.teamBPlayer1SkillChange) }}</div>
+                <div class="scoreChange"
+                     [ngClass]="{'plus': tournament.teamBPlayer1SkillChange > 0, 'minus': tournament.teamBPlayer1SkillChange < 0}">
+                  {{ roundSkill(tournament.teamBPlayer1SkillChange) }}
+                </div>
               </ion-avatar>
             </ion-col>
-            <ion-col >
+            <ion-col>
               <ion-avatar align-items-center>
                 <img src="{{ tournament.teamB.player2.avatarImage }}">
-                <div class="scoreChange" [ngClass]="{'plus': tournament.teamBPlayer2SkillChange > 0, 'minus': tournament.teamBPlayer2SkillChange < 0}">{{ roundSkill(tournament.teamBPlayer2SkillChange) }}</div>
+                <div class="scoreChange"
+                     [ngClass]="{'plus': tournament.teamBPlayer2SkillChange > 0, 'minus': tournament.teamBPlayer2SkillChange < 0}">
+                  {{ roundSkill(tournament.teamBPlayer2SkillChange) }}
+                </div>
               </ion-avatar>
             </ion-col>
           </ion-row>

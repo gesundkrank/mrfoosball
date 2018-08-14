@@ -1,0 +1,39 @@
+<ion-header>
+  <ion-navbar>
+    <ion-grid>
+      <ion-row>
+        <ion-col col-lg-8>
+          <ion-title>
+            QR-Code Scanner
+          </ion-title>
+        </ion-col>
+        <ion-col col-lg-4>
+          <ion-buttons right>
+            <button ion-button *ngIf="availableCameras > 1" (click)="toggleCamera()">
+              Toggle Camera
+            </button>
+            <button ion-button (click)="close()">
+              <ion-icon name="close"></ion-icon>
+            </button>
+          </ion-buttons>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+  <ion-card>
+    <zxing-scanner #scanner
+                   (camerasFound)="chooseCamera($event)"
+                   (scanSuccess)="scanSuccess($event)"
+                   (scanFailure)="scanFailure($event)"
+    ></zxing-scanner>
+    <ion-card-content>
+      <p>
+        Please hold the QR-Code you found in the Slack Channel into your Camera. In case you don't
+        have a QR-Code you can get it by writing "@foosball dashboard" in your Slack Channel.
+      </p>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

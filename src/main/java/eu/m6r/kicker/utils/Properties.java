@@ -24,11 +24,10 @@ public class Properties {
         return INSTANCE;
     }
 
-    private final Logger logger;
     private final java.util.Properties properties;
 
     private Properties() {
-        this.logger = LogManager.getLogger();
+        final Logger logger = LogManager.getLogger();
         this.properties = new java.util.Properties();
 
         try {
@@ -63,7 +62,8 @@ public class Properties {
     }
 
     public String getConnectionDialect() {
-        return properties.getProperty("connectionDialect", "org.hibernate.dialect.PostgreSQLDialect");
+        return properties
+                .getProperty("connectionDialect", "org.hibernate.dialect.PostgreSQLDialect");
     }
 
     public String getConnectionUsername() {
@@ -78,11 +78,32 @@ public class Properties {
         return properties.getProperty("connectionHbm2ddl", "validate");
     }
 
-    public long getInactiveTimeout() {
-        return Long.parseLong(properties.getProperty("inactiveTimeout", "60"));
-    }
-
     public String zookeeperHosts() {
         return properties.getProperty("zookeeperHosts");
+    }
+
+    public String getAppUrl() {
+        return properties.getProperty("appUrl", "http://localhost:8080");
+    }
+
+    public boolean hasTestChannel() {
+        return properties.containsKey("testTeamId") && properties.containsKey("testTeamSlackId") &&
+               properties.containsKey("testTeamName");
+    }
+
+    public int getQRCodeSize() {
+        return Integer.parseInt(properties.getProperty("qrCodeSize", "400"));
+    }
+
+    public String getTestChannelId() {
+        return properties.getProperty("testTeamId");
+    }
+
+    public String getTestChannelSlackId() {
+        return properties.getProperty("testTeamSlackId");
+    }
+
+    public String getTestChannelName() {
+        return properties.getProperty("testTeamName");
     }
 }

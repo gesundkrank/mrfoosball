@@ -20,9 +20,9 @@ public class Stats {
         this.controller = Controller.getInstance();
     }
 
-    public List<TeamStat> calcTeamStats() {
+    public List<TeamStat> calcTeamStats(final String channelId) {
         final Map<Team, TeamStat> stats = new HashMap<>();
-        for (final Tournament tournament : controller.getTournaments()) {
+        for (final Tournament tournament : controller.getTournaments(channelId)) {
             final Team teamA = tournament.teamA;
             final TeamStat teamStatA = stats.getOrDefault(teamA, new TeamStat(teamA));
             final Team teamB = tournament.teamB;

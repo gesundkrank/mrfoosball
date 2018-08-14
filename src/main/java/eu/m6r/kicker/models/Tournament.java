@@ -25,11 +25,11 @@ import javax.persistence.Table;
         ),
         @NamedQuery(
                 name = "get_tournaments",
-                query = "FROM Tournament"
+                query = "FROM Tournament WHERE channel = :channel"
         ),
         @NamedQuery(
                 name = "get_tournaments_with_state",
-                query = "FROM Tournament WHERE state = :state ORDER BY id DESC"
+                query = "FROM Tournament WHERE channel = :channel AND state = :state ORDER BY id DESC"
         )
 })
 @Entity
@@ -37,10 +37,12 @@ import javax.persistence.Table;
 public class Tournament {
     public Tournament() {}
 
-    public Tournament(final int bestOfN, final Team teamA, final Team teamB) {
+    public Tournament(final int bestOfN, final Team teamA, final Team teamB,
+                      final Channel channel) {
         this.bestOfN = bestOfN;
         this.teamA = teamA;
         this.teamB = teamB;
+        this.channel = channel;
     }
 
     @Id
@@ -68,10 +70,26 @@ public class Tournament {
     public Double teamBPlayer1SkillChange;
     public Double teamBPlayer2SkillChange;
 
+    @ManyToOne
+    public Channel channel;
+
     @Override
     public String toString() {
         return String.format("id=%d, teamA=%s, teamB=%s, state=%s, matches=%s", id, teamA,
                              teamB,
                              state, matches);
+    }
+
+    public Team winner() {
+        if (state == State.RUNNING) {
+            return null;
+        }
+
+        int sumMatches = 0;
+        for (final Match match : matches) {
+            sumMatches += match.teamA > match.teamB ? 1 : -1;
+        }
+
+        return sumMatches > 0 ? teamA : teamB;
     }
 }

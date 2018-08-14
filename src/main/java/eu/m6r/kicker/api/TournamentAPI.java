@@ -1,6 +1,7 @@
 package eu.m6r.kicker.api;
 
 import eu.m6r.kicker.Controller;
+import eu.m6r.kicker.api.annotations.CheckChannelId;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.Tournament;
 
@@ -17,13 +18,15 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/api/tournament")
+@Path("/api/tournament/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}}")
+@CheckChannelId
 public class TournamentAPI {
 
     private final Logger logger;
@@ -36,19 +39,21 @@ public class TournamentAPI {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Tournament> getTournament(@QueryParam("num") Integer num) {
+    public List<Tournament> getTournament(@PathParam("channelId") final String channelId,
+                                          @QueryParam("num") final Integer num) {
         if (num == null) {
-            return controller.getTournaments();
+            return controller.getTournaments(channelId);
         }
 
-        return controller.getTournaments(num);
+        return controller.getTournaments(channelId, num);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public void updateTournament(final Tournament tournament) {
+    public void updateTournament(@PathParam("channelId") final String channelId,
+                                 final Tournament tournament) {
         try {
-            controller.updateTournament(tournament);
+            controller.updateTournament(channelId, tournament);
         } catch (IOException | Controller.TournamentNotRunningException e) {
             logger.error("Failed to update tournament", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
@@ -56,9 +61,9 @@ public class TournamentAPI {
     }
 
     @DELETE
-    public void cancelTournament() {
+    public void cancelTournament(@PathParam("channelId") final String channelId) {
         try {
-            controller.cancelRunningTournament();
+            controller.cancelRunningTournament(channelId);
         } catch (IOException e) {
             logger.info("Tried to cancel non running match.");
         }
@@ -66,20 +71,21 @@ public class TournamentAPI {
 
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public void newTournament(@FormParam("playerA1") final String playerA1,
+    public void newTournament(@PathParam("channelId") final String channelId,
+                              @FormParam("playerA1") final String playerA1,
                               @FormParam("playerA2") final String playerA2,
                               @FormParam("playerB1") final String playerB1,
                               @FormParam("playerB2") final String playerB2,
                               @FormParam("bestOfN") final int bestOfN) {
 
         try {
-            controller.resetPlayers();
-            controller.addPlayer(playerA1);
-            controller.addPlayer(playerA2);
-            controller.addPlayer(playerB1);
-            controller.addPlayer(playerB2);
+            controller.resetPlayers(channelId);
+            controller.addPlayer(channelId, playerA1);
+            controller.addPlayer(channelId, playerA2);
+            controller.addPlayer(channelId, playerB1);
+            controller.addPlayer(channelId, playerB2);
 
-            controller.startTournament(false, bestOfN);
+            controller.startTournament(channelId, false, bestOfN);
         } catch (Exception e) {
             logger.error(e);
             throw new WebApplicationException(500);
@@ -89,10 +95,10 @@ public class TournamentAPI {
     @GET
     @Path("running")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getRunningTournament() {
+    public Response getRunningTournament(@PathParam("channelId") final String channelId) {
         try {
-            if (controller.hasRunningTournament()) {
-                return Response.ok(controller.getRunningTournament()).build();
+            if (controller.hasRunningTournament(channelId)) {
+                return Response.ok(controller.getRunningTournament(channelId)).build();
             }
         } catch (IOException e) {
             logger.error("Failed to get running tournament.", e);
@@ -105,9 +111,9 @@ public class TournamentAPI {
 
     @POST
     @Path("match")
-    public void newMatch() {
+    public void newMatch(@PathParam("channelId") final String channelId) {
         try {
-            controller.newMatch();
+            controller.newMatch(channelId);
         } catch (Controller.InvalidTournamentStateException |
                 Controller.TournamentNotRunningException | IOException e) {
             logger.error("Failed to create new match!", e);
@@ -117,9 +123,9 @@ public class TournamentAPI {
 
     @POST
     @Path("finish")
-    public void finishTournament() {
+    public void finishTournament(@PathParam("channelId") final String channelId) {
         try {
-            controller.finishTournament();
+            controller.finishTournament(channelId);
         } catch (Controller.InvalidTournamentStateException |
                 Controller.TournamentNotRunningException | IOException e) {
             logger.error("Failed to finish tournament!", e);
@@ -129,9 +135,9 @@ public class TournamentAPI {
 
     @GET
     @Path("queue")
-    public List<Player> getPlayersInQueue() {
+    public List<Player> getPlayersInQueue(@PathParam("channelId") final String channelId) {
         try {
-            return controller.getPlayersInQueue();
+            return controller.getPlayersInQueue(channelId);
         } catch (IOException e) {
             logger.error("Failed to get players in queue.", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);

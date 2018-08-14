@@ -1,20 +1,18 @@
-import {AlertController} from "ionic-angular";
-import {NavController} from "ionic-angular";
-import {Component} from "@angular/core";
+import { Component } from '@angular/core';
+import { AlertController, NavController, NavParams } from 'ionic-angular';
 
-import {TournamentController} from "../../controllers/tournamentController";
-import {Match} from "../../models/tournament";
-import {Team} from "../../models/tournament";
+import { TournamentController } from '../../controllers/tournamentController';
+import { Match, Team } from '../../models/tournament';
 
 enum FinishOptions {
   Finish,
-  Rematch
+  Rematch,
 }
 
 @Component({
-  selector: 'page-match',
-  templateUrl: 'match.html'
-})
+             selector: 'page-match',
+             templateUrl: 'match.html',
+           })
 export class MatchPage {
 
   private match: Match;
@@ -28,27 +26,30 @@ export class MatchPage {
 
   constructor(
     readonly navCtrl: NavController,
+    private readonly navParams: NavParams,
     private readonly alertCtrl: AlertController,
-    private readonly tournamentCtrl: TournamentController,
+    private readonly tournamentCtrl: TournamentController
   ) {
     this.teamPositions = {};
     this.leftWins = 0;
     this.rightWins = 0;
+    const id = this.navParams.get('id');
+    this.tournamentCtrl.setId(id);
   }
 
   ionViewDidEnter() {
-    this.update();
+    return this.update();
   }
 
   addGoal(color: string) {
-    this.tournamentCtrl
+    return this.tournamentCtrl
       .addGoal(this.teamPositions[color])
       .then(() => this.update());
   }
 
   undo() {
     this.tournamentCtrl.undo();
-    this.update();
+    return this.update();
   }
 
   canUndo() {
@@ -77,7 +78,7 @@ export class MatchPage {
   }
 
   cancelMatch() {
-    this.tournamentCtrl.cancelMatch()
+    return this.tournamentCtrl.cancelMatch().toPromise()
       .then(() => this.navCtrl.pop())
       .then(() => this.update());
   }
@@ -85,53 +86,51 @@ export class MatchPage {
   private finishMatch(matchWinner: Team) {
     const [player1, player2] = [matchWinner.player1, matchWinner.player2];
     return this.tournamentCtrl.finishMatch()
-      .then((tournamentFinished) => {
+      .then(tournamentFinished => {
         if (tournamentFinished) {
-          const title = "Done";
+          const title = 'Done';
           const message = [player1.name, 'and', player2.name, 'won!'].join(' ');
           return this.tournamentCtrl.getBestOfN()
-            .then((bestOfN) => {
-              this.showPlayBestOfNAlert(title, message)
-                .then((finishOption) => {
-                    switch (finishOption) {
-                      case FinishOptions.Finish:
-                        this.navCtrl.pop();
-                        this.tournamentCtrl.finishTournament();
-                        break;
-                      case FinishOptions.Rematch:
-                        this.tournamentCtrl.finishTournament()
-                          .then((oldTournament) => {
-                            this.navCtrl.pop();
-                            return this.tournamentCtrl.newTournament(oldTournament);
-                          });
-                    }
-                  }
-                )
+            .then(() => {
+              return this.showPlayBestOfNAlert(title, message)
+                .then(finishOption => {
+                        switch (finishOption) {
+                          case FinishOptions.Finish:
+                            return this.navCtrl.pop()
+                              .then(() => this.tournamentCtrl.finishTournament());
+                          case FinishOptions.Rematch:
+                            return this.tournamentCtrl.finishTournament()
+                              .then(oldTournament => this.navCtrl.pop()
+                                .then(() => this.tournamentCtrl.newTournament(oldTournament))
+                              );
+                        }
+                      }
+                );
             });
         }
-        this.update();
+        return this.update();
       });
   }
 
   showPlayBestOfNAlert(title, message) {
-    return new Promise((resolve, reject) => {
-      const alert = this.alertCtrl.create({
-        title,
-        message,
-        buttons: [{
-          text: 'Finish',
-          role: 'cancel',
-          handler: () => {
-            resolve(FinishOptions.Finish)
-          },
-        }, {
-          text: 'Rematch',
-          handler: () => {
-            resolve(FinishOptions.Rematch)
-          },
-        }],
-      });
-      alert.present();
+    return new Promise(resolve => {
+      const alert = this.alertCtrl
+        .create({
+                  title,
+                  message,
+                  buttons: [
+                    {
+                      text: 'Finish',
+                      role: 'cancel',
+                      handler: () => resolve(FinishOptions.Finish),
+                    },
+                    {
+                      text: 'Rematch',
+                      handler: () => resolve(FinishOptions.Rematch),
+                    },
+                  ],
+                });
+      return alert.present();
     });
   }
 
@@ -141,9 +140,9 @@ export class MatchPage {
   }
 
   private update() {
-    this.getRunning()
+    return this.getRunning()
       .then(() => this.tournamentCtrl.getWinnerTeam(this.match))
-      .then((winner) => winner ? this.finishMatch(winner).then(() => this.getRunning()) : null)
+      .then(winner => winner ? this.finishMatch(winner).then(() => this.getRunning()) : undefined)
       .then(() => this.tournamentCtrl.getTeamNames())
       .then((teamColors => this.teamPositions = teamColors))
       .then(() => this.tournamentCtrl.getTeams())
@@ -152,13 +151,13 @@ export class MatchPage {
         this.rightTeam = teams[this.teamPositions['right']];
       }))
       .then(() => this.tournamentCtrl.getWinnerTeam(this.match))
-      .then((winner) => winner ? this.finishMatch(winner) : null)
+      .then(winner => winner ? this.finishMatch(winner) : undefined)
       .then(() => this.tournamentCtrl.getWins())
-      .then((wins) => {
+      .then(wins => {
         this.leftWins = wins[this.teamPositions['left']];
         this.rightWins = wins[this.teamPositions['right']];
       })
       .then(() => this.tournamentCtrl.getBestOfN())
-      .then((bestOfN) => this.bestOfN = bestOfN);
+      .then(bestOfN => this.bestOfN = bestOfN);
   }
 }

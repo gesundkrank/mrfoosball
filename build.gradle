@@ -5,7 +5,7 @@ buildscript {
 
     dependencies {
         classpath 'se.transmode.gradle:gradle-docker:1.2'
-        classpath 'com.avast.gradle:gradle-docker-compose-plugin:0.6.9'
+        classpath 'com.avast.gradle:gradle-docker-compose-plugin:0.8.3'
     }
 }
 
@@ -31,7 +31,7 @@ dependencies {
             'org.glassfish.jersey.media:jersey-media-moxy:2.27',
             'org.glassfish.jersey.inject:jersey-hk2:2.27'
     // https://mvnrepository.com/artifact/org.hibernate/hibernate-core
-    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.8.Final'
+    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.13.Final'
     // https://mvnrepository.com/artifact/javax.websocket/javax.websocket-client-api
     compile group: 'javax.websocket', name: 'javax.websocket-client-api', version: '1.1'
     compile 'org.glassfish.tyrus:tyrus-client:1.1'
@@ -41,22 +41,32 @@ dependencies {
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.5'
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     compile group: 'org.postgresql', name: 'postgresql', version: '9.4.1212'
-    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.8.1'
-    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.8.1'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.8.2'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.8.2'
+    compile 'org.apache.logging.log4j:log4j-1.2-api:2.8.2'
+    compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.8.2'
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     compile group: 'org.postgresql', name: 'postgresql', version: '9.4.1212'
     compile group: 'de.gesundkrank.jskills', name: 'jskills', version: '1.1'
     // https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper
     compile group: 'org.apache.zookeeper', name: 'zookeeper', version: '3.4.11'
+    // https://mvnrepository.com/artifact/com.google.zxing/core
+    compile group: 'com.google.zxing', name: 'core', version: '3.3.3'
+
 }
 
 node {
     download = true
+    version = '10.8.0'
 }
 
 shadowJar {
     baseName = 'kicker'
     classifier = null
+}
+
+task tslint(type: NpmTask) {
+    args = ['--prefix', 'frontend', 'run-script', 'tslint']
 }
 
 task installFrontend(type: NpmTask) {
@@ -72,7 +82,7 @@ task buildFrontend(type: NpmTask, dependsOn: cleanFrontend) {
     args = ['--prefix', 'frontend', 'run', 'build']
 }
 
-task buildProductionFrontend(type: NpmTask, dependsOn: cleanFrontend) {
+task buildProductionFrontend(type: NpmTask, dependsOn: [cleanFrontend, tslint]) {
     args = ['--prefix', 'frontend', 'run', 'buildProduction']
 }
 
@@ -91,21 +101,27 @@ task buildDocker(type: Docker, dependsOn: [buildProductionFrontend, buildApp]) {
     tag = project.findProperty('repository') ?: 'kicker'
     tagVersion = project.findProperty('tag')
     addFile {
-        from ('build/libs/kicker.jar')
+        from('build/libs/kicker.jar')
     }
-    defaultCommand(['java', '-jar', '/kicker.jar'])
+    entryPoint(['java', '-jar', '/kicker.jar'])
     exposePort(8080)
 }
 
-task dockerTest(type:Docker, dependsOn: [buildFrontend, buildApp]) {
+task dockerTest(type: Docker, dependsOn: [buildFrontend, buildApp]) {
     baseImage = 'openjdk:8'
     tag = 'kicker'
-    addFile {
-        from ('build/libs/kicker.jar')
-        from ('kicker.properties')
-    }
-    defaultCommand(['java', '-jar', '/kicker.jar'])
+
+    setEnvironment('DOCKERIZE_VERSION', 'v0.6.1')
+    runCommand('wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz ' +
+                '    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz ' +
+                '    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz')
+    entryPoint([ 'dockerize', '-wait', 'tcp://postgres:5432','java', '-Dorg.jboss.logging.provider=log4j2', '-jar', '/kicker.jar'])
     exposePort(8080)
+
+    addFile {
+        from('build/libs/kicker.jar')
+        from('kicker.properties')
+    }
 }
 
 composeUp.dependsOn(dockerTest)

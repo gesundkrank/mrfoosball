@@ -1,11 +1,14 @@
 package eu.m6r.kicker;
 
+import eu.m6r.kicker.models.Channel;
 import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.slack.MessageWriter;
+import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
 
@@ -15,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class Controller {
@@ -23,8 +27,10 @@ public class Controller {
 
     private final Logger logger;
     private final TrueSkillCalculator trueSkillCalculator;
-    private final PlayerQueue queue;
-    private final RunningTournament runningTournament;
+    private final PlayerQueues queues;
+    private final RunningTournaments runningTournaments;
+    private final String baseUrl;
+    private final MessageWriter messageWriter;
 
     public static Controller getInstance() throws IOException {
         if (INSTANCE == null) {
@@ -38,44 +44,63 @@ public class Controller {
         this.logger = LogManager.getLogger();
         this.trueSkillCalculator = new TrueSkillCalculator();
 
-        final String zookeeperHosts = Properties.getInstance().zookeeperHosts();
-        this.queue = new PlayerQueue(zookeeperHosts);
-        this.runningTournament = new RunningTournament(zookeeperHosts);
-
+        final Properties properties = Properties.getInstance();
+        final String zookeeperHosts = properties.zookeeperHosts();
+        this.queues = new PlayerQueues(zookeeperHosts);
+        this.runningTournaments = new RunningTournaments(zookeeperHosts);
+        this.baseUrl = properties.getAppUrl();
+        this.messageWriter = new MessageWriter(properties.getSlackToken());
     }
 
-    public void startTournament() throws TournamentRunningException, IOException {
-        startTournament(true, 3);
+    public String joinChannel(final String slackId, final String slackName) {
+        final String id = UUID.randomUUID().toString();
+        final Channel channel = new Channel();
+        channel.id = id;
+        channel.name = slackName;
+        channel.slackId = slackId;
+
+        try (final Store store = new Store()) {
+            store.saveChannel(channel);
+        }
+
+        return id;
     }
 
-    public synchronized Tournament startTournament(final boolean shuffle, final int bestOfN)
+    public void startTournament(final String channelId)
             throws TournamentRunningException, IOException {
-        if (hasRunningTournament()) {
+        startTournament(channelId, true, 3);
+    }
+
+    public synchronized Tournament startTournament(final String channelId, final boolean shuffle,
+                                                   final int bestOfN)
+            throws TournamentRunningException, IOException {
+        if (hasRunningTournament(channelId)) {
             throw new TournamentRunningException();
         }
 
-        List<Player> playerList = queue.get();
+        List<Player> playerList = queues.get(channelId);
 
         if (shuffle) {
             Collections.shuffle(playerList);
             playerList = trueSkillCalculator.getBestMatch(playerList);
         }
 
-        queue.clear();
+        queues.clear(channelId);
 
         try (final Store store = new Store()) {
             final Team teamA = store.getTeam(playerList.get(0), playerList.get(1));
             final Team teamB = store.getTeam(playerList.get(2), playerList.get(3));
-            final Tournament tournament = new Tournament(bestOfN, teamA, teamB);
-            runningTournament.save(tournament);
+            final Channel channel = store.getChannel(channelId);
+            final Tournament tournament = new Tournament(bestOfN, teamA, teamB, channel);
+            runningTournaments.save(tournament);
             return tournament;
         }
 
     }
 
-    public synchronized void finishTournament()
+    public synchronized void finishTournament(final String channelId)
             throws InvalidTournamentStateException, IOException, TournamentNotRunningException {
-        final Tournament runningTournament = this.runningTournament.get();
+        final Tournament runningTournament = this.runningTournaments.get(channelId);
         for (final Match match : runningTournament.matches) {
             if (match.state == State.RUNNING) {
                 throw new InvalidTournamentStateException("Can't finish tournament if matches"
@@ -91,65 +116,77 @@ public class Controller {
             store.saveTournament(updatedTournament);
         }
 
-        this.runningTournament.clear();
+        this.runningTournaments.clear(channelId);
+
+        final Team winner = runningTournament.winner();
+        final Message message =
+                new Message(runningTournament.channel.slackId,
+                            String.format("The game is over. Congratulations to <@%s> and <@%s>!",
+                                          winner.player1.id,
+                                          winner.player2.id), null);
+        message.as_user = true;
+
+        messageWriter.postMessage(message);
+
     }
 
-    public List<Tournament> getTournaments() {
+    public List<Tournament> getTournaments(final String channelId) {
         try (final Store store = new Store()) {
-            return store.getTournaments();
+            return store.getTournaments(channelId);
         }
     }
 
-    public List<Tournament> getTournaments(int last) {
+    public List<Tournament> getTournaments(final String channelId, final int last) {
         try (final Store store = new Store()) {
-            return store.getLastTournaments(last);
+            return store.getLastTournaments(channelId, last);
         }
     }
 
-    public boolean hasRunningTournament() throws IOException {
+    public String getChannelUrl(final String channelId) {
+        final String appUrl = Properties.getInstance().getAppUrl();
+        try (final Store store = new Store()) {
+            return appUrl + "/" + store.getChannel(channelId).id;
+        }
+    }
+
+    public boolean hasRunningTournament(final String channelId) throws IOException {
         try {
-            runningTournament.get();
+            runningTournaments.get(channelId);
             return true;
         } catch (TournamentNotRunningException e) {
             return false;
         }
     }
 
-    public String newTournamentMessage() throws IOException, TournamentNotRunningException {
-        final Tournament tournament = getRunningTournament();
-        return String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
-                             tournament.teamA.player1.id, tournament.teamA.player2.id,
-                             tournament.teamB.player1.id, tournament.teamB.player2.id);
-    }
-
-    public Tournament getRunningTournament() throws IOException, TournamentNotRunningException {
-        return runningTournament.get();
-    }
-
-    public void updateTournament(final Tournament tournament)
+    public Tournament getRunningTournament(final String channelId)
             throws IOException, TournamentNotRunningException {
-        final Tournament storedTournament = runningTournament.get();
+        return runningTournaments.get(channelId);
+    }
+
+    public void updateTournament(final String channelId, final Tournament tournament)
+            throws IOException, TournamentNotRunningException {
+        final Tournament storedTournament = runningTournaments.get(channelId);
         storedTournament.matches = tournament.matches;
 
-        runningTournament.save(storedTournament);
+        runningTournaments.save(storedTournament);
     }
 
-    public boolean cancelRunningTournament() throws IOException {
-        if (!hasRunningTournament()) {
+    public boolean cancelRunningTournament(final String channelId) throws IOException {
+        if (!hasRunningTournament(channelId)) {
             return false;
         }
 
-        runningTournament.clear();
+        runningTournaments.clear(channelId);
         return true;
     }
 
-    public void newMatch() throws InvalidTournamentStateException, TournamentNotRunningException,
-                                  IOException {
+    public void newMatch(final String channelId)
+            throws InvalidTournamentStateException, TournamentNotRunningException, IOException {
 
         int teamAWins = 0;
         int teamBWins = 0;
 
-        final Tournament tournament = runningTournament.get();
+        final Tournament tournament = runningTournaments.get(channelId);
 
         for (final Match match : tournament.matches) {
             if (match.state == State.FINISHED) {
@@ -171,37 +208,38 @@ public class Controller {
         }
 
         tournament.matches.add(new Match());
-        runningTournament.save(tournament);
+        runningTournaments.save(tournament);
     }
 
-    public String getPlayersString() throws IOException {
-        return queue.get().stream().map(p -> String.format("<@%s>", p.id))
+    public String getPlayersString(final String channelId) throws IOException {
+        return queues.get(channelId).stream().map(p -> String.format("<@%s>", p.id))
                 .collect(Collectors.joining(", "));
     }
 
-    public boolean playerInQueue(final Player player) throws IOException {
-        return queue.get().contains(player);
+    public boolean playerInQueue(final String channelId, final Player player) throws IOException {
+        return queues.get(channelId).contains(player);
     }
 
-    public void addPlayer(final String playerId) throws TooManyUsersException,
-                                                        PlayerAlreadyInQueueException,
-                                                        TournamentRunningException, IOException {
+    public void addPlayer(final String channelId, final String playerId)
+            throws TooManyUsersException, PlayerAlreadyInQueueException,
+                   TournamentRunningException, IOException {
         try (final Store store = new Store()) {
-            addPlayer(store.getPlayer(playerId), false);
+            addPlayer(channelId, store.getPlayer(playerId), false);
         }
     }
 
-    public void addPlayer(final Player player) throws TooManyUsersException,
-                                                      PlayerAlreadyInQueueException,
-                                                      TournamentRunningException, IOException {
-        addPlayer(player, true);
+    public void addPlayer(final String channelId, final Player player)
+            throws TooManyUsersException, PlayerAlreadyInQueueException,
+                   TournamentRunningException, IOException {
+        addPlayer(channelId, player, true);
     }
 
-    public void addPlayer(final Player player, final boolean autoStartTournament)
+    public void addPlayer(final String channelId, final Player player,
+                          final boolean autoStartTournament)
             throws TournamentRunningException, PlayerAlreadyInQueueException,
                    TooManyUsersException, IOException {
 
-        if (hasRunningTournament()) {
+        if (hasRunningTournament(channelId)) {
             throw new TournamentRunningException();
         }
 
@@ -213,77 +251,79 @@ public class Controller {
             }
         }
 
-        queue.add(player);
+        queues.add(channelId, player);
 
-        if (queue.get().size() == 4 && autoStartTournament) {
-            startTournament();
+        if (queues.get(channelId).size() == 4 && autoStartTournament) {
+            startTournament(channelId);
         }
     }
 
-    public void resetPlayers() throws IOException {
-        queue.clear();
+    public void resetPlayers(final String channelId) throws IOException {
+        queues.clear(channelId);
     }
 
-    public void removePlayer(final Player player) throws IOException {
-        queue.remove(player);
-        logger.info("Removed {} from the queue", player);
+    public void removePlayer(final String channelId, final Player player) throws IOException {
+        queues.remove(channelId, player);
+        logger.info("Removed {} from the queues", player);
     }
 
-    public List<Player> getPlayersInQueue() throws IOException {
-        return queue.get();
+    public List<Player> getPlayersInQueue(final String channelId) throws IOException {
+        return queues.get(channelId);
     }
 
-    public List<PlayerSkill> playerSkills() {
+    public List<PlayerSkill> playerSkills(final String channelId) {
         try (final Store store = new Store()) {
-            return store.playerSkills();
+            return store.playerSkills(channelId);
         }
     }
 
-    public void recalculateSkills() {
+    public String getChannelId(String slackChannelId) {
         try (final Store store = new Store()) {
-            store.resetPlayerSkills();
-
-            for (final Tournament tournament : getTournaments()) {
-                final Tournament updatedTournament = trueSkillCalculator.updateRatings(tournament);
-                store.getTeam(updatedTournament.teamA.player1, updatedTournament.teamA.player2);
-                store.getTeam(updatedTournament.teamB.player1, updatedTournament.teamB.player2);
-            }
+            return store.getChannelBySlackId(slackChannelId).id;
         }
+    }
+
+    public String getChannelQRCodeUrl(final String channelId) {
+        return String.format("%s/api/channel/%s/qrcode", baseUrl, channelId);
+    }
+
+    public String getBaseUrl() {
+        return baseUrl;
     }
 
     public static class TooManyUsersException extends Exception {
 
-        public TooManyUsersException(final Player player) {
-            super(String.format("Unable to add %s to the game. Too many users in the queue. "
-                                + "Please remove users from the queue or start a game.",
+        TooManyUsersException(final Player player) {
+            super(String.format("Unable to add %s to the game. Too many users in the queues. "
+                                + "Please remove users from the queues or start a game.",
                                 player.name));
         }
     }
 
     public static class PlayerAlreadyInQueueException extends Exception {
 
-        public PlayerAlreadyInQueueException(final Player player) {
-            super(String.format("%s is already in the queue!", player.name));
+        PlayerAlreadyInQueueException(final Player player) {
+            super(String.format("%s is already in the queues!", player.name));
         }
     }
 
     public static class TournamentRunningException extends Exception {
 
-        public TournamentRunningException() {
+        TournamentRunningException() {
             super("A tournament is already running!");
         }
     }
 
     public static class TournamentNotRunningException extends Exception {
 
-        public TournamentNotRunningException() {
+        TournamentNotRunningException() {
             super("No tournament is running!");
         }
     }
 
     public static class InvalidTournamentStateException extends Exception {
 
-        public InvalidTournamentStateException(final String message) {
+        InvalidTournamentStateException(final String message) {
             super(message);
         }
     }

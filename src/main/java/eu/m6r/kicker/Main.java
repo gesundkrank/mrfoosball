@@ -1,5 +1,6 @@
 package eu.m6r.kicker;
 
+import eu.m6r.kicker.models.Channel;
 import eu.m6r.kicker.slack.Bot;
 import eu.m6r.kicker.utils.Properties;
 import eu.m6r.kicker.utils.ZookeeperClient;
@@ -7,6 +8,7 @@ import eu.m6r.kicker.utils.ZookeeperClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
+import org.glassfish.grizzly.ChangeListener;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -32,7 +34,7 @@ public class Main {
      *
      * @return Grizzly HTTP server.
      */
-    public static HttpServer startServer(int port) {
+    private static HttpServer startServer(int port) {
         // create a resource config that scans for JAX-RS resources and providers
         // in com.example package
         final ResourceConfig rc = new ResourceConfig().packages("eu.m6r.kicker.api");
@@ -49,6 +51,16 @@ public class Main {
         return httpServer;
     }
 
+    private static void createTestChannel(final Properties properties) {
+        try (final Store store = new Store()) {
+                final Channel channel = new Channel(properties.getTestChannelId(),
+                                                    properties.getTestChannelSlackId(),
+                                                    properties.getTestChannelName());
+
+                store.saveChannel(channel);
+        }
+    }
+
     /**
      * Main method.
      */
@@ -59,11 +71,14 @@ public class Main {
         try {
             final Properties properties = Properties.getInstance();
 
+            if (properties.hasTestChannel()) {
+                createTestChannel(properties);
+            }
+
             final ZookeeperClient zookeeperClient =
                     new ZookeeperClient(properties.zookeeperHosts());
 
-            new Bot(properties.getSlackToken(), properties.getInactiveTimeout(),
-                    zookeeperClient);
+            new Bot(properties.getSlackToken(), zookeeperClient);
 
             final int port = properties.getPort();
 

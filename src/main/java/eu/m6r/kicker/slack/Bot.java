@@ -5,7 +5,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,11 +17,9 @@ import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.Session;
-import javax.websocket.WebSocketContainer;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ResponseProcessingException;
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -94,11 +91,10 @@ public class Bot implements Watcher {
     }
 
     private void startNewSession() throws StartSocketSessionException {
-        final WebTarget target = client.target("https://slack.com").path("/api/rtm.connect")
+        final var target = client.target("https://slack.com").path("/api/rtm.connect")
                 .queryParam("token", token);
 
-        final RtmInitResponse response =
-                target.request(MediaType.APPLICATION_JSON).get(RtmInitResponse.class);
+        final var response = target.request(MediaType.APPLICATION_JSON).get(RtmInitResponse.class);
 
         if (response == null) {
             throw new StartSocketSessionException("Failed to parse response object");
@@ -112,11 +108,11 @@ public class Bot implements Watcher {
             logger.warn(response.warning);
         }
 
-        final String botMention = String.format("<@%s>", response.self.id);
+        final var botMention = String.format("<@%s>", response.self.id);
         this.botUserIdPattern = Pattern.compile(botMention);
         this.botUserId = response.self.id;
 
-        final WebSocketContainer socketClient = ContainerProvider.getWebSocketContainer();
+        final var socketClient = ContainerProvider.getWebSocketContainer();
         try {
             logger.info("Starting new web socket session with {}", response.url);
             this.socketSession = socketClient.connectToServer(this, URI.create(response.url));
@@ -146,21 +142,21 @@ public class Bot implements Watcher {
         if (messageString.startsWith("{\"type\":\"channel_joined\"")) {
             final ChannelJoined channelJoined =
                     objectMapper.readValue(messageString, ChannelJoined.class);
-            final String id = controller
+            final var id = controller
                     .joinChannel(channelJoined.channel.id, channelJoined.channel.name);
             sendChannelJoinedMessage(channelJoined.channel.id, id);
 
 
         } else if (messageString.startsWith("{\"type\":\"message\"")) {
-            final Message message = objectMapper.readValue(messageString, Message.class);
+            final var message = objectMapper.readValue(messageString, Message.class);
 
             if (message.text == null) {
                 return;
             }
-            final Matcher matcher = botUserIdPattern.matcher(message.text);
+            final var matcher = botUserIdPattern.matcher(message.text);
 
             if (message.type != null && message.type.equals("message") && matcher.find()) {
-                final String command = message.text.substring(matcher.end()).trim();
+                final var command = message.text.substring(matcher.end()).trim();
                 onCommand(command, message.channel, message.user);
             }
         }
@@ -180,11 +176,11 @@ public class Bot implements Watcher {
 
     private void onCommand(final String command, final String slackChannelId, final String sender)
             throws IOException {
-        final Matcher commandMatcher = COMMAND_PATTERN.matcher(command);
+        final var commandMatcher = COMMAND_PATTERN.matcher(command);
         if (commandMatcher.find()) {
-            final String action = commandMatcher.group();
-            final Matcher userMatcher = USER_PATTERN.matcher(command);
-            final String channelId = controller.getChannelId(slackChannelId);
+            final var action = commandMatcher.group();
+            final var userMatcher = USER_PATTERN.matcher(command);
+            final var channelId = controller.getChannelId(slackChannelId);
 
             List<String> userIds = new ArrayList<>();
 
@@ -202,7 +198,7 @@ public class Bot implements Watcher {
                     case "play":
                         for (final String userId : userIds) {
                             try {
-                                final Player player = getUser(userId);
+                                final var player = getUser(userId);
                                 controller.addPlayer(channelId, player);
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {
@@ -211,8 +207,7 @@ public class Bot implements Watcher {
                         }
 
                         try {
-                            final Tournament tournament =
-                                    controller.getRunningTournament(channelId);
+                            final var tournament = controller.getRunningTournament(channelId);
                             sendNewTournamentMessage(tournament, slackChannelId);
                         } catch (Controller.TournamentNotRunningException e) {
                             sendMessage(String.format("Current queue: %s",
@@ -225,8 +220,8 @@ public class Bot implements Watcher {
                         sendMessage("Cleared queue.", slackChannelId);
                         break;
                     case "remove":
-                        for (final String userId : userIds) {
-                            final Player playerToRemove = getUser(userId);
+                        for (final var userId : userIds) {
+                            final var playerToRemove = getUser(userId);
                             controller.removePlayer(channelId, playerToRemove);
                             sendMessage(String.format("Removed <@%s> from the queue",
                                                       playerToRemove.id), slackChannelId);
@@ -256,15 +251,15 @@ public class Bot implements Watcher {
                         } else {
                             try {
                                 controller.resetPlayers(channelId);
-                                for (final String userId : userIds) {
-                                    final Player player = getUser(userId);
+                                for (final var userId : userIds) {
+                                    final var player = getUser(userId);
                                     controller.addPlayer(channelId, player, false);
                                 }
 
-                                final Tournament tournament = controller
-                                        .startTournament(channelId, false, 3);
+                                final var
+                                        tournament =
+                                        controller.startTournament(channelId, false, 3);
                                 sendNewTournamentMessage(tournament, slackChannelId);
-
                             } catch (Controller.PlayerAlreadyInQueueException |
                                     Controller.TournamentRunningException e) {
                                 sendMessage(e.getMessage(), slackChannelId);
@@ -293,12 +288,11 @@ public class Bot implements Watcher {
     }
 
     private void sendHelpMessage(final String channel, final String sender) {
-        final String text = "Supported slack commands:";
-        final Message message = new Message(channel, text, sender);
+        final var text = "Supported slack commands:";
+        final var message = new Message(channel, text, sender);
         message.as_user = true;
 
-        final Message.Attachment addCommand =
-                new Message.Attachment("add", "_Adds new player(s) to the queue._");
+        final var addCommand = new Message.Attachment("add", "_Adds new player(s) to the queue._");
         final List<Message.Attachment.Field> addFields = new ArrayList<>();
         addFields.add(new Message.Attachment.Field("Add yourself",
                                                    String.format("<@%s> add", botUserId)));
@@ -309,7 +303,7 @@ public class Bot implements Watcher {
 
         message.attachments.add(addCommand);
 
-        final Message.Attachment removeCommand =
+        final var removeCommand =
                 new Message.Attachment("remove", "_Removes player(s) from the queue._");
         final List<Message.Attachment.Field> removeFields = new ArrayList<>();
         removeFields.add(new Message.Attachment.Field("Remove yourself",
@@ -321,15 +315,14 @@ public class Bot implements Watcher {
 
         message.attachments.add(removeCommand);
 
-        final Message.Attachment queueCommand =
-                new Message.Attachment("queue", "_Shows the current queue._");
+        final var queueCommand = new Message.Attachment("queue", "_Shows the current queue._");
         final List<Message.Attachment.Field> queueFields = new ArrayList<>();
         queueFields.add(new Message.Attachment.Field(String.format("<@%s> queue", botUserId)));
         queueCommand.fields = queueFields;
 
         message.attachments.add(queueCommand);
 
-        final Message.Attachment fixedMatchCommand =
+        final var fixedMatchCommand =
                 new Message.Attachment("fixedMatch",
                                        "_Creates a new match. Keeps the order of the players. "
                                        + "First and last two players will play together._");
@@ -341,16 +334,14 @@ public class Bot implements Watcher {
 
         message.attachments.add(fixedMatchCommand);
 
-        final Message.Attachment resetCommand =
-                new Message.Attachment("reset", "_Reset the queue._");
+        final var resetCommand = new Message.Attachment("reset", "_Reset the queue._");
         final List<Message.Attachment.Field> resetFields = new ArrayList<>();
         resetFields.add(new Message.Attachment.Field(String.format("<@%s> reset", botUserId)));
         resetCommand.fields = resetFields;
 
         message.attachments.add(resetCommand);
 
-        final Message.Attachment cancelCommand =
-                new Message.Attachment("cancel", "_Cancel a running match._");
+        final var cancelCommand = new Message.Attachment("cancel", "_Cancel a running match._");
         final List<Message.Attachment.Field> cancelFields = new ArrayList<>();
         cancelFields.add(new Message.Attachment.Field(String.format("<@%s> cancel", botUserId)));
         cancelCommand.fields = cancelFields;
@@ -360,22 +351,21 @@ public class Bot implements Watcher {
     }
 
     private Message.Attachment getQRCodeAttachment(final String channelId) {
-        final Message.Attachment attachment =
-                new Message.Attachment("Your Channel QR-Code",
-                                       "You can scan this code from on " +
-                                       controller.getBaseUrl());
+        final var attachment = new Message.Attachment("Your Channel QR-Code",
+                                                      "You can scan this code from on " +
+                                                      controller.getBaseUrl());
         attachment.image_url = controller.getChannelQRCodeUrl(channelId);
         return attachment;
     }
 
     private void sendMessage(final String text, final String channel) {
-        final Message message = new Message(channel, text, botUserId);
+        final var message = new Message(channel, text, botUserId);
         sendMessage(message);
     }
 
     private void sendMessage(final Message message) {
         try {
-            final String messageText = objectMapper.writeValueAsString(message);
+            final var messageText = objectMapper.writeValueAsString(message);
             socketSession.getAsyncRemote().sendText(messageText);
         } catch (JsonProcessingException e) {
             logger.error("Failed to process message json.", e);
@@ -383,15 +373,15 @@ public class Bot implements Watcher {
     }
 
     private Player getUser(final String userId) throws UserExtractionFailedException {
-        final WebTarget target = client.target("https://slack.com")
+        final var target = client.target("https://slack.com")
                 .path("/api/users.info")
                 .queryParam("token", token)
                 .queryParam("user", userId);
         try {
-            final String userString = target.request(MediaType.APPLICATION_JSON).get(String.class);
-            final SlackUser slackUser = objectMapper.readValue(userString, SlackUser.class);
+            final var userString = target.request(MediaType.APPLICATION_JSON).get(String.class);
+            final var slackUser = objectMapper.readValue(userString, SlackUser.class);
 
-            final Player player = new Player();
+            final var player = new Player();
             player.id = slackUser.user.id;
             player.name = slackUser.user.name;
             player.avatarImage = slackUser.user.profile.image_192;
@@ -402,28 +392,28 @@ public class Bot implements Watcher {
     }
 
     private void sendChannelJoinedMessage(final String channel, final String id) {
-        final String url = controller.getChannelUrl(id);
-        final String messageText =
+        final var url = controller.getChannelUrl(id);
+        final var messageText =
                 String.format("Nice to meet you! I'm your new favourite kicker-bot. Go to %s to "
                               + "find your team stats and to enter your results.", url);
-        final Message message = new Message(channel, messageText, botUserId);
+        final var message = new Message(channel, messageText, botUserId);
         message.as_user = true;
         message.attachments.add(getQRCodeAttachment(channel));
         messageWriter.postMessage(message);
     }
 
     private void sendChannelUrlMessage(final String channel, final String id, final String userId) {
-        final String url = controller.getChannelUrl(channel);
-        final Message message = new Message(id, url, userId);
+        final var url = controller.getChannelUrl(channel);
+        final var message = new Message(id, url, userId);
         message.as_user = true;
         message.attachments.add(getQRCodeAttachment(channel));
         messageWriter.postEphemeral(message);
     }
 
     private void sendNewTournamentMessage(final Tournament tournament, final String channel) {
-        String message = String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
-                                       tournament.teamA.player1.id, tournament.teamA.player2.id,
-                                       tournament.teamB.player1.id, tournament.teamB.player2.id);
+        final var message = String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
+                                          tournament.teamA.player1.id, tournament.teamA.player2.id,
+                                          tournament.teamB.player1.id, tournament.teamB.player2.id);
         sendMessage(message, channel);
     }
 

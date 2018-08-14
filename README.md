@@ -32,7 +32,7 @@ To shut down all containers exec
 
 ## Dockerize Production Version
 ```bash
-./gradlew -Ppush buildDocker
+./gradlew buildDocker
 ```
 
 Creates the docker package and pushes it to the registry.

@@ -44,8 +44,8 @@ public class Controller {
         this.logger = LogManager.getLogger();
         this.trueSkillCalculator = new TrueSkillCalculator();
 
-        final Properties properties = Properties.getInstance();
-        final String zookeeperHosts = properties.zookeeperHosts();
+        final var properties = Properties.getInstance();
+        final var zookeeperHosts = properties.zookeeperHosts();
         this.queues = new PlayerQueues(zookeeperHosts);
         this.runningTournaments = new RunningTournaments(zookeeperHosts);
         this.baseUrl = properties.getAppUrl();
@@ -53,13 +53,13 @@ public class Controller {
     }
 
     public String joinChannel(final String slackId, final String slackName) {
-        final String id = UUID.randomUUID().toString();
-        final Channel channel = new Channel();
+        final var id = UUID.randomUUID().toString();
+        final var channel = new Channel();
         channel.id = id;
         channel.name = slackName;
         channel.slackId = slackId;
 
-        try (final Store store = new Store()) {
+        try (final var store = new Store()) {
             store.saveChannel(channel);
         }
 
@@ -87,11 +87,11 @@ public class Controller {
 
         queues.clear(channelId);
 
-        try (final Store store = new Store()) {
-            final Team teamA = store.getTeam(playerList.get(0), playerList.get(1));
-            final Team teamB = store.getTeam(playerList.get(2), playerList.get(3));
-            final Channel channel = store.getChannel(channelId);
-            final Tournament tournament = new Tournament(bestOfN, teamA, teamB, channel);
+        try (final var store = new Store()) {
+            final var teamA = store.getTeam(playerList.get(0), playerList.get(1));
+            final var teamB = store.getTeam(playerList.get(2), playerList.get(3));
+            final var channel = store.getChannel(channelId);
+            final var tournament = new Tournament(bestOfN, teamA, teamB, channel);
             runningTournaments.save(tournament);
             return tournament;
         }
@@ -100,8 +100,8 @@ public class Controller {
 
     public synchronized void finishTournament(final String channelId)
             throws InvalidTournamentStateException, IOException, TournamentNotRunningException {
-        final Tournament runningTournament = this.runningTournaments.get(channelId);
-        for (final Match match : runningTournament.matches) {
+        final var runningTournament = this.runningTournaments.get(channelId);
+        for (final var match : runningTournament.matches) {
             if (match.state == State.RUNNING) {
                 throw new InvalidTournamentStateException("Can't finish tournament if matches"
                                                           + "are still running!");
@@ -110,15 +110,15 @@ public class Controller {
 
         runningTournament.state = State.FINISHED;
 
-        try (final Store store = new Store()) {
-            final Tournament updatedTournament =
+        try (final var store = new Store()) {
+            final var updatedTournament =
                     trueSkillCalculator.updateRatings(runningTournament);
             store.saveTournament(updatedTournament);
         }
 
         this.runningTournaments.clear(channelId);
 
-        final Team winner = runningTournament.winner();
+        final var winner = runningTournament.winner();
         final Message message =
                 new Message(runningTournament.channel.slackId,
                             String.format("The game is over. Congratulations to <@%s> and <@%s>!",
@@ -131,20 +131,20 @@ public class Controller {
     }
 
     public List<Tournament> getTournaments(final String channelId) {
-        try (final Store store = new Store()) {
+        try (final var store = new Store()) {
             return store.getTournaments(channelId);
         }
     }
 
     public List<Tournament> getTournaments(final String channelId, final int last) {
-        try (final Store store = new Store()) {
+        try (final var store = new Store()) {
             return store.getLastTournaments(channelId, last);
         }
     }
 
     public String getChannelUrl(final String channelId) {
-        final String appUrl = Properties.getInstance().getAppUrl();
-        try (final Store store = new Store()) {
+        final var appUrl = Properties.getInstance().getAppUrl();
+        try (final var store = new Store()) {
             return appUrl + "/" + store.getChannel(channelId).id;
         }
     }
@@ -165,7 +165,7 @@ public class Controller {
 
     public void updateTournament(final String channelId, final Tournament tournament)
             throws IOException, TournamentNotRunningException {
-        final Tournament storedTournament = runningTournaments.get(channelId);
+        final var storedTournament = runningTournaments.get(channelId);
         storedTournament.matches = tournament.matches;
 
         runningTournaments.save(storedTournament);
@@ -186,7 +186,7 @@ public class Controller {
         int teamAWins = 0;
         int teamBWins = 0;
 
-        final Tournament tournament = runningTournaments.get(channelId);
+        final var tournament = runningTournaments.get(channelId);
 
         for (final Match match : tournament.matches) {
             if (match.state == State.FINISHED) {
@@ -201,7 +201,7 @@ public class Controller {
             }
         }
 
-        final int maxTeamWins = (tournament.bestOfN / 2) + 1;
+        final var maxTeamWins = (tournament.bestOfN / 2) + 1;
 
         if (maxTeamWins <= Math.max(teamAWins, teamBWins)) {
             throw new InvalidTournamentStateException("Cannot create more matches than bestOfN.");
@@ -243,8 +243,8 @@ public class Controller {
             throw new TournamentRunningException();
         }
 
-        try (final Store store = new Store()) {
-            final Player storedPlayer = store.getPlayer(player);
+        try (final var store = new Store()) {
+            final var storedPlayer = store.getPlayer(player);
             if (storedPlayer != null) {
                 player.trueSkillMean = storedPlayer.trueSkillMean;
                 player.trueSkillStandardDeviation = storedPlayer.trueSkillStandardDeviation;
@@ -272,13 +272,13 @@ public class Controller {
     }
 
     public List<PlayerSkill> playerSkills(final String channelId) {
-        try (final Store store = new Store()) {
+        try (final var store = new Store()) {
             return store.playerSkills(channelId);
         }
     }
 
     public String getChannelId(String slackChannelId) {
-        try (final Store store = new Store()) {
+        try (final var store = new Store()) {
             return store.getChannelBySlackId(slackChannelId).id;
         }
     }

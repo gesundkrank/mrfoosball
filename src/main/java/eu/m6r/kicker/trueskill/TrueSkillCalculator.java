@@ -40,46 +40,46 @@ public class TrueSkillCalculator {
     public Tournament updateRatings(final Tournament tournament) {
         try (final Store store = new Store()) {
 
-            eu.m6r.kicker.models.Player playerA1 = store.getPlayer(tournament.teamA.player1);
-            eu.m6r.kicker.models.Player playerA2 = store.getPlayer(tournament.teamA.player2);
-            eu.m6r.kicker.models.Player playerB1 = store.getPlayer(tournament.teamB.player1);
-            eu.m6r.kicker.models.Player playerB2 = store.getPlayer(tournament.teamB.player2);
+            final var playerA1 = store.getPlayer(tournament.teamA.player1);
+            final var playerA2 = store.getPlayer(tournament.teamA.player2);
+            final var playerB1 = store.getPlayer(tournament.teamB.player1);
+            final var playerB2 = store.getPlayer(tournament.teamB.player2);
 
-            double skillA1 = playerSkill(tournament.teamA.player1);
-            double skillA2 = playerSkill(tournament.teamA.player2);
-            double skillB1 = playerSkill(tournament.teamB.player1);
-            double skillB2 = playerSkill(tournament.teamB.player2);
+            final double skillA1 = playerSkill(tournament.teamA.player1);
+            final double skillA2 = playerSkill(tournament.teamA.player2);
+            final double skillB1 = playerSkill(tournament.teamB.player1);
+            final double skillB2 = playerSkill(tournament.teamB.player2);
 
             final List<ITeam> teams = new ArrayList<>();
 
             final IPlayer iPlayerA1 = new Player<>(playerA1.id);
             final IPlayer iPlayerA2 = new Player<>(playerA2.id);
-            final ITeam teamA = toTeam(iPlayerA1, playerA1, iPlayerA2, playerA2);
+            final var teamA = toTeam(iPlayerA1, playerA1, iPlayerA2, playerA2);
             teams.add(teamA);
 
             final IPlayer iPlayerB1 = new Player<>(playerB1.id);
             final IPlayer iPlayerB2 = new Player<>(playerB2.id);
-            final ITeam teamB = toTeam(iPlayerB1, playerB1, iPlayerB2, playerB2);
+            final var teamB = toTeam(iPlayerB1, playerB1, iPlayerB2, playerB2);
             teams.add(teamB);
 
-            final Map<IPlayer, Rating> newRatings = skillCalculator
+            final var newRatings = skillCalculator
                     .calculateNewRatings(gameInfo, teams,
                                          rankTeamA(tournament),
                                          rankTeamB(tournament));
 
-            final Rating newRatingA1 = newRatings.get(iPlayerA1);
+            final var newRatingA1 = newRatings.get(iPlayerA1);
             playerA1.trueSkillMean = newRatingA1.getMean();
             playerA1.trueSkillStandardDeviation = newRatingA1.getStandardDeviation();
 
-            final Rating newRatingA2 = newRatings.get(iPlayerA2);
+            final var newRatingA2 = newRatings.get(iPlayerA2);
             playerA2.trueSkillMean = newRatingA2.getMean();
             playerA2.trueSkillStandardDeviation = newRatingA2.getStandardDeviation();
 
-            final Rating newRatingB1 = newRatings.get(iPlayerB1);
+            final var newRatingB1 = newRatings.get(iPlayerB1);
             playerB1.trueSkillMean = newRatingB1.getMean();
             playerB1.trueSkillStandardDeviation = newRatingB1.getStandardDeviation();
 
-            final Rating newRatingB2 = newRatings.get(iPlayerB2);
+            final var newRatingB2 = newRatings.get(iPlayerB2);
             playerB2.trueSkillMean = newRatingB2.getMean();
             playerB2.trueSkillStandardDeviation = newRatingB2.getStandardDeviation();
 
@@ -97,8 +97,8 @@ public class TrueSkillCalculator {
         }
     }
 
-    public double playerSkill(final eu.m6r.kicker.models.Player player) {
-        final Rating rating = new Rating(player.trueSkillMean, player.trueSkillStandardDeviation);
+    private double playerSkill(final eu.m6r.kicker.models.Player player) {
+        final var rating = new Rating(player.trueSkillMean, player.trueSkillStandardDeviation);
         return rating.getConservativeRating();
     }
 
@@ -106,7 +106,7 @@ public class TrueSkillCalculator {
                          final eu.m6r.kicker.models.Player player1,
                          final IPlayer iPlayer2,
                          final eu.m6r.kicker.models.Player player2) {
-        final Team team = new Team();
+        final var team = new Team();
         team.addPlayer(iPlayer1, new Rating(player1.trueSkillMean,
                                             player1.trueSkillStandardDeviation));
         team.addPlayer(iPlayer2, new Rating(player2.trueSkillMean,
@@ -116,7 +116,7 @@ public class TrueSkillCalculator {
 
     private int rankTeamA(final Tournament tournament) {
         int winsTeamA = 0;
-        for (final Match match : tournament.matches) {
+        for (final var match : tournament.matches) {
             if (match.teamA >= match.teamB) {
                 winsTeamA += 1;
             }
@@ -127,7 +127,7 @@ public class TrueSkillCalculator {
 
     private int rankTeamB(final Tournament tournament) {
         int winsTeamA = 0;
-        for (final Match match : tournament.matches) {
+        for (final var match : tournament.matches) {
             if (match.teamA >= match.teamB) {
                 winsTeamA += 1;
             }
@@ -139,10 +139,10 @@ public class TrueSkillCalculator {
     public List<eu.m6r.kicker.models.Player> getBestMatch(
             final List<eu.m6r.kicker.models.Player> playerList
     ) {
-        final eu.m6r.kicker.models.Player player1 = playerList.get(0);
-        final eu.m6r.kicker.models.Player player2 = playerList.get(1);
-        final eu.m6r.kicker.models.Player player3 = playerList.get(2);
-        final eu.m6r.kicker.models.Player player4 = playerList.get(3);
+        final var player1 = playerList.get(0);
+        final var player2 = playerList.get(1);
+        final var player3 = playerList.get(2);
+        final var player4 = playerList.get(3);
         final double quality1234 = calcMatchQuality(player1, player2, player3, player4);
         final double quality1324 = calcMatchQuality(player1, player3, player2, player4);
         final double quality1423 = calcMatchQuality(player1, player4, player2, player3);

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import * as Cookies from 'es-cookie';
 import { AlertController, ModalController, NavController, ToastController } from 'ionic-angular';
 import { Logger, LoggingService } from 'ionic-logging-service';
 
@@ -23,7 +24,11 @@ export class IndexPage {
   ionViewDidEnter() {
     const splits = location.search.substring(1).split('=');
     if (splits && splits.length === 2 && splits[0] === 'id') {
-      return this.goToStatsPage(splits[1]);
+      const id = splits[1];
+      return this.goToStatsPage(id);
+    } else if (Cookies.get('id') !== undefined) {
+      const id = Cookies.get('id');
+      return this.goToStatsPage(id);
     } else {
       window.history.pushState(undefined, undefined, '/');
 
@@ -35,6 +40,7 @@ export class IndexPage {
   }
 
   goToStatsPage(channelId: string): Promise<any> {
+    Cookies.set('id', channelId, { expires: 30 });
     return this.navCtrl.push(StatsPage, { 'id': channelId });
   }
 

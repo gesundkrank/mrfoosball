@@ -25,6 +25,7 @@
     "@ionic-native/status-bar": "~4.11.0",
     "@ionic/storage": "2.2.0",
     "@zxing/ngx-scanner": "^1.2.0",
+    "es-cookie": "^1.2.0",
     "ionic-angular": "3.9.2",
     "ionic-logging-service": "^5.1.0",
     "ionicons": "3.0.0",

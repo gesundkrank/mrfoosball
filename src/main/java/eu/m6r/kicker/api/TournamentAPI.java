@@ -32,6 +32,9 @@ public class TournamentAPI {
     private final Logger logger;
     private final Controller controller;
 
+    @PathParam("channelId")
+    private String channelId;
+
     public TournamentAPI() throws IOException {
         this.logger = LogManager.getLogger();
         this.controller = Controller.getInstance();
@@ -39,8 +42,7 @@ public class TournamentAPI {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Tournament> getTournament(@PathParam("channelId") final String channelId,
-                                          @QueryParam("num") final Integer num) {
+    public List<Tournament> getTournament(@QueryParam("num") final Integer num) {
         if (num == null) {
             return controller.getTournaments(channelId);
         }
@@ -50,8 +52,7 @@ public class TournamentAPI {
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public void updateTournament(@PathParam("channelId") final String channelId,
-                                 final Tournament tournament) {
+    public void updateTournament(final Tournament tournament) {
         try {
             controller.updateTournament(channelId, tournament);
         } catch (IOException | Controller.TournamentNotRunningException e) {
@@ -61,7 +62,7 @@ public class TournamentAPI {
     }
 
     @DELETE
-    public void cancelTournament(@PathParam("channelId") final String channelId) {
+    public void cancelTournament() {
         try {
             controller.cancelRunningTournament(channelId);
         } catch (IOException e) {
@@ -71,8 +72,7 @@ public class TournamentAPI {
 
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public void newTournament(@PathParam("channelId") final String channelId,
-                              @FormParam("playerA1") final String playerA1,
+    public void newTournament(@FormParam("playerA1") final String playerA1,
                               @FormParam("playerA2") final String playerA2,
                               @FormParam("playerB1") final String playerB1,
                               @FormParam("playerB2") final String playerB2,
@@ -95,7 +95,7 @@ public class TournamentAPI {
     @GET
     @Path("running")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getRunningTournament(@PathParam("channelId") final String channelId) {
+    public Response getRunningTournament() {
         try {
             if (controller.hasRunningTournament(channelId)) {
                 return Response.ok(controller.getRunningTournament(channelId)).build();
@@ -111,7 +111,7 @@ public class TournamentAPI {
 
     @POST
     @Path("match")
-    public void newMatch(@PathParam("channelId") final String channelId) {
+    public void newMatch() {
         try {
             controller.newMatch(channelId);
         } catch (Controller.InvalidTournamentStateException |
@@ -123,7 +123,7 @@ public class TournamentAPI {
 
     @POST
     @Path("finish")
-    public void finishTournament(@PathParam("channelId") final String channelId) {
+    public void finishTournament() {
         try {
             controller.finishTournament(channelId);
         } catch (Controller.InvalidTournamentStateException |
@@ -135,7 +135,7 @@ public class TournamentAPI {
 
     @GET
     @Path("queue")
-    public List<Player> getPlayersInQueue(@PathParam("channelId") final String channelId) {
+    public List<Player> getPlayersInQueue() {
         try {
             return controller.getPlayersInQueue(channelId);
         } catch (IOException e) {

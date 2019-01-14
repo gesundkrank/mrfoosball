@@ -212,7 +212,7 @@ export class TournamentController {
 
   cancelMatch(): Observable<{}> {
     this.recordState();
-    return this.http.delete(this.tournamentUrl() + '/running');
+    return this.http.delete(this.tournamentUrl());
   }
 
   getUpdateInProgress() {

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+if [[ -z "${IMAGE_NAME:-}" ]]
+ then
+ echo "Environment variable \$IMAGE_NAME has to be set."
+ exit 1
+fi
+
+if [[ -z "{$VERSION_TAG:-}" ]]
+ then
+ echo "Environment variable \$VERSION_TAG has to be set."
+ exit 1
+fi
+
+
+TASK_FAMILY=kicker
+SERVICE_NAME=kicker-codedeploy
+TASK_DEFINITION_TMP_FILE=task-definition.yml
+CONTAINER_DEFINITION_FILE=container-definition.yml
+CLUSTER_NAME=kicker-cluster
+CONTAINER_NAME=kicker-app
+CONTAINER_PORT=8080
+APPSPEC_FILE=appspec.yaml
+S3_BUCKET=kicker-deploy
+CODEDEPLOY_APPLICATION_NAME=AppECS-kicker-cluster-kicker-codedeploy
+DEPLOYMENT_GROUP=kicker-deploy
+
+aws ecs describe-task-definition --task-definition ${TASK_FAMILY} > $TASK_DEFINITION_TMP_FILE
+cat $TASK_DEFINITION_TMP_FILE | jq -c ".taskDefinition.containerDefinitions | .[0].image = \"$IMAGE_NAME:${VERSION_TAG}\"" > $CONTAINER_DEFINITION_FILE
+TASK_ROLE_ARN=$(cat ${TASK_DEFINITION_TMP_FILE} | jq -r .taskDefinition.taskRoleArn)
+EXECUTION_ROLE_ARN=$(cat ${TASK_DEFINITION_TMP_FILE} | jq -r .taskDefinition.executionRoleArn)
+CPU=$(cat ${TASK_DEFINITION_TMP_FILE} | jq -r .taskDefinition.cpu)
+MEMORY=$(cat ${TASK_DEFINITION_TMP_FILE} | jq -r .taskDefinition.memory)
+TASK_DEFINITION_ARN=$(aws ecs register-task-definition --requires-compatibilities FARGATE --family ${TASK_FAMILY} --container-definitions file://${CONTAINER_DEFINITION_FILE} --network-mode awsvpc --task-role-arn ${TASK_ROLE_ARN} --execution-role-arn ${EXECUTION_ROLE_ARN} --cpu ${CPU} --memory ${MEMORY} | jq -r '.taskDefinition.taskDefinitionArn')
+cat >${APPSPEC_FILE} <<EOL
+version: 0.0
+Resources:
+  - TargetService:
+        Type: "AWS::ECS::Service"
+        Properties:
+          TaskDefinition: "${TASK_DEFINITION_ARN}"
+          LoadBalancerInfo:
+            ContainerName: "${CONTAINER_NAME}"
+            ContainerPort: ${CONTAINER_PORT}
+EOL
+aws s3 cp ${APPSPEC_FILE} s3://${S3_BUCKET}/
+aws deploy create-deployment --application-name ${CODEDEPLOY_APPLICATION_NAME} --s3-location bucket=${S3_BUCKET},bundleType=YAML,key=${APPSPEC_FILE} --deployment-group-name ${DEPLOYMENT_GROUP}
+

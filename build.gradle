@@ -37,19 +37,22 @@ compileJava {
 
 dependencies {
     implementation 'org.glassfish.jersey.containers:jersey-container-grizzly2-http:2.27',
-            'org.glassfish.jersey.inject:jersey-hk2:2.27'
-    implementation(group: 'org.glassfish.jersey.media', name: 'jersey-media-moxy', version: '2.27'){
+                   'org.glassfish.jersey.inject:jersey-hk2:2.27'
+    implementation(group: 'org.glassfish.jersey.media', name: 'jersey-media-moxy',
+                   version: '2.27') {
         exclude group: 'org.eclipse.persistence', module: 'org.eclipse.persistence.moxy'
     }
     // https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.moxy
-    implementation group: 'org.eclipse.persistence', name: 'org.eclipse.persistence.moxy', version: '2.7.3'
+    implementation group: 'org.eclipse.persistence', name: 'org.eclipse.persistence.moxy',
+                   version: '2.7.3'
     // https://mvnrepository.com/artifact/org.hibernate/hibernate-core
     implementation group: 'org.hibernate', name: 'hibernate-core', version: '5.4.0.Final'
     // https://mvnrepository.com/artifact/javax.websocket/javax.websocket-client-api
     implementation group: 'javax.websocket', name: 'javax.websocket-client-api', version: '1.1'
     implementation 'org.glassfish.tyrus:tyrus-client:1.14'
     // https://mvnrepository.com/artifact/org.glassfish.tyrus/tyrus-container-grizzly-client
-    implementation group: 'org.glassfish.tyrus', name: 'tyrus-container-grizzly-client', version: '1.14'
+    implementation group: 'org.glassfish.tyrus', name: 'tyrus-container-grizzly-client',
+                   version: '1.14'
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
@@ -84,9 +87,15 @@ task tslint(type: NpmTask) {
     args = ['--prefix', 'frontend', 'run-script', 'tslint']
 }
 
+task cleanNodeModules(type: Delete) {
+    delete 'frontend/node_modules'
+}
+
 task installFrontend(type: NpmTask) {
     args = ['--prefix', 'frontend', 'install']
 }
+
+installFrontend.shouldRunAfter cleanNodeModules
 
 task cleanFrontend(type: Delete, dependsOn: installFrontend) {
     delete 'build/resources/main/www'
@@ -97,7 +106,7 @@ task buildFrontend(type: NpmTask, dependsOn: cleanFrontend) {
     args = ['--prefix', 'frontend', 'run', 'build']
 }
 
-task buildProductionFrontend(type: NpmTask, dependsOn: [cleanFrontend, tslint]) {
+task buildProductionFrontend(type: NpmTask, dependsOn: [cleanNodeModules, cleanFrontend, tslint]) {
     args = ['--prefix', 'frontend', 'run', 'buildProduction']
 }
 
@@ -125,12 +134,13 @@ task testDockerFile(type: Dockerfile) {
     environmentVariable 'DOCKERIZE_VERSION', 'v0.6.1'
     workingDir 'kicker'
     exposePort 8080
-    addFile 'https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz', 'dockerize.tar.gz'
+    addFile 'https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz',
+            'dockerize.tar.gz'
     runCommand 'tar -C /usr/local/bin -xvzf dockerize.tar.gz'
     copyFile '.', '.'
-    entryPoint 'dockerize', '-wait', 'tcp://postgres:5432', 'java', '-Dorg.jboss.logging.provider=log4j2', '-jar', 'kicker.jar'
+    entryPoint 'dockerize', '-wait', 'tcp://postgres:5432', 'java',
+               '-Dorg.jboss.logging.provider=log4j2', '-jar', 'kicker.jar'
 }
-
 
 task buildDocker(type: DockerBuildImage,
                  dependsOn: [buildProductionFrontend, buildApp, productionDockerFile]) {

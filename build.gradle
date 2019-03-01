@@ -139,8 +139,9 @@ task buildDocker(type: DockerBuildImage,
              "${project.findProperty('tag') ?: 'latest'}")
 }
 
-task dockerTest(type: DockerBuildImage,
-                 dependsOn: [buildFrontend, buildApp, testDockerFile]) {
+task dockerTest(type: DockerBuildImage) {
+    Task frontendDep = project.hasProperty('production') ? buildProductionFrontend : buildFrontend
+    dependsOn frontendDep, buildApp, testDockerFile
     inputDir = testDockerFile.destFile.get().asFile.parentFile
     tags.add("${project.findProperty('imageName') ?: 'kicker'}:" +
              "${project.findProperty('tag') ?: 'latest'}")

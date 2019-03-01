@@ -15,7 +15,7 @@ connectionHbm2ddl=create-drop
 ## Run App Locally
 
 ```bash
-./gradlew composeUp
+./gradlew [-Pproduction] prcomposeUp
 ```
 
 To see the logs of the container do 

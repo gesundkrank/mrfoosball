@@ -1,14 +1,14 @@
 package eu.m6r.kicker.api;
 
 import java.io.IOException;
-
-import com.google.zxing.WriterException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+
+import com.google.zxing.WriterException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,13 +16,13 @@ import eu.m6r.kicker.api.annotations.CheckChannelId;
 import eu.m6r.kicker.utils.QRCodeGenerator;
 
 @Path("api/channel")
-public class ChannelAPI {
+public class ChannelApi {
 
     private final Logger logger;
     private final QRCodeGenerator qrCodeGenerator;
 
 
-    public ChannelAPI() {
+    public ChannelApi() {
         this.logger = LogManager.getLogger();
         this.qrCodeGenerator = new QRCodeGenerator();
     }

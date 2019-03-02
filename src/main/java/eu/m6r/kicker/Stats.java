@@ -1,16 +1,16 @@
 package eu.m6r.kicker;
 
-import eu.m6r.kicker.models.Match;
-import eu.m6r.kicker.models.Team;
-import eu.m6r.kicker.models.TeamStat;
-import eu.m6r.kicker.models.Tournament;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import eu.m6r.kicker.models.Match;
+import eu.m6r.kicker.models.Team;
+import eu.m6r.kicker.models.TeamStat;
+import eu.m6r.kicker.models.Tournament;
 
 public class Stats {
 

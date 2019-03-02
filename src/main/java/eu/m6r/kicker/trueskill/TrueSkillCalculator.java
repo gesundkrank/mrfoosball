@@ -1,5 +1,9 @@
 package eu.m6r.kicker.trueskill;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 import de.gesundkrank.jskills.GameInfo;
 import de.gesundkrank.jskills.IPlayer;
 import de.gesundkrank.jskills.ITeam;
@@ -10,14 +14,7 @@ import de.gesundkrank.jskills.Team;
 import de.gesundkrank.jskills.trueskill.TwoTeamTrueSkillCalculator;
 
 import eu.m6r.kicker.Store;
-import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Tournament;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 public class TrueSkillCalculator {
 
@@ -68,20 +65,16 @@ public class TrueSkillCalculator {
                                          rankTeamB(tournament));
 
             final var newRatingA1 = newRatings.get(iPlayerA1);
-            playerA1.trueSkillMean = newRatingA1.getMean();
-            playerA1.trueSkillStandardDeviation = newRatingA1.getStandardDeviation();
+            playerA1.updateRating(newRatingA1);
 
             final var newRatingA2 = newRatings.get(iPlayerA2);
-            playerA2.trueSkillMean = newRatingA2.getMean();
-            playerA2.trueSkillStandardDeviation = newRatingA2.getStandardDeviation();
+            playerA2.updateRating(newRatings.get(iPlayerA2));
 
             final var newRatingB1 = newRatings.get(iPlayerB1);
-            playerB1.trueSkillMean = newRatingB1.getMean();
-            playerB1.trueSkillStandardDeviation = newRatingB1.getStandardDeviation();
+            playerB1.updateRating(newRatings.get(iPlayerB1));
 
             final var newRatingB2 = newRatings.get(iPlayerB2);
-            playerB2.trueSkillMean = newRatingB2.getMean();
-            playerB2.trueSkillStandardDeviation = newRatingB2.getStandardDeviation();
+            playerB2.updateRating(newRatings.get(iPlayerB2));
 
             tournament.teamA.player1 = playerA1;
             tournament.teamA.player2 = playerA2;
@@ -102,19 +95,19 @@ public class TrueSkillCalculator {
         return rating.getConservativeRating();
     }
 
-    private ITeam toTeam(final IPlayer iPlayer1,
+    private ITeam toTeam(final IPlayer trueSkillPlayer1,
                          final eu.m6r.kicker.models.Player player1,
-                         final IPlayer iPlayer2,
+                         final IPlayer trueSkillPlayer2,
                          final eu.m6r.kicker.models.Player player2) {
         final var team = new Team();
-        team.addPlayer(iPlayer1, new Rating(player1.trueSkillMean,
+        team.addPlayer(trueSkillPlayer1, new Rating(player1.trueSkillMean,
                                             player1.trueSkillStandardDeviation));
-        team.addPlayer(iPlayer2, new Rating(player2.trueSkillMean,
+        team.addPlayer(trueSkillPlayer2, new Rating(player2.trueSkillMean,
                                             player2.trueSkillStandardDeviation));
         return team;
     }
 
-    private int rankTeamA(final Tournament tournament) {
+    private boolean teamAWins(final Tournament tournament) {
         int winsTeamA = 0;
         for (final var match : tournament.matches) {
             if (match.teamA >= match.teamB) {
@@ -122,18 +115,15 @@ public class TrueSkillCalculator {
             }
         }
 
-        return winsTeamA > (tournament.bestOfN - 1) / 2 ? 1 : 2;
+        return winsTeamA > (tournament.bestOfN - 1) / 2;
+    }
+
+    private int rankTeamA(final Tournament tournament) {
+        return teamAWins(tournament) ? 1 : 2;
     }
 
     private int rankTeamB(final Tournament tournament) {
-        int winsTeamA = 0;
-        for (final var match : tournament.matches) {
-            if (match.teamA >= match.teamB) {
-                winsTeamA += 1;
-            }
-        }
-
-        return winsTeamA > (tournament.bestOfN - 1) / 2 ? 2 : 1;
+        return teamAWins(tournament) ? 2 : 1;
     }
 
     public List<eu.m6r.kicker.models.Player> getBestMatch(

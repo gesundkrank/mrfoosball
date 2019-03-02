@@ -1,6 +1,7 @@
 package eu.m6r.kicker.slack.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SlackUser {
@@ -18,8 +19,8 @@ public class SlackUser {
 
         @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Profile {
-            public String real_name;
-            public String image_192;
+            @JsonProperty("real_name") public String realName;
+            @JsonProperty("image_192") public String image192;
         }
     }
 

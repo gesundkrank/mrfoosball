@@ -1,14 +1,14 @@
 package eu.m6r.kicker;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.utils.ZookeeperClient;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PlayerQueues {
 

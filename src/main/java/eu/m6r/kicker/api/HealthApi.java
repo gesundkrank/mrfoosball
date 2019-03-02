@@ -6,7 +6,7 @@ import javax.ws.rs.Path;
 import eu.m6r.kicker.models.HealthStatus;
 
 @Path("api/health")
-public class HealthAPI {
+public class HealthApi {
 
     @GET
     public HealthStatus checkHealth() {

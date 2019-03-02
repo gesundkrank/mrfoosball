@@ -1,6 +1,5 @@
 package eu.m6r.kicker.models;
 
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -29,7 +28,8 @@ import javax.persistence.Table;
         ),
         @NamedQuery(
                 name = "get_tournaments_with_state",
-                query = "FROM Tournament WHERE channel = :channel AND state = :state ORDER BY id DESC"
+                query = "FROM Tournament WHERE channel = :channel "
+                        + "AND state = :state ORDER BY id DESC"
         )
 })
 @Entity

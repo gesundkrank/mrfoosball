@@ -1,7 +1,6 @@
 package eu.m6r.kicker.models;
 
 import java.util.Date;
-
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -19,15 +18,4 @@ public class Match {
 
     @Enumerated(EnumType.STRING)
     public State state = State.RUNNING;
-
-    @Override
-    public String toString() {
-        return "Match{" +
-               "id=" + id +
-               ", date=" + date +
-               ", teamA=" + teamA +
-               ", teamB=" + teamB +
-               ", state=" + state +
-               '}';
-    }
 }

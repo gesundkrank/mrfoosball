@@ -1,22 +1,21 @@
 package eu.m6r.kicker;
 
-import eu.m6r.kicker.models.Channel;
-import eu.m6r.kicker.slack.Bot;
-import eu.m6r.kicker.utils.Properties;
-import eu.m6r.kicker.utils.ZookeeperClient;
+import java.io.IOException;
+import java.net.URI;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
-import org.glassfish.grizzly.ChangeListener;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
-import java.io.IOException;
-import java.net.URI;
+import eu.m6r.kicker.models.Channel;
+import eu.m6r.kicker.slack.Bot;
+import eu.m6r.kicker.utils.Properties;
+import eu.m6r.kicker.utils.ZookeeperClient;
 
 /**
  * Main class.
@@ -53,11 +52,11 @@ public class Main {
 
     private static void createTestChannel(final Properties properties) {
         try (final Store store = new Store()) {
-                final Channel channel = new Channel(properties.getTestChannelId(),
-                                                    properties.getTestChannelSlackId(),
-                                                    properties.getTestChannelName());
+            final Channel channel = new Channel(properties.getTestChannelId(),
+                                                properties.getTestChannelSlackId(),
+                                                properties.getTestChannelName());
 
-                store.saveChannel(channel);
+            store.saveChannel(channel);
         }
     }
 

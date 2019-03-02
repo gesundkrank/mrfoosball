@@ -9,6 +9,7 @@ buildscript {
 
 plugins {
     id 'java'
+    id 'checkstyle'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '4.0.3'
     id 'com.bmuschko.docker-remote-api' version '4.2.0'
@@ -19,6 +20,7 @@ apply plugin: 'docker-compose'
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 import com.bmuschko.gradle.docker.tasks.image.*
@@ -26,13 +28,14 @@ import com.bmuschko.gradle.docker.tasks.image.*
 group = "eu.m6r.kicker"
 mainClassName = 'eu.m6r.kicker.Main'
 
-repositories {
-    mavenCentral()
-}
-
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
+}
+
+checkstyle {
+    ignoreFailures = false
+    maxWarnings = 0
 }
 
 dependencies {

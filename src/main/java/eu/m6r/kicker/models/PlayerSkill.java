@@ -2,10 +2,6 @@ package eu.m6r.kicker.models;
 
 import java.io.Serializable;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
-
 public class PlayerSkill implements Serializable {
 
     public PlayerSkill() {
@@ -26,13 +22,4 @@ public class PlayerSkill implements Serializable {
     public int games;
     public int wins;
     public double skill;
-
-    @Override
-    public String toString() {
-        return "PlayerSkill{" +
-               ", games=" + games +
-               ", wins=" + wins +
-               ", skill=" + skill +
-               '}';
-    }
 }

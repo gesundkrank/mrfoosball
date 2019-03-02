@@ -68,20 +68,16 @@ public class TrueSkillCalculator {
                                          rankTeamB(tournament));
 
             final var newRatingA1 = newRatings.get(iPlayerA1);
-            playerA1.trueSkillMean = newRatingA1.getMean();
-            playerA1.trueSkillStandardDeviation = newRatingA1.getStandardDeviation();
+            playerA1.updateRating(newRatingA1);
 
             final var newRatingA2 = newRatings.get(iPlayerA2);
-            playerA2.trueSkillMean = newRatingA2.getMean();
-            playerA2.trueSkillStandardDeviation = newRatingA2.getStandardDeviation();
+            playerA2.updateRating(newRatings.get(iPlayerA2));
 
             final var newRatingB1 = newRatings.get(iPlayerB1);
-            playerB1.trueSkillMean = newRatingB1.getMean();
-            playerB1.trueSkillStandardDeviation = newRatingB1.getStandardDeviation();
+            playerB1.updateRating(newRatings.get(iPlayerB1));
 
             final var newRatingB2 = newRatings.get(iPlayerB2);
-            playerB2.trueSkillMean = newRatingB2.getMean();
-            playerB2.trueSkillStandardDeviation = newRatingB2.getStandardDeviation();
+            playerB2.updateRating(newRatings.get(iPlayerB2));
 
             tournament.teamA.player1 = playerA1;
             tournament.teamA.player2 = playerA2;
@@ -114,7 +110,7 @@ public class TrueSkillCalculator {
         return team;
     }
 
-    private int rankTeamA(final Tournament tournament) {
+    private boolean teamAWins(final Tournament tournament) {
         int winsTeamA = 0;
         for (final var match : tournament.matches) {
             if (match.teamA >= match.teamB) {
@@ -122,18 +118,15 @@ public class TrueSkillCalculator {
             }
         }
 
-        return winsTeamA > (tournament.bestOfN - 1) / 2 ? 1 : 2;
+        return winsTeamA > (tournament.bestOfN - 1) / 2;
+    }
+
+    private int rankTeamA(final Tournament tournament) {
+        return teamAWins(tournament) ? 1 : 2;
     }
 
     private int rankTeamB(final Tournament tournament) {
-        int winsTeamA = 0;
-        for (final var match : tournament.matches) {
-            if (match.teamA >= match.teamB) {
-                winsTeamA += 1;
-            }
-        }
-
-        return winsTeamA > (tournament.bestOfN - 1) / 2 ? 2 : 1;
+        return teamAWins(tournament) ? 2 : 1;
     }
 
     public List<eu.m6r.kicker.models.Player> getBestMatch(

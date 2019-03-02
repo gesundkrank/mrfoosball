@@ -1,12 +1,14 @@
 package eu.m6r.kicker.models;
 
-import eu.m6r.kicker.trueskill.TrueSkillCalculator;
-
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
+
+import de.gesundkrank.jskills.Rating;
+
+import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 
 @NamedQueries({
  @NamedQuery(
@@ -26,6 +28,11 @@ public class Player implements Comparable<Player> {
     public Double trueSkillStandardDeviation =
             TrueSkillCalculator.DEFAULT_INITIAL_STANDARD_DEVIATION;
 
+
+    public void updateRating(final Rating newRating) {
+        trueSkillMean = newRating.getMean();
+        trueSkillStandardDeviation = newRating.getStandardDeviation();
+    }
 
     @Override
     public int hashCode() {

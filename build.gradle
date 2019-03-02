@@ -19,16 +19,13 @@ apply plugin: 'docker-compose'
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 import com.bmuschko.gradle.docker.tasks.image.*
 
 group = "eu.m6r.kicker"
 mainClassName = 'eu.m6r.kicker.Main'
-
-repositories {
-    mavenCentral()
-}
 
 compileJava {
     sourceCompatibility = JavaVersion.VERSION_11

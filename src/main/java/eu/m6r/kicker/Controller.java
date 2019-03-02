@@ -1,25 +1,24 @@
 package eu.m6r.kicker;
 
-import eu.m6r.kicker.models.Channel;
-import eu.m6r.kicker.models.Match;
-import eu.m6r.kicker.models.Player;
-import eu.m6r.kicker.models.PlayerSkill;
-import eu.m6r.kicker.models.State;
-import eu.m6r.kicker.models.Team;
-import eu.m6r.kicker.models.Tournament;
-import eu.m6r.kicker.slack.MessageWriter;
-import eu.m6r.kicker.slack.models.Message;
-import eu.m6r.kicker.trueskill.TrueSkillCalculator;
-import eu.m6r.kicker.utils.Properties;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import eu.m6r.kicker.models.Channel;
+import eu.m6r.kicker.models.Match;
+import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.PlayerSkill;
+import eu.m6r.kicker.models.State;
+import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.slack.MessageWriter;
+import eu.m6r.kicker.slack.models.Message;
+import eu.m6r.kicker.trueskill.TrueSkillCalculator;
+import eu.m6r.kicker.utils.Properties;
 
 public class Controller {
 
@@ -66,7 +65,7 @@ public class Controller {
         return id;
     }
 
-    public void startTournament(final String channelId)
+    private void startTournament(final String channelId)
             throws TournamentRunningException, IOException {
         startTournament(channelId, true, 3);
     }
@@ -214,10 +213,6 @@ public class Controller {
     public String getPlayersString(final String channelId) throws IOException {
         return queues.get(channelId).stream().map(p -> String.format("<@%s>", p.id))
                 .collect(Collectors.joining(", "));
-    }
-
-    public boolean playerInQueue(final String channelId, final Player player) throws IOException {
-        return queues.get(channelId).contains(player);
     }
 
     public void addPlayer(final String channelId, final String playerId)

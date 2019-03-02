@@ -15,6 +15,7 @@ public class TeamStat implements Comparable<TeamStat> {
     public TeamStat() {
 
     }
+
     public TeamStat(final Team team) {
         this.team = team;
     }

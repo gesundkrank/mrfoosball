@@ -9,7 +9,7 @@ import javax.ws.rs.core.UriBuilder;
 import eu.m6r.kicker.utils.Properties;
 
 @Path("/")
-public class RootAPI {
+public class RootApi {
 
     private final String baseUrl = Properties.getInstance().getAppUrl();
 

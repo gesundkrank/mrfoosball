@@ -6,9 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
 import javax.websocket.ContainerProvider;
@@ -21,6 +18,9 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.core.MediaType;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
@@ -40,12 +40,12 @@ import eu.m6r.kicker.utils.ZookeeperClient;
 @ClientEndpoint
 public class Bot implements Watcher {
 
-    private final static Pattern COMMAND_PATTERN = Pattern.compile("\\w+");
-    private final static Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
-    private final static String ZOO_KEEPER_PARENT_PATH =
+    private static final Pattern COMMAND_PATTERN = Pattern.compile("\\w+");
+    private static final Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
+    private static final String ZOO_KEEPER_PARENT_PATH =
             ZookeeperClient.ZOOKEEPER_ROOT_PATH + "/bot";
-    private final static String ZOO_KEEPER_PATH = ZOO_KEEPER_PARENT_PATH + "/slack_";
-    private final static String BOT_ID = UUID.randomUUID().toString();
+    private static final String ZOO_KEEPER_PATH = ZOO_KEEPER_PARENT_PATH + "/slack_";
+    private static final String BOT_ID = UUID.randomUUID().toString();
 
     private final Logger logger;
     private final String token;
@@ -200,8 +200,8 @@ public class Bot implements Watcher {
                             try {
                                 final var player = getUser(userId);
                                 controller.addPlayer(channelId, player);
-                            } catch (Controller.PlayerAlreadyInQueueException |
-                                    Controller.TournamentRunningException e) {
+                            } catch (Controller.PlayerAlreadyInQueueException
+                                    | Controller.TournamentRunningException e) {
                                 sendMessage(e.getMessage(), slackChannelId);
                             }
                         }
@@ -232,8 +232,8 @@ public class Bot implements Watcher {
                         if (controller.getPlayersInQueue(channelId).isEmpty()) {
                             queueMessage = "Queue is empty!";
                         } else {
-                            queueMessage = "Current queue: " +
-                                           controller.getPlayersString(channelId);
+                            queueMessage = "Current queue: "
+                                           + controller.getPlayersString(channelId);
                         }
 
                         sendMessage(queueMessage, slackChannelId);
@@ -260,8 +260,8 @@ public class Bot implements Watcher {
                                         tournament =
                                         controller.startTournament(channelId, false, 3);
                                 sendNewTournamentMessage(tournament, slackChannelId);
-                            } catch (Controller.PlayerAlreadyInQueueException |
-                                    Controller.TournamentRunningException e) {
+                            } catch (Controller.PlayerAlreadyInQueueException
+                                    | Controller.TournamentRunningException e) {
                                 sendMessage(e.getMessage(), slackChannelId);
                             }
 
@@ -278,8 +278,8 @@ public class Bot implements Watcher {
                                                   + "If you need help just ask for it.", sender),
                                     slackChannelId);
                 }
-            } catch (final Controller.TooManyUsersException |
-                    UserExtractionFailedException e) {
+            } catch (final Controller.TooManyUsersException
+                    | UserExtractionFailedException e) {
                 sendMessage(e.getMessage(), sender);
             }
         } else {
@@ -290,7 +290,7 @@ public class Bot implements Watcher {
     private void sendHelpMessage(final String channel, final String sender) {
         final var text = "Supported slack commands:";
         final var message = new Message(channel, text, sender);
-        message.as_user = true;
+        message.asUser = true;
 
         final var addCommand = new Message.Attachment("add", "_Adds new player(s) to the queue._");
         final List<Message.Attachment.Field> addFields = new ArrayList<>();
@@ -352,9 +352,9 @@ public class Bot implements Watcher {
 
     private Message.Attachment getQRCodeAttachment(final String channelId) {
         final var attachment = new Message.Attachment("Your Channel QR-Code",
-                                                      "You can scan this code from on " +
-                                                      controller.getBaseUrl());
-        attachment.image_url = controller.getChannelQRCodeUrl(channelId);
+                                                      "You can scan this code from on "
+                                                      + controller.getBaseUrl());
+        attachment.imageUrl = controller.getChannelQRCodeUrl(channelId);
         return attachment;
     }
 
@@ -384,7 +384,7 @@ public class Bot implements Watcher {
             final var player = new Player();
             player.id = slackUser.user.id;
             player.name = slackUser.user.name;
-            player.avatarImage = slackUser.user.profile.image_192;
+            player.avatarImage = slackUser.user.profile.image192;
             return player;
         } catch (final ResponseProcessingException | IOException e) {
             throw new UserExtractionFailedException(userId, e);
@@ -397,7 +397,7 @@ public class Bot implements Watcher {
                 String.format("Nice to meet you! I'm your new favourite kicker-bot. Go to %s to "
                               + "find your team stats and to enter your results.", url);
         final var message = new Message(channel, messageText, botUserId);
-        message.as_user = true;
+        message.asUser = true;
         message.attachments.add(getQRCodeAttachment(channel));
         messageWriter.postMessage(message);
     }
@@ -405,7 +405,7 @@ public class Bot implements Watcher {
     private void sendChannelUrlMessage(final String channel, final String id, final String userId) {
         final var url = controller.getChannelUrl(channel);
         final var message = new Message(id, url, userId);
-        message.as_user = true;
+        message.asUser = true;
         message.attachments.add(getQRCodeAttachment(channel));
         messageWriter.postEphemeral(message);
     }

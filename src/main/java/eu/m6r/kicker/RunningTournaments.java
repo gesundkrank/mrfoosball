@@ -1,10 +1,11 @@
 package eu.m6r.kicker;
 
+import java.io.IOException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.utils.ZookeeperClient;
-import java.io.IOException;
 
 public class RunningTournaments {
     private static final String TOURNAMENT_PATH = "/kicker/tournament";

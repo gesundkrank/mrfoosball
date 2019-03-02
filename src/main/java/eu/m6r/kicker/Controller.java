@@ -123,7 +123,7 @@ public class Controller {
                             String.format("The game is over. Congratulations to <@%s> and <@%s>!",
                                           winner.player1.id,
                                           winner.player2.id), null);
-        message.as_user = true;
+        message.asUser = true;
 
         messageWriter.postMessage(message);
 

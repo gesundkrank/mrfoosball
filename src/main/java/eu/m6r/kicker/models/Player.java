@@ -11,10 +11,10 @@ import de.gesundkrank.jskills.Rating;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 
 @NamedQueries({
- @NamedQuery(
-         name = "get_players_ordered_by_skill",
-         query = "from Player order by (trueSkillMean - 3 * trueSkillStandardDeviation) desc"
- )
+        @NamedQuery(
+                name = "get_players_ordered_by_skill",
+                query = "from Player order by (trueSkillMean - 3 * trueSkillStandardDeviation) desc"
+        )
 })
 @Entity
 @Table
@@ -42,17 +42,6 @@ public class Player implements Comparable<Player> {
     @Override
     public boolean equals(Object obj) {
         return obj instanceof Player && ((Player) obj).id.equals(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Player{" +
-               "id='" + id + '\'' +
-               ", name='" + name + '\'' +
-               ", avatarImage='" + avatarImage + '\'' +
-               ", trueSkillMean=" + trueSkillMean +
-               ", trueSkillStandardDeviation=" + trueSkillStandardDeviation +
-               '}';
     }
 
     @Override

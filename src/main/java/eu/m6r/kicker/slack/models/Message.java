@@ -1,10 +1,10 @@
 package eu.m6r.kicker.slack.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
@@ -13,7 +13,8 @@ public class Message {
     public String type;
     public String text;
     public String user;
-    public boolean as_user;
+    @JsonProperty("as_user")
+    public boolean asUser;
     public List<Attachment> attachments = new ArrayList<>();
 
     public Message() {
@@ -32,9 +33,11 @@ public class Message {
         public String title;
         public String text;
         public String color = "#ff0080";
-        public String image_url;
+        @JsonProperty("imageUrl")
+        public String imageUrl;
 
-        public List<String> mrkdwn_in = new ArrayList<>();
+        @JsonProperty("mrkdwn_in")
+        public List<String> mrkdwnIn = new ArrayList<>();
         public List<Field> fields = new ArrayList<>();
 
         public Attachment() {
@@ -47,8 +50,8 @@ public class Message {
         public Attachment(final String title, final String text) {
             this.title = title;
             this.text = text;
-            mrkdwn_in.add("text");
-            mrkdwn_in.add("fields");
+            mrkdwnIn.add("text");
+            mrkdwnIn.add("fields");
         }
 
         public static class Field {
@@ -71,39 +74,6 @@ public class Message {
                 this.title = title;
                 this.value = value;
             }
-
-            @Override
-            public String toString() {
-                return "Field{" +
-                       "title='" + title + '\'' +
-                       ", value='" + value + '\'' +
-                       ", isShort=" + isShort +
-                       '}';
-            }
         }
-
-        @Override
-        public String toString() {
-            return "Attachment{" +
-                   "title='" + title + '\'' +
-                   ", text='" + text + '\'' +
-                   ", color='" + color + '\'' +
-                   ", image_url='" + image_url + '\'' +
-                   ", mrkdwn_in=" + mrkdwn_in +
-                   ", fields=" + fields +
-                   '}';
-        }
-    }
-
-    @Override
-    public String toString() {
-        return "Message{" +
-               "channel='" + channel + '\'' +
-               ", type='" + type + '\'' +
-               ", text='" + text + '\'' +
-               ", user='" + user + '\'' +
-               ", as_user=" + as_user +
-               ", attachments=" + attachments +
-               '}';
     }
 }

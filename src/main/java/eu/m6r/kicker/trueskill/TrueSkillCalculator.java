@@ -1,5 +1,9 @@
 package eu.m6r.kicker.trueskill;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 import de.gesundkrank.jskills.GameInfo;
 import de.gesundkrank.jskills.IPlayer;
 import de.gesundkrank.jskills.ITeam;
@@ -10,14 +14,7 @@ import de.gesundkrank.jskills.Team;
 import de.gesundkrank.jskills.trueskill.TwoTeamTrueSkillCalculator;
 
 import eu.m6r.kicker.Store;
-import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Tournament;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 public class TrueSkillCalculator {
 
@@ -98,14 +95,14 @@ public class TrueSkillCalculator {
         return rating.getConservativeRating();
     }
 
-    private ITeam toTeam(final IPlayer iPlayer1,
+    private ITeam toTeam(final IPlayer trueSkillPlayer1,
                          final eu.m6r.kicker.models.Player player1,
-                         final IPlayer iPlayer2,
+                         final IPlayer trueSkillPlayer2,
                          final eu.m6r.kicker.models.Player player2) {
         final var team = new Team();
-        team.addPlayer(iPlayer1, new Rating(player1.trueSkillMean,
+        team.addPlayer(trueSkillPlayer1, new Rating(player1.trueSkillMean,
                                             player1.trueSkillStandardDeviation));
-        team.addPlayer(iPlayer2, new Rating(player2.trueSkillMean,
+        team.addPlayer(trueSkillPlayer2, new Rating(player2.trueSkillMean,
                                             player2.trueSkillStandardDeviation));
         return team;
     }

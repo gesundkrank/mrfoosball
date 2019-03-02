@@ -1,16 +1,7 @@
 package eu.m6r.kicker.api;
 
-import eu.m6r.kicker.Controller;
-import eu.m6r.kicker.api.annotations.CheckChannelId;
-import eu.m6r.kicker.models.Player;
-import eu.m6r.kicker.models.Tournament;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.util.List;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -25,9 +16,17 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import eu.m6r.kicker.Controller;
+import eu.m6r.kicker.api.annotations.CheckChannelId;
+import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.Tournament;
+
 @Path("/api/tournament/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}}")
 @CheckChannelId
-public class TournamentAPI {
+public class TournamentApi {
 
     private final Logger logger;
     private final Controller controller;
@@ -35,7 +34,7 @@ public class TournamentAPI {
     @PathParam("channelId")
     private String channelId;
 
-    public TournamentAPI() throws IOException {
+    public TournamentApi() throws IOException {
         this.logger = LogManager.getLogger();
         this.controller = Controller.getInstance();
     }
@@ -114,8 +113,8 @@ public class TournamentAPI {
     public void newMatch() {
         try {
             controller.newMatch(channelId);
-        } catch (Controller.InvalidTournamentStateException |
-                Controller.TournamentNotRunningException | IOException e) {
+        } catch (Controller.InvalidTournamentStateException
+                | Controller.TournamentNotRunningException | IOException e) {
             logger.error("Failed to create new match!", e);
             throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -126,8 +125,8 @@ public class TournamentAPI {
     public void finishTournament() {
         try {
             controller.finishTournament(channelId);
-        } catch (Controller.InvalidTournamentStateException |
-                Controller.TournamentNotRunningException | IOException e) {
+        } catch (Controller.InvalidTournamentStateException
+                | Controller.TournamentNotRunningException | IOException e) {
             logger.error("Failed to finish tournament!", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

@@ -1,13 +1,12 @@
 package eu.m6r.kicker.utils;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.io.IOError;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Properties {
 
@@ -87,8 +86,8 @@ public class Properties {
     }
 
     public boolean hasTestChannel() {
-        return properties.containsKey("testTeamId") && properties.containsKey("testTeamSlackId") &&
-               properties.containsKey("testTeamName");
+        return properties.containsKey("testTeamId") && properties.containsKey("testTeamSlackId")
+               && properties.containsKey("testTeamName");
     }
 
     public int getQRCodeSize() {

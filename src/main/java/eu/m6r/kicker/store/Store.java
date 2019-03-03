@@ -1,14 +1,10 @@
-package eu.m6r.kicker;
+package eu.m6r.kicker.store;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.io.IOUtils;

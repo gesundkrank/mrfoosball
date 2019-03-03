@@ -17,6 +17,7 @@ import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.MessageWriter;
 import eu.m6r.kicker.slack.models.Message;
+import eu.m6r.kicker.store.Store;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
 

@@ -2,15 +2,14 @@ package eu.m6r.kicker.api.filters;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
-import eu.m6r.kicker.Store;
 import eu.m6r.kicker.api.annotations.CheckChannelId;
+import eu.m6r.kicker.store.Store;
 
 @Provider
 @CheckChannelId

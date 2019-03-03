@@ -19,7 +19,6 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.type.StandardBasicTypes;
 
 import eu.m6r.kicker.models.Channel;
 import eu.m6r.kicker.models.Player;
@@ -55,7 +54,6 @@ public class Store implements Closeable {
 
     private final Logger logger;
     private final Session session;
-
 
     public Store() throws HibernateException {
         logger = LogManager.getLogger();
@@ -160,25 +158,18 @@ public class Store implements Closeable {
         final var queryFile = getClass().getResourceAsStream("player_skill.sql");
         try {
             final var query = IOUtils.toString(queryFile, Charset.forName("UTF-8"));
-            final List<Object[]> list = session
-                    .createNativeQuery(query)
+            return session
+                    .createNativeQuery(query, PlayerSkill.class)
                     .setParameter("channelId", channelId)
-                    .addScalar("id", StandardBasicTypes.STRING)
-                    .addScalar("name", StandardBasicTypes.STRING)
-                    .addScalar("avatarImage", StandardBasicTypes.STRING)
-                    .addScalar("games", StandardBasicTypes.INTEGER)
-                    .addScalar("wins", StandardBasicTypes.INTEGER)
-                    .addScalar("skill", StandardBasicTypes.DOUBLE).list();
-            return list.stream().map(PlayerSkill::new).collect(Collectors.toList());
+                    .list();
         } catch (IOException e) {
             logger.error("Failed to load query", e);
             return Collections.emptyList();
         }
-
     }
 
     public void saveTournament(final Tournament tournament) {
-        Transaction tx = session.beginTransaction();
+        final var tx = session.beginTransaction();
         session.update(tournament.teamA);
         session.update(tournament.teamA.player1);
         session.update(tournament.teamA.player2);

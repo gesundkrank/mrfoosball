@@ -35,7 +35,12 @@ public class StatsApi {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<PlayerSkill> getStats(@PathParam("channelId") final String channelId) {
-        return controller.playerSkills(channelId);
+        try {
+            return controller.playerSkills(channelId);
+        } catch (Exception e) {
+            logger.error("Failed to get skills", e);
+            throw new WebApplicationException(e.getMessage());
+        }
     }
 
     @GET

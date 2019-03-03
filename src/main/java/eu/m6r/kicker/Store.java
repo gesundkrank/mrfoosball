@@ -1,14 +1,17 @@
 package eu.m6r.kicker;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.HibernateException;
@@ -154,9 +157,9 @@ public class Store implements Closeable {
     }
 
     public List<PlayerSkill> playerSkills(final String channelId) {
-        final var queryFile = getClass().getResource("player_skill.sql").getFile();
+        final var queryFile = getClass().getResourceAsStream("player_skill.sql");
         try {
-            final var query = new String(Files.readAllBytes(Paths.get(queryFile)));
+            final var query = IOUtils.toString(queryFile, Charset.forName("UTF-8"));
             final List<Object[]> list = session
                     .createNativeQuery(query)
                     .setParameter("channelId", channelId)

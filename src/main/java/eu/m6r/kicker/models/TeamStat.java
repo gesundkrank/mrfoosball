@@ -1,5 +1,7 @@
 package eu.m6r.kicker.models;
 
+import javax.xml.bind.annotation.XmlAttribute;
+
 public class TeamStat implements Comparable<TeamStat> {
 
     public Team team;
@@ -20,34 +22,13 @@ public class TeamStat implements Comparable<TeamStat> {
         this.team = team;
     }
 
+    @XmlAttribute(name = "winRate")
+    public float getWinRate() {
+        return (float) this.tournamentsWon / this.tournamentsPlayed;
+    }
 
     @Override
     public int compareTo(TeamStat otherTeam) {
-        final int differenceTeam1 = this.tournamentsWon - this.tournamentsLost;
-        final int differenceTeam2 = otherTeam.tournamentsWon - otherTeam.tournamentsLost;
-
-        if (differenceTeam1 > differenceTeam2) {
-            return -1;
-        }
-
-        if (differenceTeam1 < differenceTeam2) {
-            return 1;
-        }
-
-        final int matchDifferenceTeam1 = this.matchesWon - this.matchesLost;
-        final int matchDifferenceTeam2 = otherTeam.matchesWon - otherTeam.matchesLost;
-
-        if (matchDifferenceTeam1 > matchDifferenceTeam2) {
-            return -1;
-        }
-
-        if (matchDifferenceTeam1 < matchDifferenceTeam2) {
-            return 1;
-        }
-
-        final int goalDifferenceTeam1 = this.goalsScored - this.goalsReceived;
-        final int goalDifferenceTeam2 = otherTeam.goalsScored - otherTeam.goalsReceived;
-
-        return -Integer.compare(goalDifferenceTeam1, goalDifferenceTeam2);
+        return -Float.compare(getWinRate(), otherTeam.getWinRate());
     }
 }

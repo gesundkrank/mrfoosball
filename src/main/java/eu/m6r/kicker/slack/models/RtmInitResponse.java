@@ -1,8 +1,5 @@
 package eu.m6r.kicker.slack.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-@JsonIgnoreProperties
 public class RtmInitResponse {
     public boolean ok;
     public String url;

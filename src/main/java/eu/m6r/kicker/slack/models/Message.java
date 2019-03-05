@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAttribute;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
 
     public String channel;
@@ -27,7 +24,6 @@ public class Message {
         this.user = user;
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Attachment {
 
         public String title;

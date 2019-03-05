@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import eu.m6r.kicker.models.Channel;
 import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.PlayerQueue;
 import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
@@ -79,7 +80,7 @@ public class Controller {
             throw new TournamentRunningException();
         }
 
-        List<Player> playerList = queues.get(channelId);
+        var playerList = queues.get(channelId).queue;
 
         if (shuffle) {
             Collections.shuffle(playerList);
@@ -213,12 +214,12 @@ public class Controller {
     }
 
     public String getPlayersString(final String channelId) throws IOException {
-        return queues.get(channelId).stream().map(p -> String.format("<@%s>", p.id))
+        return queues.get(channelId).queue.stream().map(p -> String.format("<@%s>", p.id))
                 .collect(Collectors.joining(", "));
     }
 
     public void addPlayer(final String channelId, final String playerId)
-            throws TooManyUsersException, PlayerAlreadyInQueueException,
+            throws PlayerQueue.TooManyUsersException, PlayerQueue.PlayerAlreadyInQueueException,
                    TournamentRunningException, IOException {
         try (final Store store = new Store()) {
             addPlayer(channelId, store.getPlayer(playerId), false);
@@ -226,15 +227,15 @@ public class Controller {
     }
 
     public void addPlayer(final String channelId, final Player player)
-            throws TooManyUsersException, PlayerAlreadyInQueueException,
+            throws PlayerQueue.TooManyUsersException, PlayerQueue.PlayerAlreadyInQueueException,
                    TournamentRunningException, IOException {
         addPlayer(channelId, player, true);
     }
 
     public void addPlayer(final String channelId, final Player player,
                           final boolean autoStartTournament)
-            throws TournamentRunningException, PlayerAlreadyInQueueException,
-                   TooManyUsersException, IOException {
+            throws TournamentRunningException, PlayerQueue.PlayerAlreadyInQueueException,
+                   PlayerQueue.TooManyUsersException, IOException {
 
         if (hasRunningTournament(channelId)) {
             throw new TournamentRunningException();
@@ -250,7 +251,7 @@ public class Controller {
 
         queues.add(channelId, player);
 
-        if (queues.get(channelId).size() == 4 && autoStartTournament) {
+        if (queues.get(channelId).isFull() && autoStartTournament) {
             startTournament(channelId);
         }
     }
@@ -265,7 +266,7 @@ public class Controller {
     }
 
     public List<Player> getPlayersInQueue(final String channelId) throws IOException {
-        return queues.get(channelId);
+        return queues.get(channelId).queue;
     }
 
     public List<PlayerSkill> playerSkills(final String channelId) {
@@ -310,22 +311,6 @@ public class Controller {
 
         final var message = new Message(slackId, messageString, null);
         messageWriter.postMessage(message);
-    }
-
-    public static class TooManyUsersException extends Exception {
-
-        TooManyUsersException(final Player player) {
-            super(String.format("Unable to add %s to the game. Too many users in the queues. "
-                                + "Please remove users from the queues or start a game.",
-                                player.name));
-        }
-    }
-
-    public static class PlayerAlreadyInQueueException extends Exception {
-
-        PlayerAlreadyInQueueException(final Player player) {
-            super(String.format("%s is already in the queues!", player.name));
-        }
     }
 
     public static class TournamentRunningException extends Exception {

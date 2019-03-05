@@ -1,9 +1,7 @@
 package eu.m6r.kicker.slack.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.xml.bind.annotation.XmlAttribute;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class SlackUser {
     public boolean ok;
     public String error;
@@ -11,16 +9,14 @@ public class SlackUser {
 
     public User user;
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class User {
         public String id;
         public String name;
         public Profile profile;
 
-        @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Profile {
-            @JsonProperty("real_name") public String realName;
-            @JsonProperty("image_192") public String image192;
+            @XmlAttribute(name = "real_name") public String realName;
+            @XmlAttribute(name = "image_192") public String image192;
         }
     }
 

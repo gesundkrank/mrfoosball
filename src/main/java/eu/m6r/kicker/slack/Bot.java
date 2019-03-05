@@ -18,9 +18,8 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.core.MediaType;
+import javax.xml.bind.JAXBException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
@@ -30,11 +29,13 @@ import org.glassfish.jersey.client.ClientProperties;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.PlayerQueue;
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.models.ChannelJoined;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
+import eu.m6r.kicker.utils.JsonConverter;
 import eu.m6r.kicker.utils.ZookeeperClient;
 
 @ClientEndpoint
@@ -49,7 +50,7 @@ public class Bot implements Watcher {
 
     private final Logger logger;
     private final String token;
-    private final ObjectMapper objectMapper;
+    private final JsonConverter jsonConverter;
     private final Controller controller;
     private final Client client;
     private final ZookeeperClient zookeeperClient;
@@ -61,7 +62,8 @@ public class Bot implements Watcher {
     private Pattern botUserIdPattern;
 
     public Bot(final String token, final ZookeeperClient zookeeperClient)
-            throws KeeperException, InterruptedException, StartSocketSessionException, IOException {
+            throws KeeperException, InterruptedException, StartSocketSessionException, IOException,
+                   JAXBException {
         this.logger = LogManager.getLogger();
 
         if (token == null) {
@@ -74,10 +76,12 @@ public class Bot implements Watcher {
         client.property(ClientProperties.READ_TIMEOUT, 30000);
 
         this.token = token;
-        this.objectMapper = new ObjectMapper();
         this.controller = Controller.getInstance();
         this.zookeeperClient = zookeeperClient;
         this.messageWriter = new MessageWriter(token);
+
+        this.jsonConverter = new JsonConverter(Message.class, ChannelJoined.class,
+                                               SlackUser.class);
 
         zookeeperClient.createPath(ZOO_KEEPER_PARENT_PATH);
         this.lockNode = zookeeperClient.createEphemeralSequential(ZOO_KEEPER_PATH, BOT_ID);
@@ -140,15 +144,16 @@ public class Bot implements Watcher {
         logger.info(messageString);
 
         if (messageString.startsWith("{\"type\":\"channel_joined\"")) {
-            final ChannelJoined channelJoined =
-                    objectMapper.readValue(messageString, ChannelJoined.class);
+
+            final var channelJoined =
+                    jsonConverter.fromString(messageString, ChannelJoined.class);
             final var id = controller
                     .joinChannel(channelJoined.channel.id, channelJoined.channel.name);
             sendChannelJoinedMessage(channelJoined.channel.id, id);
 
 
         } else if (messageString.startsWith("{\"type\":\"message\"")) {
-            final var message = objectMapper.readValue(messageString, Message.class);
+            final var message = jsonConverter.fromString(messageString, Message.class);
 
             if (message.text == null) {
                 return;
@@ -200,7 +205,7 @@ public class Bot implements Watcher {
                             try {
                                 final var player = getUser(userId);
                                 controller.addPlayer(channelId, player);
-                            } catch (Controller.PlayerAlreadyInQueueException
+                            } catch (PlayerQueue.PlayerAlreadyInQueueException
                                     | Controller.TournamentRunningException e) {
                                 sendMessage(e.getMessage(), slackChannelId);
                             }
@@ -260,7 +265,7 @@ public class Bot implements Watcher {
                                         tournament =
                                         controller.startTournament(channelId, false, 3);
                                 sendNewTournamentMessage(tournament, slackChannelId);
-                            } catch (Controller.PlayerAlreadyInQueueException
+                            } catch (PlayerQueue.PlayerAlreadyInQueueException
                                     | Controller.TournamentRunningException e) {
                                 sendMessage(e.getMessage(), slackChannelId);
                             }
@@ -278,7 +283,7 @@ public class Bot implements Watcher {
                                                   + "If you need help just ask for it.", sender),
                                     slackChannelId);
                 }
-            } catch (final Controller.TooManyUsersException
+            } catch (final PlayerQueue.TooManyUsersException
                     | UserExtractionFailedException e) {
                 sendMessage(e.getMessage(), sender);
             }
@@ -364,9 +369,8 @@ public class Bot implements Watcher {
 
     private void sendMessage(final Message message) {
         try {
-            final var messageText = objectMapper.writeValueAsString(message);
-            socketSession.getAsyncRemote().sendText(messageText);
-        } catch (JsonProcessingException e) {
+            socketSession.getAsyncRemote().sendText(jsonConverter.toString(message));
+        } catch (final IOException e) {
             logger.error("Failed to process message json.", e);
         }
     }
@@ -378,7 +382,7 @@ public class Bot implements Watcher {
                 .queryParam("user", userId);
         try {
             final var userString = target.request(MediaType.APPLICATION_JSON).get(String.class);
-            final var slackUser = objectMapper.readValue(userString, SlackUser.class);
+            final var slackUser = jsonConverter.fromString(userString, SlackUser.class);
 
             final var player = new Player();
             player.id = slackUser.user.id;

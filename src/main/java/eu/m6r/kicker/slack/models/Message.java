@@ -2,9 +2,9 @@ package eu.m6r.kicker.slack.models;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.bind.annotation.XmlAttribute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
@@ -13,8 +13,8 @@ public class Message {
     public String type;
     public String text;
     public String user;
-    @JsonProperty("as_user")
-    public boolean asUser;
+    @XmlAttribute(name = "as_user")
+    public boolean asUser = true;
     public List<Attachment> attachments = new ArrayList<>();
 
     public Message() {
@@ -33,10 +33,10 @@ public class Message {
         public String title;
         public String text;
         public String color = "#ff0080";
-        @JsonProperty("imageUrl")
+        @XmlAttribute(name = "image_url")
         public String imageUrl;
 
-        @JsonProperty("mrkdwn_in")
+        @XmlAttribute(name = "mrkdwn_in")
         public List<String> mrkdwnIn = new ArrayList<>();
         public List<Field> fields = new ArrayList<>();
 
@@ -59,7 +59,7 @@ public class Message {
             public String title;
             public String value;
 
-            @JsonProperty(value = "short")
+            @XmlAttribute(name = "short")
             public boolean isShort = false;
 
             public Field() {

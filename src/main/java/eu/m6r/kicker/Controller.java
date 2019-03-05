@@ -126,8 +126,6 @@ public class Controller {
                             String.format("The game is over. Congratulations to <@%s> and <@%s>!",
                                           winner.player1.id,
                                           winner.player2.id), null);
-        message.asUser = true;
-
         messageWriter.postMessage(message);
 
     }
@@ -311,7 +309,6 @@ public class Controller {
                                     loosers.player1.id, loosers.player2.id);
 
         final var message = new Message(slackId, messageString, null);
-        message.asUser = true;
         messageWriter.postMessage(message);
     }
 

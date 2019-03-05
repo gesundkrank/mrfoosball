@@ -13,8 +13,8 @@ import de.gesundkrank.jskills.SkillCalculator;
 import de.gesundkrank.jskills.Team;
 import de.gesundkrank.jskills.trueskill.TwoTeamTrueSkillCalculator;
 
-import eu.m6r.kicker.Store;
 import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.store.Store;
 
 public class TrueSkillCalculator {
 

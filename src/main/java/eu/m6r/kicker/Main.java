@@ -14,6 +14,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import eu.m6r.kicker.models.Channel;
 import eu.m6r.kicker.slack.Bot;
+import eu.m6r.kicker.store.Store;
 import eu.m6r.kicker.utils.Properties;
 import eu.m6r.kicker.utils.ZookeeperClient;
 

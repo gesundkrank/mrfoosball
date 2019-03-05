@@ -12,5 +12,6 @@
     <mapping class="eu.m6r.kicker.models.Match"/>
     <mapping class="eu.m6r.kicker.models.Player"/>
     <mapping class="eu.m6r.kicker.models.Team"/>
+    <mapping class="eu.m6r.kicker.models.PlayerSkill"/>
   </session-factory>
 </hibernate-configuration>

@@ -14,9 +14,11 @@ import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.State;
+import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.MessageWriter;
 import eu.m6r.kicker.slack.models.Message;
+import eu.m6r.kicker.store.Store;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
 
@@ -115,6 +117,7 @@ public class Controller {
             store.saveTournament(updatedTournament);
         }
 
+        checkCrawlShaming(runningTournament);
         this.runningTournaments.clear(channelId);
 
         final var winner = runningTournament.winner();
@@ -206,6 +209,7 @@ public class Controller {
             throw new InvalidTournamentStateException("Cannot create more matches than bestOfN.");
         }
 
+        checkCrawlShaming(tournament);
         tournament.matches.add(new Match());
         runningTournaments.save(tournament);
     }
@@ -284,6 +288,31 @@ public class Controller {
 
     public String getBaseUrl() {
         return baseUrl;
+    }
+
+    private void checkCrawlShaming(final Tournament tournament) {
+        if (tournament.matches.isEmpty()) {
+            return;
+        }
+
+        final var slackId = tournament.channel.slackId;
+        final var lastMatch = tournament.matches.get(tournament.matches.size() - 1);
+
+        final Team loosers;
+        if (lastMatch.teamA == 0) {
+            loosers = tournament.teamA;
+        } else if (lastMatch.teamB == 0) {
+            loosers = tournament.teamB;
+        } else {
+            return;
+        }
+
+        var messageString = String.format("<@%s> and <@%s> have to crawl. How embarrassing!!",
+                                    loosers.player1.id, loosers.player2.id);
+
+        final var message = new Message(slackId, messageString, null);
+        message.asUser = true;
+        messageWriter.postMessage(message);
     }
 
     public static class TooManyUsersException extends Exception {

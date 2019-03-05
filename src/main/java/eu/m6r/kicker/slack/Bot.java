@@ -290,7 +290,6 @@ public class Bot implements Watcher {
     private void sendHelpMessage(final String channel, final String sender) {
         final var text = "Supported slack commands:";
         final var message = new Message(channel, text, sender);
-        message.asUser = true;
 
         final var addCommand = new Message.Attachment("add", "_Adds new player(s) to the queue._");
         final List<Message.Attachment.Field> addFields = new ArrayList<>();
@@ -397,7 +396,6 @@ public class Bot implements Watcher {
                 String.format("Nice to meet you! I'm your new favourite kicker-bot. Go to %s to "
                               + "find your team stats and to enter your results.", url);
         final var message = new Message(channel, messageText, botUserId);
-        message.asUser = true;
         message.attachments.add(getQRCodeAttachment(channel));
         messageWriter.postMessage(message);
     }
@@ -405,7 +403,6 @@ public class Bot implements Watcher {
     private void sendChannelUrlMessage(final String channel, final String id, final String userId) {
         final var url = controller.getChannelUrl(channel);
         final var message = new Message(id, url, userId);
-        message.asUser = true;
         message.attachments.add(getQRCodeAttachment(channel));
         messageWriter.postEphemeral(message);
     }

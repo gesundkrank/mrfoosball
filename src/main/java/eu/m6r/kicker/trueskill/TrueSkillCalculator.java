@@ -13,6 +13,7 @@ import de.gesundkrank.jskills.SkillCalculator;
 import de.gesundkrank.jskills.Team;
 import de.gesundkrank.jskills.trueskill.TwoTeamTrueSkillCalculator;
 
+import eu.m6r.kicker.models.PlayerQueue;
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.store.Store;
 
@@ -101,9 +102,9 @@ public class TrueSkillCalculator {
                          final eu.m6r.kicker.models.Player player2) {
         final var team = new Team();
         team.addPlayer(trueSkillPlayer1, new Rating(player1.trueSkillMean,
-                                            player1.trueSkillStandardDeviation));
+                                                    player1.trueSkillStandardDeviation));
         team.addPlayer(trueSkillPlayer2, new Rating(player2.trueSkillMean,
-                                            player2.trueSkillStandardDeviation));
+                                                    player2.trueSkillStandardDeviation));
         return team;
     }
 

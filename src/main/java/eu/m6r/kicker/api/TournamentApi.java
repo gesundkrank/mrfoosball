@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.api.annotations.CheckChannelId;
 import eu.m6r.kicker.models.Player;
+import eu.m6r.kicker.models.PlayerQueue;
 import eu.m6r.kicker.models.Tournament;
 
 @Path("/api/tournament/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}}")
@@ -137,7 +138,7 @@ public class TournamentApi {
     public List<Player> getPlayersInQueue() {
         try {
             return controller.getPlayersInQueue(channelId);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Failed to get players in queue.", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

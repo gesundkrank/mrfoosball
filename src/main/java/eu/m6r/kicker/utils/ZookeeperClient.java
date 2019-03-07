@@ -88,6 +88,17 @@ public class ZookeeperClient {
         }
     }
 
+    public void deleteNode(final String path) throws IOException {
+        try {
+            final Stat stat = zooKeeper.exists(path, false);
+            if (stat != null) {
+                zooKeeper.delete(path, stat.getVersion());
+            }
+        } catch (InterruptedException | KeeperException e) {
+            throw new IOException(e);
+        }
+    }
+
     public String readNode(final String path) throws IOException {
         try {
             if (zooKeeper.exists(path, false) == null) {

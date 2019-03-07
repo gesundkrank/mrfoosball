@@ -28,7 +28,7 @@ public class PlayerQueues {
     public PlayerQueue get(final String channelId) throws IOException {
 
         final String value = zookeeperClient.readNode(path(channelId));
-        if (value == null) {
+        if (value == null || value.isEmpty()) {
             return new PlayerQueue();
         }
 
@@ -36,7 +36,7 @@ public class PlayerQueues {
     }
 
     public void clear(final String channelId) throws IOException {
-        zookeeperClient.writeNode(path(channelId), "");
+        zookeeperClient.deleteNode(path(channelId));
     }
 
     public void add(final String channelId, final Player player)

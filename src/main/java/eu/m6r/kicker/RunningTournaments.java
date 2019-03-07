@@ -34,7 +34,7 @@ public class RunningTournaments {
     }
 
     public void clear(final String channelId) throws IOException {
-        zookeeperClient.writeNode(path(channelId), "");
+        zookeeperClient.deleteNode(path(channelId));
     }
 
     public void save(final Tournament tournament) throws IOException {

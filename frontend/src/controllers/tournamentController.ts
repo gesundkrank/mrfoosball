@@ -58,7 +58,7 @@ export class TournamentController {
       return Promise.resolve(State.FINISHED);
     }
     const wins = this.countWins(this.tournament.matches);
-    const maxWins = this.tournament.bestOfN / 2 + 1;
+    const maxWins = (this.tournament.bestOfN + 1) / 2;
 
     if (Math.max(wins['teamA'], wins['teamB']) >= maxWins) {
       return this.finishTournament().then(() => this.tournament.state);

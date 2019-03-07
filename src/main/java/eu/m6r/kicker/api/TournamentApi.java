@@ -1,9 +1,11 @@
 package eu.m6r.kicker.api;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -77,15 +79,8 @@ public class TournamentApi {
                               @FormParam("playerB1") final String playerB1,
                               @FormParam("playerB2") final String playerB2,
                               @FormParam("bestOfN") final int bestOfN) {
-
         try {
-            controller.resetPlayers(channelId);
-            controller.addPlayer(channelId, playerA1);
-            controller.addPlayer(channelId, playerA2);
-            controller.addPlayer(channelId, playerB1);
-            controller.addPlayer(channelId, playerB2);
-
-            controller.startTournament(channelId, false, bestOfN);
+            controller.startTournament(channelId, bestOfN, playerA1, playerA2, playerB1, playerB2);
         } catch (Exception e) {
             logger.error(e);
             throw new WebApplicationException(500);
@@ -123,9 +118,10 @@ public class TournamentApi {
 
     @POST
     @Path("finish")
-    public void finishTournament() {
+    public void finishTournament(
+            @QueryParam("startNext") @DefaultValue("true") final boolean startNext) {
         try {
-            controller.finishTournament(channelId);
+            controller.finishTournament(channelId, startNext);
         } catch (Controller.InvalidTournamentStateException
                 | Controller.TournamentNotRunningException | IOException e) {
             logger.error("Failed to finish tournament!", e);

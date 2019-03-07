@@ -18,7 +18,6 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.core.MediaType;
-import javax.xml.bind.JAXBException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +29,6 @@ import org.glassfish.jersey.client.ClientProperties;
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerQueue;
-import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.models.ChannelJoined;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
@@ -62,8 +60,7 @@ public class Bot implements Watcher {
     private Pattern botUserIdPattern;
 
     public Bot(final String token, final ZookeeperClient zookeeperClient)
-            throws KeeperException, InterruptedException, StartSocketSessionException, IOException,
-                   JAXBException {
+            throws KeeperException, InterruptedException, StartSocketSessionException, IOException {
         this.logger = LogManager.getLogger();
 
         if (token == null) {
@@ -205,18 +202,17 @@ public class Bot implements Watcher {
                             try {
                                 final var player = getUser(userId);
                                 controller.addPlayer(channelId, player);
-                            } catch (PlayerQueue.PlayerAlreadyInQueueException
-                                    | Controller.TournamentRunningException e) {
+                            } catch (PlayerQueue.PlayerAlreadyInQueueException e) {
                                 sendMessage(e.getMessage(), slackChannelId);
+                            } catch (final PlayerQueue.TooManyUsersException e) {
+                                sendMessage(e.getMessage(), slackChannelId);
+                                break;
                             }
                         }
 
-                        try {
-                            final var tournament = controller.getRunningTournament(channelId);
-                            sendNewTournamentMessage(tournament, slackChannelId);
-                        } catch (Controller.TournamentNotRunningException e) {
-                            sendMessage(String.format("Current queue: %s",
-                                                      controller.getPlayersString(channelId)),
+                        final var playersInQueue = controller.getPlayersString(channelId);
+                        if (!playersInQueue.isEmpty()) {
+                            sendMessage(String.format("Current queue: %s", playersInQueue),
                                         slackChannelId);
                         }
                         break;
@@ -258,13 +254,10 @@ public class Bot implements Watcher {
                                 controller.resetPlayers(channelId);
                                 for (final var userId : userIds) {
                                     final var player = getUser(userId);
-                                    controller.addPlayer(channelId, player, false);
+                                    controller.addPlayer(channelId, player);
                                 }
 
-                                final var
-                                        tournament =
-                                        controller.startTournament(channelId, false, 3);
-                                sendNewTournamentMessage(tournament, slackChannelId);
+                                controller.startTournament(channelId, false, 3);
                             } catch (PlayerQueue.PlayerAlreadyInQueueException
                                     | Controller.TournamentRunningException e) {
                                 sendMessage(e.getMessage(), slackChannelId);
@@ -409,13 +402,6 @@ public class Bot implements Watcher {
         final var message = new Message(id, url, userId);
         message.attachments.add(getQRCodeAttachment(channel));
         messageWriter.postEphemeral(message);
-    }
-
-    private void sendNewTournamentMessage(final Tournament tournament, final String channel) {
-        final var message = String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
-                                          tournament.teamA.player1.id, tournament.teamA.player2.id,
-                                          tournament.teamB.player1.id, tournament.teamB.player2.id);
-        sendMessage(message, channel);
     }
 
     public static class StartSocketSessionException extends Exception {

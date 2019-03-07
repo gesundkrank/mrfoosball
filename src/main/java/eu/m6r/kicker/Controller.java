@@ -1,6 +1,7 @@
 package eu.m6r.kicker;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -73,21 +74,41 @@ public class Controller {
         startTournament(channelId, true, 3);
     }
 
-    public synchronized Tournament startTournament(final String channelId, final boolean shuffle,
-                                                   final int bestOfN)
+    public void startTournament(final String channelId, final boolean shuffle,
+                                final int bestOfN)
+            throws IOException, TournamentRunningException {
+        var playerList = queues.get(channelId).queue;
+        queues.clear(channelId);
+        startTournament(channelId, shuffle, bestOfN, playerList);
+    }
+
+    public void startTournament(final String channelId, final int bestOfN,
+                                final String playerA1, final String playerA2,
+                                final String playerB1, final String playerB2)
+            throws IOException, TournamentRunningException {
+
+        final var playerList = new ArrayList<Player>();
+        try (final var store = new Store()) {
+            playerList.add(store.getPlayer(playerA1));
+            playerList.add(store.getPlayer(playerA2));
+            playerList.add(store.getPlayer(playerB1));
+            playerList.add(store.getPlayer(playerB2));
+        }
+
+        startTournament(channelId, false, bestOfN, playerList);
+    }
+
+    private synchronized void startTournament(final String channelId, final boolean shuffle,
+                                              final int bestOfN, List<Player> playerList)
             throws TournamentRunningException, IOException {
         if (hasRunningTournament(channelId)) {
             throw new TournamentRunningException();
         }
 
-        var playerList = queues.get(channelId).queue;
-
         if (shuffle) {
             Collections.shuffle(playerList);
             playerList = trueSkillCalculator.getBestMatch(playerList);
         }
-
-        queues.clear(channelId);
 
         try (final var store = new Store()) {
             final var teamA = store.getTeam(playerList.get(0), playerList.get(1));
@@ -95,12 +116,21 @@ public class Controller {
             final var channel = store.getChannel(channelId);
             final var tournament = new Tournament(bestOfN, teamA, teamB, channel);
             runningTournaments.save(tournament);
-            return tournament;
+
+            final var message = String.format("A new game started:%n <@%s> <@%s> vs. <@%s> <@%s>",
+                                              tournament.teamA.player1.id,
+                                              tournament.teamA.player2.id,
+                                              tournament.teamB.player1.id,
+                                              tournament.teamB.player2.id);
+            messageWriter.postMessage(tournament.channel.slackId, message);
+
         }
+
 
     }
 
-    public synchronized void finishTournament(final String channelId)
+    public synchronized void finishTournament(final String channelId,
+                                              final boolean autoStartTournament)
             throws InvalidTournamentStateException, IOException, TournamentNotRunningException {
         final var runningTournament = this.runningTournaments.get(channelId);
         for (final var match : runningTournament.matches) {
@@ -122,13 +152,18 @@ public class Controller {
         this.runningTournaments.clear(channelId);
 
         final var winner = runningTournament.winner();
-        final Message message =
-                new Message(runningTournament.channel.slackId,
-                            String.format("The game is over. Congratulations to <@%s> and <@%s>!",
+        final var message = String.format("The game is over. Congratulations to <@%s> and <@%s>!",
                                           winner.player1.id,
-                                          winner.player2.id), null);
-        messageWriter.postMessage(message);
+                                          winner.player2.id);
+        messageWriter.postMessage(runningTournament.channel.slackId, message);
 
+        if (autoStartTournament && queues.get(channelId).isFull()) {
+            try {
+                startTournament(channelId);
+            } catch (TournamentRunningException e) {
+                logger.error("This should not happen.", e);
+            }
+        }
     }
 
     public List<Tournament> getTournaments(final String channelId) {
@@ -218,28 +253,9 @@ public class Controller {
                 .collect(Collectors.joining(", "));
     }
 
-    public void addPlayer(final String channelId, final String playerId)
-            throws PlayerQueue.TooManyUsersException, PlayerQueue.PlayerAlreadyInQueueException,
-                   TournamentRunningException, IOException {
-        try (final Store store = new Store()) {
-            addPlayer(channelId, store.getPlayer(playerId), false);
-        }
-    }
-
     public void addPlayer(final String channelId, final Player player)
-            throws PlayerQueue.TooManyUsersException, PlayerQueue.PlayerAlreadyInQueueException,
-                   TournamentRunningException, IOException {
-        addPlayer(channelId, player, true);
-    }
-
-    public void addPlayer(final String channelId, final Player player,
-                          final boolean autoStartTournament)
-            throws TournamentRunningException, PlayerQueue.PlayerAlreadyInQueueException,
-                   PlayerQueue.TooManyUsersException, IOException {
-
-        if (hasRunningTournament(channelId)) {
-            throw new TournamentRunningException();
-        }
+            throws PlayerQueue.PlayerAlreadyInQueueException, PlayerQueue.TooManyUsersException,
+                   IOException {
 
         try (final var store = new Store()) {
             final var storedPlayer = store.getPlayer(player);
@@ -251,8 +267,12 @@ public class Controller {
 
         queues.add(channelId, player);
 
-        if (queues.get(channelId).isFull() && autoStartTournament) {
-            startTournament(channelId);
+        if (queues.get(channelId).isFull() && !hasRunningTournament(channelId)) {
+            try {
+                startTournament(channelId);
+            } catch (TournamentRunningException e) {
+                logger.error("This should not happen", e);
+            }
         }
     }
 
@@ -307,7 +327,7 @@ public class Controller {
         }
 
         var messageString = String.format("<@%s> and <@%s> have to crawl. How embarrassing!!",
-                                    loosers.player1.id, loosers.player2.id);
+                                          loosers.player1.id, loosers.player2.id);
 
         final var message = new Message(slackId, messageString, null);
         messageWriter.postMessage(message);

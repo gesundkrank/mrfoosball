@@ -58,7 +58,7 @@ export class TournamentController {
       return Promise.resolve(State.FINISHED);
     }
     const wins = this.countWins(this.tournament.matches);
-    const maxWins = this.tournament.bestOfN / 2 + 1;
+    const maxWins = (this.tournament.bestOfN + 1) / 2;
 
     if (Math.max(wins['teamA'], wins['teamB']) >= maxWins) {
       return this.finishTournament().then(() => this.tournament.state);
@@ -198,13 +198,16 @@ export class TournamentController {
       });
   }
 
-  finishTournament(): Promise<Tournament> {
+  finishTournament(startNext = true): Promise<Tournament> {
     return this.push().toPromise()
       .then(() => {
         const oldTournament = this.tournament;
         this.tournament = undefined;
+
+        const data = new HttpParams()
+          .set('startNext', startNext.toString());
         return this.http
-          .post(this.tournamentUrl() + '/finish', '')
+          .post(this.tournamentUrl() + '/finish', '', { params: data })
           .map(() => oldTournament)
           .toPromise();
       });

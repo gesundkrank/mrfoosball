@@ -35,15 +35,15 @@ public class PlayerQueue {
     public static class PlayerAlreadyInQueueException extends Exception {
 
         PlayerAlreadyInQueueException(final Player player) {
-            super(String.format("%s is already in the queues!", player.name));
+            super(String.format("<@%s> is already in the queue!", player.name));
         }
     }
 
     public static class TooManyUsersException extends Exception {
 
         TooManyUsersException(final Player player) {
-            super(String.format("Unable to add %s to the game. Too many users in the queues. "
-                                + "Please remove users from the queues or start a game.",
+            super(String.format("Unable to add <@%s> to the game. Too many users in the queue. "
+                                + "Please remove users from the queue or start a game.",
                                 player.name));
         }
     }

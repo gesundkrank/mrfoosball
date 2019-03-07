@@ -36,7 +36,7 @@ public class PlayerQueues {
     }
 
     public void clear(final String channelId) throws IOException {
-        zookeeperClient.writeNode(path(channelId), "");
+        zookeeperClient.deleteNode(path(channelId));
     }
 
     public void add(final String channelId, final Player player)

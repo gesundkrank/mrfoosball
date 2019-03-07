@@ -28,7 +28,7 @@ public class PlayerQueues {
     public PlayerQueue get(final String channelId) throws IOException {
 
         final String value = zookeeperClient.readNode(path(channelId));
-        if (value == null) {
+        if (value == null || value.isEmpty()) {
             return new PlayerQueue();
         }
 

@@ -30,6 +30,11 @@ public class MessageWriter {
         sendMessageToApi(message, "chat.postEphemeral");
     }
 
+    public void postMessage(final String channelId, final String messageString) {
+        final var message = new Message(channelId, messageString, null);
+        postMessage(message);
+    }
+
     public void postMessage(final Message message) {
         sendMessageToApi(message, "chat.postMessage");
     }

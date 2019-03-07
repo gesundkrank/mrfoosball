@@ -198,13 +198,16 @@ export class TournamentController {
       });
   }
 
-  finishTournament(): Promise<Tournament> {
+  finishTournament(startNext = true): Promise<Tournament> {
     return this.push().toPromise()
       .then(() => {
         const oldTournament = this.tournament;
         this.tournament = undefined;
+
+        const data = new HttpParams()
+          .set('startNext', startNext.toString());
         return this.http
-          .post(this.tournamentUrl() + '/finish', '')
+          .post(this.tournamentUrl() + '/finish', '', { params: data })
           .map(() => oldTournament)
           .toPromise();
       });

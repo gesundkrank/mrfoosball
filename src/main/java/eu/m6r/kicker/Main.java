@@ -3,8 +3,6 @@ package eu.m6r.kicker;
 import java.io.IOException;
 import java.net.URI;
 
-import javax.xml.bind.JAXBException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
@@ -88,8 +86,6 @@ public class Main {
 
             //Keeps process running
             Thread.currentThread().join();
-        } catch (final JAXBException e) {
-            LOGGER.error(e);
         } finally {
             LOGGER.info("Shutting down kicker app.");
         }

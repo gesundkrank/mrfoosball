@@ -99,7 +99,7 @@ export class MatchPage {
                             return this.navCtrl.pop()
                               .then(() => this.tournamentCtrl.finishTournament());
                           case FinishOptions.Rematch:
-                            return this.tournamentCtrl.finishTournament()
+                            return this.tournamentCtrl.finishTournament(false)
                               .then(oldTournament => this.navCtrl.pop()
                                 .then(() => this.tournamentCtrl.newTournament(oldTournament))
                               );

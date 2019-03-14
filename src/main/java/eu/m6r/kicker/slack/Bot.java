@@ -140,7 +140,7 @@ public class Bot implements Watcher {
     public void onMessage(final String messageString, final Session session) throws IOException {
         logger.info(messageString);
 
-        if (messageString.startsWith("{\"type\":\"channel_joined\"")) {
+        if (messageString.contains("\"type\":\"channel_joined\"")) {
 
             final var channelJoined =
                     jsonConverter.fromString(messageString, ChannelJoined.class);
@@ -149,7 +149,7 @@ public class Bot implements Watcher {
             sendChannelJoinedMessage(channelJoined.channel.id, id);
 
 
-        } else if (messageString.startsWith("{\"type\":\"message\"")) {
+        } else if (messageString.contains("\"type\":\"message\"")) {
             final var message = jsonConverter.fromString(messageString, Message.class);
 
             if (message.text == null) {

@@ -40,6 +40,7 @@ import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Team.Key;
 import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
 
 
@@ -194,7 +195,7 @@ public class Store implements Closeable {
         session.update(tournament.teamB);
         session.update(tournament.teamB.player1);
         session.update(tournament.teamB.player2);
-        session.save(tournament);
+        session.saveOrUpdate(tournament);
         tx.commit();
     }
 
@@ -202,4 +203,16 @@ public class Store implements Closeable {
     public void close() {
         session.close();
     }
+
+    public void resetTeamSkills() {
+        final Transaction tx = session.beginTransaction();
+        session.createQuery("UPDATE Team SET trueSkillMean = :mean, "
+            + "trueSkillStandardDeviation = :standardDeviation")
+            .setParameter("mean", TrueSkillCalculator.DEFAULT_INITIAL_MEAN)
+            .setParameter("standardDeviation",
+                TrueSkillCalculator.DEFAULT_INITIAL_STANDARD_DEVIATION)
+            .executeUpdate();
+        tx.commit();
+    }
+
 }

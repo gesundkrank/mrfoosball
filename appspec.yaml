@@ -1,9 +1,0 @@
-version: 0.0
-Resources:
-  - TargetService:
-        Type: "AWS::ECS::Service"
-        Properties:
-          TaskDefinition: "arn:aws:ecs:eu-west-1:867503539023:task-definition/kicker:108"
-          LoadBalancerInfo:
-            ContainerName: "kicker-app"
-            ContainerPort: 8080

@@ -3,3 +3,5 @@ build
 .gradle
 kicker.properties
 out/
+container-definition.yml
+appspec.yaml

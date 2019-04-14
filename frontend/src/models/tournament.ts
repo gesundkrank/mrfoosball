@@ -52,4 +52,6 @@ export interface Tournament {
   teamAPlayer2SkillChange: number;
   teamBPlayer1SkillChange: number;
   teamBPlayer2SkillChange: number;
+  teamASkillChange: number;
+  teamBSkillChange: number;
 }

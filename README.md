@@ -21,7 +21,7 @@ connectionHbm2ddl=create-drop
 To see the logs of the container do 
 
 ```bash
-docker logs `docker ps --filter 'name=kicker_kicker' --format '{{.ID}}'`
+docker logs `docker ps --filter 'name=kicker__kicker' --format '{{.ID}}'`
 ``` 
 
 To shut down all containers exec

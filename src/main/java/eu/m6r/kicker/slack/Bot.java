@@ -288,10 +288,6 @@ public class Bot implements Watcher {
                     case "help":
                         sendHelpMessage(slackChannelId, sender);
                         break;
-                    case "calcTeamSkills":
-                        controller.recalculateTeamSkills(channelId);
-                        sendMessage("done", slackChannelId);
-                        break;
                     default:
                         sendMessage(String.format("I'm sorry <@%s>, I didn't understand that. "
                                                   + "If you need help just ask for it.", sender),

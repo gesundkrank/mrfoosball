@@ -356,22 +356,6 @@ public class Controller {
         messageWriter.postMessage(message);
     }
 
-    public void recalculateTeamSkills(String channelId) {
-        try (final Store store = new Store()) {
-            store.resetTeamSkills();
-        }
-        final List<Tournament> tournamentList = getTournaments(channelId);
-        Collections.reverse(tournamentList);
-        for (final Tournament tournament : tournamentList) {
-            try (final Store store = new Store()) {
-                System.out.println("tournament = " + tournament);
-                final Tournament updatedTournament = teamTrueSkillCalculator
-                    .updateRatings(tournament);
-                store.saveTournament(updatedTournament);
-            }
-        }
-    }
-
     public static class TournamentRunningException extends Exception {
 
         TournamentRunningException() {

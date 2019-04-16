@@ -39,6 +39,7 @@ import eu.m6r.kicker.slack.MessageWriter;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.store.Store;
 import eu.m6r.kicker.trueskill.PlayerTrueSkillCalculator;
+import eu.m6r.kicker.trueskill.TeamTrueSkillCalculator;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
 
@@ -47,7 +48,8 @@ public class Controller {
     private static Controller INSTANCE;
 
     private final Logger logger;
-    private final TrueSkillCalculator trueSkillCalculator;
+    private final TrueSkillCalculator playerTrueSkillCalculator;
+    private final TrueSkillCalculator teamTrueSkillCalculator;
     private final PlayerQueues queues;
     private final RunningTournaments runningTournaments;
     private final String baseUrl;
@@ -63,7 +65,8 @@ public class Controller {
 
     private Controller() throws IOException {
         this.logger = LogManager.getLogger();
-        this.trueSkillCalculator = new PlayerTrueSkillCalculator();
+        this.playerTrueSkillCalculator = new PlayerTrueSkillCalculator();
+        this.teamTrueSkillCalculator = new TeamTrueSkillCalculator();
 
         final var properties = Properties.getInstance();
         final var zookeeperHosts = properties.zookeeperHosts();
@@ -161,8 +164,10 @@ public class Controller {
         runningTournament.state = State.FINISHED;
 
         try (final var store = new Store()) {
-            final var updatedTournament =
-                    trueSkillCalculator.updateRatings(runningTournament);
+            var updatedTournament =
+                    playerTrueSkillCalculator.updateRatings(runningTournament);
+            updatedTournament =
+                    teamTrueSkillCalculator.updateRatings(updatedTournament);
             store.saveTournament(updatedTournament);
         }
 

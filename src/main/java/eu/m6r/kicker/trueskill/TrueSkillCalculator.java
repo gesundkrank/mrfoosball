@@ -42,11 +42,11 @@ public abstract class TrueSkillCalculator {
     static final SkillCalculator skillCalculator;
     static final GameInfo gameInfo;
 
-    static  {
+    static {
         skillCalculator = new TwoTeamTrueSkillCalculator();
         gameInfo = new GameInfo(DEFAULT_INITIAL_MEAN, DEFAULT_INITIAL_STANDARD_DEVIATION,
-                                     DEFAULT_BETA, DEFAULT_DYNAMICS_FACTOR,
-                                     DEFAULT_DRAW_PROBABILITY);
+                                DEFAULT_BETA, DEFAULT_DYNAMICS_FACTOR,
+                                DEFAULT_DRAW_PROBABILITY);
     }
 
     public abstract Tournament updateRatings(final Tournament tournament);
@@ -115,9 +115,9 @@ public abstract class TrueSkillCalculator {
     }
 
     private static double calcMatchQuality(final eu.m6r.kicker.models.Player player1,
-                                    final eu.m6r.kicker.models.Player player2,
-                                    final eu.m6r.kicker.models.Player player3,
-                                    final eu.m6r.kicker.models.Player player4) {
+                                           final eu.m6r.kicker.models.Player player2,
+                                           final eu.m6r.kicker.models.Player player3,
+                                           final eu.m6r.kicker.models.Player player4) {
         final IPlayer iPlayer1 = new Player<>(player1.id);
         final IPlayer iPlayer2 = new Player<>(player2.id);
         final IPlayer iPlayer3 = new Player<>(player3.id);

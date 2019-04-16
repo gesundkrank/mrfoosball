@@ -161,28 +161,6 @@ export class TournamentController {
       .then(() => this.pull().toPromise());
   }
 
-  newTournament(tournament): Promise<Tournament> {
-    const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
-    const options = { headers };
-
-    let teamA = tournament.teamA;
-    let teamB = tournament.teamB;
-
-    if (tournament.matches.length % 2 === 0) {
-      [teamA, teamB] = [teamB, teamA];
-    }
-
-    const data = new HttpParams()
-      .set('playerB1', teamA.player1.id.toString())
-      .set('playerB2', teamA.player2.id.toString())
-      .set('playerA1', teamB.player1.id.toString())
-      .set('playerA2', teamB.player2.id.toString())
-      .set('bestOfN', tournament.bestOfN.toString());
-
-    return this.http.post(this.tournamentUrl(), data.toString(), options).toPromise()
-      .then(() => this.pull().toPromise());
-  }
-
   getWins() {
     return this.get().then(tournament => {
       return this.countWins(tournament.matches);
@@ -215,17 +193,15 @@ export class TournamentController {
       });
   }
 
-  finishTournament(startNext = true): Promise<Tournament> {
+  finishTournament(rematch = false): Promise<any> {
     return this.push().toPromise()
       .then(() => {
-        const oldTournament = this.tournament;
         this.tournament = undefined;
 
         const data = new HttpParams()
-          .set('startNext', startNext.toString());
+          .set('rematch', rematch.toString());
         return this.http
           .post(this.tournamentUrl() + '/finish', '', { params: data })
-          .map(() => oldTournament)
           .toPromise();
       });
   }

@@ -99,7 +99,7 @@ export class MatchPage {
       .then(() => this.update());
   }
 
-  private finishMatch(matchWinner: Team) {
+  private finishMatch(matchWinner: Team): Promise<any> {
     const [player1, player2] = [matchWinner.player1, matchWinner.player2];
     return this.tournamentCtrl.finishMatch()
       .then(tournamentFinished => {
@@ -110,16 +110,9 @@ export class MatchPage {
             .then(() => {
               return this.showPlayBestOfNAlert(title, message)
                 .then(finishOption => {
-                        switch (finishOption) {
-                          case FinishOptions.Finish:
-                            return this.navCtrl.pop()
-                              .then(() => this.tournamentCtrl.finishTournament());
-                          case FinishOptions.Rematch:
-                            return this.tournamentCtrl.finishTournament(false)
-                              .then(oldTournament => this.navCtrl.pop()
-                                .then(() => this.tournamentCtrl.newTournament(oldTournament))
-                              );
-                        }
+                        const rematch = finishOption === FinishOptions.Rematch;
+                        return this.tournamentCtrl.finishTournament(rematch)
+                          .then(() => this.navCtrl.pop());
                       }
                 );
             });

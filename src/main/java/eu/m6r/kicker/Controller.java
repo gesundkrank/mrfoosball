@@ -103,20 +103,10 @@ public class Controller {
         startTournament(channelId, shuffle, bestOfN, playerList);
     }
 
-    public void startTournament(final String channelId, final int bestOfN,
-                                final String playerA1, final String playerA2,
-                                final String playerB1, final String playerB2)
-            throws IOException, TournamentRunningException {
-
-        final var playerList = new ArrayList<Player>();
-        try (final var store = new Store()) {
-            playerList.add(store.getPlayer(playerA1));
-            playerList.add(store.getPlayer(playerA2));
-            playerList.add(store.getPlayer(playerB1));
-            playerList.add(store.getPlayer(playerB2));
-        }
-
-        startTournament(channelId, false, bestOfN, playerList);
+    private void startTournament(final String channelId, final int bestOfN, final Team teamA,
+                                 final Team teamB) throws IOException, TournamentRunningException {
+        final var list = List.of(teamA.player1, teamA.player2, teamB.player1, teamB.player2);
+        startTournament(channelId, false, bestOfN, list);
     }
 
     private synchronized void startTournament(final String channelId, final boolean shuffle,
@@ -150,8 +140,7 @@ public class Controller {
 
     }
 
-    public synchronized void finishTournament(final String channelId,
-                                              final boolean autoStartTournament)
+    public synchronized void finishTournament(final String channelId, final boolean rematch)
             throws InvalidTournamentStateException, IOException, TournamentNotRunningException {
         final var runningTournament = this.runningTournaments.get(channelId);
         for (final var match : runningTournament.matches) {
@@ -180,13 +169,31 @@ public class Controller {
                                           winner.player2.id);
         messageWriter.postMessage(runningTournament.channel.slackId, message);
 
-        if (autoStartTournament && queues.get(channelId).isFull()) {
-            try {
+        try {
+            if (rematch) {
+                startRematch(runningTournament);
+            } else if (queues.get(channelId).isFull()) {
                 startTournament(channelId);
-            } catch (TournamentRunningException e) {
-                logger.error("This should not happen.", e);
             }
+        } catch (TournamentRunningException e) {
+            logger.error("This should not happen.", e);
         }
+    }
+
+    private void startRematch(final Tournament tournament)
+            throws IOException, TournamentRunningException {
+        final Team teamA;
+        final Team teamB;
+
+        if (tournament.matches.size() % 2 == 0) {
+            teamA = tournament.teamA;
+            teamB = tournament.teamB;
+        } else {
+            teamA = tournament.teamB;
+            teamB = tournament.teamA;
+        }
+
+        startTournament(tournament.channel.id, tournament.bestOfN, teamA, teamB);
     }
 
     public List<Tournament> getTournaments(final String channelId) {

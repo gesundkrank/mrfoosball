@@ -111,8 +111,8 @@ export class MatchPage {
               return this.showPlayBestOfNAlert(title, message)
                 .then(finishOption => {
                         const rematch = finishOption === FinishOptions.Rematch;
-                        return this.navCtrl.pop()
-                          .then(() => this.tournamentCtrl.finishTournament(rematch));
+                        return this.tournamentCtrl.finishTournament(rematch)
+                          .then(() => this.navCtrl.pop());
                       }
                 );
             });

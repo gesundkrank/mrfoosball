@@ -89,21 +89,6 @@ public class TournamentApi {
         }
     }
 
-    @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public void newTournament(@FormParam("playerA1") final String playerA1,
-                              @FormParam("playerA2") final String playerA2,
-                              @FormParam("playerB1") final String playerB1,
-                              @FormParam("playerB2") final String playerB2,
-                              @FormParam("bestOfN") final int bestOfN) {
-        try {
-            controller.startTournament(channelId, bestOfN, playerA1, playerA2, playerB1, playerB2);
-        } catch (Exception e) {
-            logger.error(e);
-            throw new WebApplicationException(500);
-        }
-    }
-
     @GET
     @Path("running")
     @Produces(MediaType.APPLICATION_JSON)
@@ -136,9 +121,9 @@ public class TournamentApi {
     @POST
     @Path("finish")
     public void finishTournament(
-            @QueryParam("startNext") @DefaultValue("true") final boolean startNext) {
+            @QueryParam("rematch") @DefaultValue("true") final boolean rematch) {
         try {
-            controller.finishTournament(channelId, startNext);
+            controller.finishTournament(channelId, rematch);
         } catch (Controller.InvalidTournamentStateException
                 | Controller.TournamentNotRunningException | IOException e) {
             logger.error("Failed to finish tournament!", e);

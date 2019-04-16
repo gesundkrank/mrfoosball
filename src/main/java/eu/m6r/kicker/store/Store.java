@@ -38,6 +38,7 @@ import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.State;
 import eu.m6r.kicker.models.Team;
+import eu.m6r.kicker.models.Team.Key;
 import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.utils.Properties;
 
@@ -123,23 +124,33 @@ public class Store implements Closeable {
     }
 
     public Team getTeam(final Player player1, final Player player2) {
+        return getTeam(player1, player2, true);
+    }
+
+    public Team getTeam(final Player player1, final Player player2, boolean persist) {
         Transaction tx = session.beginTransaction();
 
         session.saveOrUpdate(player1);
         session.saveOrUpdate(player2);
 
-        final Team team = new Team();
+        final Key key = new Key();
 
         if (player1.compareTo(player2) > 0) {
-            team.player1 = player2;
-            team.player2 = player1;
+            key.player1 = player2;
+            key.player2 = player1;
         } else {
-            team.player1 = player1;
-            team.player2 = player2;
+            key.player1 = player1;
+            key.player2 = player2;
         }
 
-        if (session.get(Team.class, team) == null) {
-            session.save(team);
+        Team team = session.get(Team.class, key);
+        if (team == null) {
+            team = new Team();
+            team.player1 = key.player1;
+            team.player2 = key.player2;
+            if (persist) {
+                session.save(team);
+            }
         }
 
         tx.commit();

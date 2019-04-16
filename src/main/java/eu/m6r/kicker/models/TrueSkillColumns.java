@@ -1,4 +1,4 @@
-/*!
+/*
  * This file is part of kicker (https://github.com/mbrtargeting/kicker).
  * Copyright (c) 2019 Jan Graßegger.
  *
@@ -15,42 +15,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-page-stats {
-  ion-avatar > img {
-    border-radius: 100%;
-    max-height: 40px;
-  }
+package eu.m6r.kicker.models;
 
-  .center {
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-  }
+import javax.persistence.MappedSuperclass;
 
-  .scoreChange {
-    text-align: center;
-    vertical-align: middle;
+import de.gesundkrank.jskills.Rating;
 
-    &.plus {
-      color: green;
+import eu.m6r.kicker.trueskill.TrueSkillCalculator;
+
+@MappedSuperclass
+public class TrueSkillColumns {
+
+    public Double trueSkillMean = TrueSkillCalculator.DEFAULT_INITIAL_MEAN;
+    public Double trueSkillStandardDeviation =
+            TrueSkillCalculator.DEFAULT_INITIAL_STANDARD_DEVIATION;
+
+    public void updateRating(final Rating newRating) {
+        trueSkillMean = newRating.getMean();
+        trueSkillStandardDeviation = newRating.getStandardDeviation();
     }
-
-    &.minus {
-      color: red;
-    }
-  }
-
-  .gameResult {
-    font-size: 20px;
-    padding-top: 12px;
-
-    ion-col {
-      font-size: 14px;
-      padding: 2px;
-    }
-  }
-
-  .lastGames img {
-    margin: auto;
-  }
 }

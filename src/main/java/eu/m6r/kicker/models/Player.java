@@ -23,10 +23,6 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
-import de.gesundkrank.jskills.Rating;
-
-import eu.m6r.kicker.trueskill.TrueSkillCalculator;
-
 @NamedQueries({
         @NamedQuery(
                 name = "get_players_ordered_by_skill",
@@ -35,21 +31,12 @@ import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 })
 @Entity
 @Table
-public class Player implements Comparable<Player> {
+public class Player extends TrueSkillColumns implements Comparable<Player> {
 
     @Id
     public String id;
     public String name;
     public String avatarImage;
-    public Double trueSkillMean = TrueSkillCalculator.DEFAULT_INITIAL_MEAN;
-    public Double trueSkillStandardDeviation =
-            TrueSkillCalculator.DEFAULT_INITIAL_STANDARD_DEVIATION;
-
-
-    public void updateRating(final Rating newRating) {
-        trueSkillMean = newRating.getMean();
-        trueSkillStandardDeviation = newRating.getStandardDeviation();
-    }
 
     @Override
     public int hashCode() {

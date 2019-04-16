@@ -28,8 +28,8 @@ import javax.persistence.Table;
 
 @Entity
 @Table
-@IdClass(Team.class)
-public class Team implements Serializable {
+@IdClass(Team.Key.class)
+public class Team extends TrueSkillColumns implements Serializable {
 
     @Id
     @ManyToOne(cascade = CascadeType.PERSIST)
@@ -52,5 +52,11 @@ public class Team implements Serializable {
             return oTeam.player1.equals(player1) && oTeam.player2.equals(player2);
         }
         return false;
+    }
+
+    public static class Key implements Serializable {
+
+        public Player player1;
+        public Player player2;
     }
 }

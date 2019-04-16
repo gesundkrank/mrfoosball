@@ -90,8 +90,7 @@ export class MatchPage {
       return 0;
     }
 
-    return Math.round((team.player1.trueSkillMean - 3 * team.player1.trueSkillStandardDeviation) +
-                      (team.player2.trueSkillMean - 3 * team.player2.trueSkillStandardDeviation));
+    return (team.trueSkillMean - 3 * team.trueSkillStandardDeviation).toFixed(2);
   }
 
   cancelMatch() {

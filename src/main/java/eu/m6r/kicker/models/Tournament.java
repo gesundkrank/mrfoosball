@@ -85,6 +85,8 @@ public class Tournament {
     public Double teamAPlayer2SkillChange;
     public Double teamBPlayer1SkillChange;
     public Double teamBPlayer2SkillChange;
+    public Double teamASkillChange;
+    public Double teamBSkillChange;
 
     @ManyToOne
     public Channel channel;

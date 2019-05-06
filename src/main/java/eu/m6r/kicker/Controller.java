@@ -310,6 +310,13 @@ public class Controller {
         queues.clear(channelId);
     }
 
+    public void removePlayer(final String channelId, final String playerId) throws IOException {
+        try (final var store = new Store()) {
+            final var storedPlayer = store.getPlayer(playerId);
+            removePlayer(channelId, storedPlayer);
+        }
+    }
+
     public void removePlayer(final String channelId, final Player player) throws IOException {
         queues.remove(channelId, player);
         logger.info("Removed {} from the queues", player);

@@ -70,6 +70,24 @@ export class StatsPage {
       .then(() => refresher.complete());
   }
 
+  addPlayer(player) {
+    this.http.post('/api/tournament/' + this.id + '/queue', player)
+      .subscribe(
+        error => this.handleError(error)
+      );
+    this.checkTournament(false)
+      .catch(err => this.handleError(err));
+  }
+
+  removePlayer(player) {
+    this.http.delete('/api/tournament/' + this.id + '/queue/' + player.id)
+      .subscribe(
+        error => this.handleError(error)
+      );
+    this.checkTournament(false)
+      .catch(err => this.handleError(err));
+  }
+
   checkTournament(loop = true) {
     return this.tournamentController.getRunningMatch()
       .then(match => {

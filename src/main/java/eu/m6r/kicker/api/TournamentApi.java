@@ -141,4 +141,30 @@ public class TournamentApi {
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @POST
+    @Path("queue")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void addPlayer(final Player player) {
+        try {
+            controller.addPlayer(channelId, player);
+        } catch (PlayerQueue.PlayerAlreadyInQueueException | PlayerQueue.TooManyUsersException e) {
+            logger.error("Failed to add player to the queue", e);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        } catch (IOException e) {
+            logger.error("Failed to add player to the queue", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DELETE
+    @Path("queue/{id}")
+    public void removePlayer(@PathParam("id") final String id) {
+        try {
+            controller.removePlayer(channelId, id);
+        } catch (IOException e) {
+            logger.error("Failed to remove player from the queue", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

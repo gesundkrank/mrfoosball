@@ -93,6 +93,18 @@
                 </p>
               </ion-col>
             </ion-row>
+            <ion-row>
+              <ion-col>
+              <p>
+                {{ leftTeam?.player1.trueSkillMean - 3 * leftTeam?.player1.trueSkillStandardDeviation | number:'1.2-2'}}
+              </p>
+            </ion-col>
+              <ion-col>
+                <p>
+                  {{ leftTeam?.player2.trueSkillMean - 3 * leftTeam?.player2.trueSkillStandardDeviation | number:'1.2-2'}}
+                </p>
+              </ion-col>
+            </ion-row>
           </ion-grid>
         </ion-item>
       </ion-col>
@@ -152,6 +164,18 @@
               <ion-col>
                 <p>
                   {{ rightTeam?.player2.name }}
+                </p>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col>
+                <p>
+                  {{ rightTeam?.player1.trueSkillMean - 3 * rightTeam?.player1.trueSkillStandardDeviation | number:'1.2-2'}}
+                </p>
+              </ion-col>
+              <ion-col>
+                <p>
+                  {{ rightTeam?.player2.trueSkillMean - 3 * rightTeam?.player2.trueSkillStandardDeviation | number:'1.2-2'}}
                 </p>
               </ion-col>
             </ion-row>

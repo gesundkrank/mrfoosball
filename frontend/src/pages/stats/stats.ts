@@ -17,7 +17,7 @@
 
 import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
-import { NavController, NavParams } from 'ionic-angular';
+import { NavController, NavParams, ToastController } from 'ionic-angular';
 import { Logger, LoggingService } from 'ionic-logging-service';
 
 import { TournamentController } from '../../controllers/tournamentController';
@@ -40,6 +40,7 @@ export class StatsPage {
   lastTournaments: Tournament[];
 
   constructor(public http: HttpClient,
+              public toastController: ToastController,
               private readonly navCtrl: NavController,
               private readonly navParams: NavParams,
               private readonly tournamentController: TournamentController,
@@ -75,6 +76,7 @@ export class StatsPage {
       .subscribe(
         error => this.handleError(error)
       );
+    this.presentToast('Adding ' + player.name + ' to the queue.');
     this.checkTournament(false)
       .catch(err => this.handleError(err));
   }
@@ -84,8 +86,17 @@ export class StatsPage {
       .subscribe(
         error => this.handleError(error)
       );
+    this.presentToast('Removing ' + player.name + ' from the queue.');
     this.checkTournament(false)
       .catch(err => this.handleError(err));
+  }
+
+  private presentToast(message) {
+    void this.toastController.create({
+      message,
+      duration: 2000,
+      cssClass: 'queueToast',
+    }).present();
   }
 
   checkTournament(loop = true) {

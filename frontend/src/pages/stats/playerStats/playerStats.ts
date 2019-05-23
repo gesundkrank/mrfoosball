@@ -79,6 +79,7 @@ export class PlayerStatsPage {
   addPlayer(player) {
     this.http.post('/api/tournament/' + this.id + '/queue', player)
       .subscribe(
+        response => undefined,
         error => this.handleError(error)
       );
     this.presentToast('Adding ' + player.name + ' to the queue.');

@@ -78,11 +78,10 @@ export class StatsPage {
       .then(() => refresher.complete());
   }
 
-
-
   removePlayer(player) {
     this.http.delete('/api/tournament/' + this.id + '/queue/' + player.id)
       .subscribe(
+        response => undefined,
         error => this.handleError(error)
       );
     this.presentToast('Removing ' + player.name + ' from the queue.');

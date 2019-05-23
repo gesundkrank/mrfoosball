@@ -31,43 +31,10 @@
   <ion-grid>
     <ion-row>
       <ion-col col-8>
-        <ion-item>Top Players</ion-item>
-        <ion-grid>
-          <ion-row>
-            <ion-col class="header">
-              Rank
-            </ion-col>
-            <ion-col class="header">
-              Player
-            </ion-col>
-            <ion-col></ion-col>
-            <ion-col class="header">
-              Skill
-            </ion-col>
-            <ion-col class="header">
-              Win Rate
-            </ion-col>
-          </ion-row>
-          <ion-row *ngFor="let playerSkill of stats; let i = index " [attr.data-index]="i">
-            <ion-col>
-              #{{ i + 1 }}
-            </ion-col>
-            <ion-col>
-              <ion-avatar item-left (click)="addPlayer(playerSkill)">
-                <img src="{{ playerSkill?.avatarImage }}">
-              </ion-avatar>
-            </ion-col>
-            <ion-col>
-              {{ playerSkill?.name }}
-            </ion-col>
-            <ion-col>
-              {{ roundSkill(playerSkill?.skill) }}
-            </ion-col>
-            <ion-col>
-              {{ winRate(playerSkill) }}
-            </ion-col>
-          </ion-row>
-        </ion-grid>
+        <ion-tabs tabsPlacement=top>
+          <ion-tab [root]="playerRoot" tabTitle="Top Players "></ion-tab>
+          <ion-tab [root]="teamRoot" tabTitle="Top Teams "></ion-tab>
+        </ion-tabs>
       </ion-col>
       <ion-col col-4>
         <ion-item>Queue</ion-item>

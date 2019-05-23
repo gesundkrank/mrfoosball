@@ -26,9 +26,12 @@ import { TournamentController } from '../controllers/tournamentController';
 import { IndexPage } from '../pages/index';
 import { MatchPage } from '../pages/match/match';
 import { QRScannerPage } from '../pages/qr-scanner/qr-scanner';
+import { PlayerStatsPage } from '../pages/stats/playerStats/playerStats';
 import { StatsPage } from '../pages/stats/stats';
+import { TeamStatsPage } from '../pages/stats/teamStats/teamStats';
 
 import { MyApp } from './app.component';
+import { ChannelService } from './channel.service';
 
 @NgModule({
             declarations: [
@@ -36,6 +39,8 @@ import { MyApp } from './app.component';
               IndexPage,
               MatchPage,
               StatsPage,
+              TeamStatsPage,
+              PlayerStatsPage,
               QRScannerPage,
             ],
             imports: [
@@ -50,12 +55,15 @@ import { MyApp } from './app.component';
               IndexPage,
               MatchPage,
               StatsPage,
+              TeamStatsPage,
+              PlayerStatsPage,
               QRScannerPage,
             ],
             providers: [
               { provide: ErrorHandler, useClass: IonicErrorHandler },
               LoggingService,
               TournamentController,
+              [ChannelService],
             ],
           })
 export class AppModule {

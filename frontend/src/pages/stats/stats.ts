@@ -20,16 +20,20 @@ import { Component } from '@angular/core';
 import { NavController, NavParams, ToastController } from 'ionic-angular';
 import { Logger, LoggingService } from 'ionic-logging-service';
 
+import { ChannelService } from '../../app/channel.service';
 import { TournamentController } from '../../controllers/tournamentController';
 import { PlayerSkill } from '../../models/playerSkill';
 import { Player, Tournament } from '../../models/tournament';
 import { IndexPage } from '../index';
 import { MatchPage } from '../match/match';
 
+import { PlayerStatsPage } from './playerStats/playerStats';
+import { TeamStatsPage } from './teamStats/teamStats';
+
 @Component({
-             selector: 'page-stats',
-             templateUrl: 'stats.html',
-           })
+  selector: 'page-stats',
+  templateUrl: 'stats.html',
+})
 export class StatsPage {
 
   private readonly logger: Logger;
@@ -39,22 +43,25 @@ export class StatsPage {
   stats: PlayerSkill[];
   lastTournaments: Tournament[];
 
+  playerRoot = PlayerStatsPage;
+  teamRoot = TeamStatsPage;
+
   constructor(public http: HttpClient,
               public toastController: ToastController,
               private readonly navCtrl: NavController,
               private readonly navParams: NavParams,
               private readonly tournamentController: TournamentController,
-              private readonly loggingService: LoggingService) {
+              private readonly loggingService: LoggingService,
+              private channelService: ChannelService) {
     this.logger = this.loggingService.getLogger('StatsPage');
   }
 
   ionViewDidEnter() {
-    this.id = this.navParams.get('id');
+    this.id = this.channelService.channelId;
     window.history.pushState(undefined, undefined, '/' + this.id);
     this.tournamentController.setId(this.id);
     this.checkTournament()
       .catch(err => this.handleError(err));
-    this.loadPlayerStats();
     this.loadLastTournaments();
   }
 
@@ -71,15 +78,7 @@ export class StatsPage {
       .then(() => refresher.complete());
   }
 
-  addPlayer(player) {
-    this.http.post('/api/tournament/' + this.id + '/queue', player)
-      .subscribe(
-        error => this.handleError(error)
-      );
-    this.presentToast('Adding ' + player.name + ' to the queue.');
-    this.checkTournament(false)
-      .catch(err => this.handleError(err));
-  }
+
 
   removePlayer(player) {
     this.http.delete('/api/tournament/' + this.id + '/queue/' + player.id)
@@ -121,14 +120,6 @@ export class StatsPage {
       );
   }
 
-  loadPlayerStats() {
-    this.http.get<PlayerSkill[]>('/api/stats/' + this.id)
-      .subscribe(
-        (stats: PlayerSkill[]) => this.stats = stats,
-        error => this.handleError(error)
-      );
-  }
-
   loadLastTournaments() {
     this.http.get<Tournament[]>('/api/tournament/' + this.id + '?num=10')
       .subscribe(
@@ -155,10 +146,6 @@ export class StatsPage {
 
   winsTeamB(tournament: Tournament): number {
     return this.wins(tournament)['teamB'];
-  }
-
-  winRate(playerSkill: PlayerSkill): string {
-    return ((playerSkill.wins / playerSkill.games) * 100).toFixed(2) + ' %';
   }
 
 }

@@ -20,6 +20,7 @@ import * as Cookies from 'es-cookie';
 import { AlertController, ModalController, NavController, ToastController } from 'ionic-angular';
 import { Logger, LoggingService } from 'ionic-logging-service';
 
+import { ChannelService } from '../../app/channel.service';
 import { QRScannerPage } from '../qr-scanner/qr-scanner';
 import { StatsPage } from '../stats/stats';
 
@@ -34,7 +35,8 @@ export class IndexPage {
               private readonly alertCtrl: AlertController,
               private readonly modalCtrl: ModalController,
               private readonly toastCtrl: ToastController,
-              private readonly loggingService: LoggingService) {
+              private readonly loggingService: LoggingService,
+              private channelService: ChannelService) {
     this.logger = this.loggingService.getLogger('IndexPage');
   }
 
@@ -42,9 +44,11 @@ export class IndexPage {
     const splits = location.search.substring(1).split('=');
     if (splits && splits.length === 2 && splits[0] === 'id') {
       const id = splits[1];
+      this.channelService.updateCahnnelId(id);
       return this.goToStatsPage(id);
     } else if (Cookies.get('id') !== undefined) {
       const id = Cookies.get('id');
+      this.channelService.updateCahnnelId(id);
       return this.goToStatsPage(id);
     } else {
       window.history.pushState(undefined, undefined, '/');
@@ -89,6 +93,7 @@ export class IndexPage {
                   {
                     text: 'Submit',
                     handler: data => {
+                      this.channelService.updateCahnnelId(data.channelId);
                       this.goToStatsPage(data.channelId)
                         .catch(reason => this.logger.error(reason));
                     },

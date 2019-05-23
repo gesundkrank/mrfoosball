@@ -354,17 +354,17 @@ public class Controller {
         final var slackId = tournament.channel.slackId;
         final var lastMatch = tournament.matches.get(tournament.matches.size() - 1);
 
-        final Team loosers;
+        final Team losers;
         if (lastMatch.teamA == 0) {
-            loosers = tournament.teamA;
+            losers = tournament.teamA;
         } else if (lastMatch.teamB == 0) {
-            loosers = tournament.teamB;
+            losers = tournament.teamB;
         } else {
             return;
         }
 
         var messageString = String.format("<@%s> and <@%s> have to crawl. How embarrassing!!",
-                                          loosers.player1.id, loosers.player2.id);
+                                          losers.player1.id, losers.player2.id);
 
         final var message = new Message(slackId, messageString, null);
         messageWriter.postMessage(message);

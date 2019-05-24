@@ -1,0 +1,41 @@
+{
+  "name": "kicker-frontend",
+  "author": "mbr targeting",
+  "private": true,
+  "scripts": {
+    "clean": "ionic-app-scripts clean",
+    "build": "ionic-app-scripts build",
+    "tslint": "tslint -p tsconfig.json -c tslint.json",
+    "ionic:build": "ionic-app-scripts build",
+    "ionic:serve": "ionic-app-scripts serve",
+    "buildProduction": "ionic-app-scripts build --prod"
+  },
+  "dependencies": {
+    "@angular/animations": "5.2.11",
+    "@angular/common": "5.2.11",
+    "@angular/compiler": "5.2.11",
+    "@angular/compiler-cli": "5.2.11",
+    "@angular/core": "5.2.11",
+    "@angular/forms": "5.2.11",
+    "@angular/http": "5.2.11",
+    "@angular/platform-browser": "5.2.11",
+    "@angular/platform-browser-dynamic": "5.2.11",
+    "@ionic-native/core": "~4.11.0",
+    "@ionic-native/splash-screen": "~4.11.0",
+    "@ionic-native/status-bar": "~4.11.0",
+    "@ionic/storage": "2.1.3",
+    "@zxing/ngx-scanner": "^1.2.0",
+    "es-cookie": "^1.2.0",
+    "ionic-angular": "3.9.2",
+    "ionic-logging-service": "^5.1.0",
+    "ionicons": "3.0.0",
+    "rxjs": "5.5.11",
+    "sw-toolbox": "3.6.0"
+  },
+  "devDependencies": {
+    "@ionic/app-scripts": "3.1.11",
+    "tslint": "^5.11.0",
+    "tslint-ionic-rules": "0.0.17",
+    "typescript": "^2.6.2"
+  }
+}

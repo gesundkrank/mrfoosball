@@ -28,6 +28,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import eu.m6r.kicker.models.Channel;
+import eu.m6r.kicker.models.Crawl;
 import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerQueue;
@@ -52,6 +53,7 @@ public class Controller {
     private final TrueSkillCalculator teamTrueSkillCalculator;
     private final PlayerQueues queues;
     private final RunningTournaments runningTournaments;
+    private final LastCrawl lastCrawl;
     private final String baseUrl;
     private final MessageWriter messageWriter;
 
@@ -72,6 +74,7 @@ public class Controller {
         final var zookeeperHosts = properties.zookeeperHosts();
         this.queues = new PlayerQueues(zookeeperHosts);
         this.runningTournaments = new RunningTournaments(zookeeperHosts);
+        this.lastCrawl = new LastCrawl(zookeeperHosts);
         this.baseUrl = properties.getAppUrl();
         this.messageWriter = new MessageWriter(properties.getSlackToken());
     }
@@ -160,7 +163,7 @@ public class Controller {
             store.saveTournament(updatedTournament);
         }
 
-        checkCrawlShaming(runningTournament);
+        checkCrawl(runningTournament, channelId);
         this.runningTournaments.clear(channelId);
 
         final var winner = runningTournament.winner();
@@ -273,7 +276,7 @@ public class Controller {
             throw new InvalidTournamentStateException("Cannot create more matches than bestOfN.");
         }
 
-        checkCrawlShaming(tournament);
+        checkCrawl(tournament, channelId);
         tournament.matches.add(new Match());
         runningTournaments.save(tournament);
     }
@@ -346,7 +349,13 @@ public class Controller {
         return baseUrl;
     }
 
-    private void checkCrawlShaming(final Tournament tournament) {
+    public Crawl getLastCrawl(String channelId)
+            throws IOException, Controller.NoLastCrawlException {
+        return lastCrawl.get(channelId);
+    }
+
+    private void checkCrawl(final Tournament tournament, final String channelId)
+            throws IOException {
         if (tournament.matches.isEmpty()) {
             return;
         }
@@ -354,21 +363,30 @@ public class Controller {
         final var slackId = tournament.channel.slackId;
         final var lastMatch = tournament.matches.get(tournament.matches.size() - 1);
 
-        final Team loosers;
+        final Team losers;
+        final Team winners;
         if (lastMatch.teamA == 0) {
-            loosers = tournament.teamA;
+            losers = tournament.teamA;
+            winners = tournament.teamB;
         } else if (lastMatch.teamB == 0) {
-            loosers = tournament.teamB;
+            losers = tournament.teamB;
+            winners = tournament.teamA;
         } else {
             return;
         }
 
+        final Crawl crawl = new Crawl(channelId, winners, losers);
+        lastCrawl.save(crawl);
+
         var messageString = String.format("<@%s> and <@%s> have to crawl. How embarrassing!!",
-                                          loosers.player1.id, loosers.player2.id);
+            losers.player1.id, losers.player2.id
+        );
 
         final var message = new Message(slackId, messageString, null);
         messageWriter.postMessage(message);
     }
+
+    public static class NoLastCrawlException extends Exception {}
 
     public static class TournamentRunningException extends Exception {
 

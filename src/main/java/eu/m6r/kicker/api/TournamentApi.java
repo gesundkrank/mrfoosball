@@ -19,6 +19,7 @@ package eu.m6r.kicker.api;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -32,7 +33,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +43,7 @@ import org.apache.logging.log4j.Logger;
 
 import eu.m6r.kicker.Controller;
 import eu.m6r.kicker.api.annotations.CheckChannelId;
+import eu.m6r.kicker.models.Crawl;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerQueue;
 import eu.m6r.kicker.models.Tournament;
@@ -164,6 +168,31 @@ public class TournamentApi {
             controller.removePlayer(channelId, id);
         } catch (IOException e) {
             logger.error("Failed to remove player from the queue", e);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("lastCrawl")
+    public Response getLastCrawl(@Context Request request) {
+        try {
+            final Crawl lastCrawl = controller.getLastCrawl(channelId);
+            final Date timestamp = lastCrawl.timestamp;
+            Response.ResponseBuilder responseBuilder =
+                request.evaluatePreconditions(timestamp);
+
+            if (responseBuilder == null) {
+                return Response
+                    .ok(lastCrawl)
+                    .lastModified(timestamp)
+                    .build();
+            } else {
+                return responseBuilder.build();
+            }
+        } catch (Controller.NoLastCrawlException e) {
+            throw new WebApplicationException(Response.Status.NO_CONTENT);
+        } catch (IOException e) {
+            logger.error("Failed to get last crawl", e);
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

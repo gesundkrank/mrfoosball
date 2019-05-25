@@ -32,26 +32,26 @@ import org.apache.logging.log4j.Logger;
 import eu.m6r.kicker.api.annotations.CheckChannelId;
 import eu.m6r.kicker.utils.QRCodeGenerator;
 
-@Path("api/channel")
+@Path("api/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}}")
+@CheckChannelId
 public class ChannelApi {
 
     private final Logger logger;
-    private final QRCodeGenerator qrCodeGenerator;
 
+    @PathParam("channelId")
+    private String channelId;
 
     public ChannelApi() {
         this.logger = LogManager.getLogger();
-        this.qrCodeGenerator = new QRCodeGenerator();
     }
 
 
     @GET
-    @Path("{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}}/qrcode")
+    @Path("qrcode")
     @Produces("image/png")
-    @CheckChannelId
-
-    public byte[] getQRCode(@PathParam("channelId") final String channelId) {
+    public byte[] getQRCode() {
         try {
+            final QRCodeGenerator qrCodeGenerator = new QRCodeGenerator();
             return qrCodeGenerator.generateChannelId(channelId);
         } catch (IOException | WriterException e) {
             logger.error(String.format("Failed to generate QrCode for channel %s", channelId), e);

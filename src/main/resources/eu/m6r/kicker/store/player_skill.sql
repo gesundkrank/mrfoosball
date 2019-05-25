@@ -8,10 +8,10 @@ FROM player
        INNER JOIN (
   SELECT player.id AS player_id
   FROM player
-         LEFT JOIN tournament
-                   ON player.id IN
-                      (teama_player1_id, teama_player2_id, teamb_player1_id, teamb_player2_id)
-                     AND tournament.channel_id = :channelId
+      LEFT JOIN tournament
+  ON player.id IN
+      (teama_player1_id, teama_player2_id, teamb_player1_id, teamb_player2_id)
+      AND tournament.channel_id = :channelId
   GROUP BY player.id
   HAVING MAX(tournament.date) > (NOW() - INTERVAL '60 days')
 ) AS has_recent_tournaments ON player.id = has_recent_tournaments.player_id

@@ -18,6 +18,7 @@
 package eu.m6r.kicker.models;
 
 import java.util.Date;
+import java.util.Objects;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -26,6 +27,17 @@ import javax.persistence.Id;
 
 @Entity
 public class Match {
+
+    public Match() {
+    }
+
+    public Match(final Date date, final int teamA, final int teamB, final State state) {
+        this.date = date;
+        this.teamA = teamA;
+        this.teamB = teamB;
+        this.state = state;
+    }
+
     @Id
     @GeneratedValue
     public int id;
@@ -35,4 +47,25 @@ public class Match {
 
     @Enumerated(EnumType.STRING)
     public State state = State.RUNNING;
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Match match = (Match) o;
+        return id == match.id
+               && teamA == match.teamA
+               && teamB == match.teamB
+               && Objects.equals(date, match.date)
+               && state == match.state;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, date, teamA, teamB, state);
+    }
 }

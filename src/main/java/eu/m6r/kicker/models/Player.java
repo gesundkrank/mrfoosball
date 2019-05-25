@@ -33,6 +33,15 @@ import javax.persistence.Table;
 @Table
 public class Player extends TrueSkillColumns implements Comparable<Player> {
 
+    public Player() {
+    }
+
+    public Player(final String id, final String name, final String avatarImage) {
+        this.id = id;
+        this.name = name;
+        this.avatarImage = avatarImage;
+    }
+
     @Id
     public String id;
     public String name;

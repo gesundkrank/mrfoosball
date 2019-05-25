@@ -18,6 +18,7 @@
 package eu.m6r.kicker.models;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -30,6 +31,14 @@ import javax.persistence.Table;
 @Table
 @IdClass(Team.Key.class)
 public class Team extends TrueSkillColumns implements Serializable {
+
+    public Team() {
+    }
+
+    public Team(final Player player1, final Player player2) {
+        this.player1 = player1;
+        this.player2 = player2;
+    }
 
     @Id
     @ManyToOne(cascade = CascadeType.PERSIST)
@@ -45,13 +54,21 @@ public class Team extends TrueSkillColumns implements Serializable {
     }
 
     @Override
-    public boolean equals(Object obj) {
-
-        if (obj instanceof Team) {
-            final Team oTeam = (Team) obj;
-            return oTeam.player1.equals(player1) && oTeam.player2.equals(player2);
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
         }
-        return false;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Team team = (Team) o;
+        return player1.equals(team.player1)
+               && player2.equals(team.player2);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(player1, player2);
     }
 
     public static class Key implements Serializable {

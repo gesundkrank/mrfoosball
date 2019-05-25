@@ -26,7 +26,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
 import eu.m6r.kicker.api.annotations.CheckChannelId;
-import eu.m6r.kicker.store.Store;
+import eu.m6r.kicker.store.SqlStore;
 
 @Provider
 @CheckChannelId
@@ -40,7 +40,7 @@ public class ChannelExistsFilter implements ContainerRequestFilter {
         final String path = requestContext.getUriInfo().getPath();
         final Matcher matcher = UUID_REGEX.matcher(path);
         if (matcher.find()) {
-            try (final Store store = new Store()) {
+            try (final SqlStore store = new SqlStore()) {
                 final String channelId = matcher.group();
                 if (!store.channelExists(channelId)) {
                     final Response notFoundResponse = Response

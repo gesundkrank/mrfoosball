@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import eu.m6r.kicker.controller.Controller;
 import eu.m6r.kicker.models.Match;
 import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.TeamStat;
@@ -34,7 +35,7 @@ public class Stats {
     private final Controller controller;
 
     public Stats() throws IOException {
-        this.controller = Controller.getInstance();
+        this.controller = new Controller();
     }
 
     public List<TeamStat> calcTeamStats(final String channelId) {

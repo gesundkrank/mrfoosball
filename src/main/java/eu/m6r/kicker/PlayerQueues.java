@@ -21,10 +21,10 @@ import java.io.IOException;
 
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerQueue;
+import eu.m6r.kicker.store.ZookeeperClient;
 import eu.m6r.kicker.utils.JsonConverter;
-import eu.m6r.kicker.utils.ZookeeperClient;
 
-public class PlayerQueues {
+public class PlayerQueues implements AutoCloseable {
 
     private static final String QUEUE_PATH = "/kicker/queue/v2";
 
@@ -43,13 +43,15 @@ public class PlayerQueues {
     }
 
     public PlayerQueue get(final String channelId) throws IOException {
-
-        final String value = zookeeperClient.readNode(path(channelId));
-        if (value == null || value.isEmpty()) {
+        try {
+            final String value = new String(zookeeperClient.readNode(path(channelId)));
+            if (value.isEmpty()) {
+                return new PlayerQueue();
+            }
+            return jsonConverter.fromString(value, PlayerQueue.class);
+        } catch (ZookeeperClient.ZNodeDoesNotExistException e) {
             return new PlayerQueue();
         }
-
-        return jsonConverter.fromString(value, PlayerQueue.class);
     }
 
     public void clear(final String channelId) throws IOException {
@@ -72,6 +74,11 @@ public class PlayerQueues {
     }
 
     private void save(final String channelId, final PlayerQueue players) throws IOException {
-        zookeeperClient.writeNode(path(channelId), jsonConverter.toString(players));
+        zookeeperClient.writeNode(path(channelId), jsonConverter.toString(players).getBytes());
+    }
+
+    @Override
+    public void close() throws Exception {
+        zookeeperClient.close();
     }
 }

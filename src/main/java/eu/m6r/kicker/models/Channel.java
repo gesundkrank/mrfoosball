@@ -17,6 +17,7 @@
 
 package eu.m6r.kicker.models;
 
+import java.util.Objects;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
@@ -50,5 +51,24 @@ public class Channel {
         this.id = id;
         this.slackId = slackId;
         this.name = name;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Channel channel = (Channel) o;
+        return Objects.equals(id, channel.id) &&
+               Objects.equals(slackId, channel.slackId) &&
+               Objects.equals(name, channel.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, slackId, name);
     }
 }

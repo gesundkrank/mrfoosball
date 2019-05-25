@@ -1,41 +1,32 @@
 {
-  "name": "kicker-frontend",
-  "author": "mbr targeting",
+  "name": "frontend-react",
+  "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "clean": "ionic-app-scripts clean",
-    "build": "ionic-app-scripts build",
-    "tslint": "tslint -p tsconfig.json -c tslint.json",
-    "ionic:build": "ionic-app-scripts build",
-    "ionic:serve": "ionic-app-scripts serve",
-    "buildProduction": "ionic-app-scripts build --prod"
-  },
   "dependencies": {
-    "@angular/animations": "5.2.11",
-    "@angular/common": "5.2.11",
-    "@angular/compiler": "5.2.11",
-    "@angular/compiler-cli": "5.2.11",
-    "@angular/core": "5.2.11",
-    "@angular/forms": "5.2.11",
-    "@angular/http": "5.2.11",
-    "@angular/platform-browser": "5.2.11",
-    "@angular/platform-browser-dynamic": "5.2.11",
-    "@ionic-native/core": "~4.11.0",
-    "@ionic-native/splash-screen": "~4.11.0",
-    "@ionic-native/status-bar": "~4.11.0",
-    "@ionic/storage": "2.1.3",
-    "@zxing/ngx-scanner": "^1.2.0",
-    "es-cookie": "^1.2.0",
-    "ionic-angular": "3.9.2",
-    "ionic-logging-service": "^5.1.0",
-    "ionicons": "3.0.0",
-    "rxjs": "5.5.11",
-    "sw-toolbox": "3.6.0"
+    "axios": "^0.18.0",
+    "bootstrap": "^4.3.1",
+    "react": "^16.8.6",
+    "react-bootstrap": "^1.0.0-beta.8",
+    "react-dom": "^16.8.6",
+    "react-redux": "^7.0.2",
+    "react-router-dom": "^5.0.0",
+    "react-scripts-ts": "3.1.0",
+    "redux": "^4.0.1",
+    "universal-cookie": "^3.1.0"
+  },
+  "scripts": {
+    "start": "react-scripts-ts start",
+    "build": "react-scripts-ts build",
+    "test": "react-scripts-ts test --env=jsdom",
+    "eject": "react-scripts-ts eject"
   },
   "devDependencies": {
-    "@ionic/app-scripts": "3.1.11",
-    "tslint": "^5.11.0",
-    "tslint-ionic-rules": "0.0.17",
-    "typescript": "^2.6.2"
+    "@types/jest": "^24.0.11",
+    "@types/node": "^11.13.4",
+    "@types/react": "^16.8.13",
+    "@types/react-dom": "^16.8.4",
+    "@types/react-redux": "^7.0.8",
+    "@types/react-router-dom": "^4.3.2",
+    "typescript": "^3.4.3"
   }
 }

@@ -43,7 +43,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.glassfish.jersey.client.ClientProperties;
 
-import eu.m6r.kicker.Controller;
+import eu.m6r.kicker.controller.Controller;
 import eu.m6r.kicker.models.Player;
 import eu.m6r.kicker.models.PlayerQueue;
 import eu.m6r.kicker.slack.models.ChannelJoined;
@@ -51,7 +51,7 @@ import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.slack.models.RtmInitResponse;
 import eu.m6r.kicker.slack.models.SlackUser;
 import eu.m6r.kicker.utils.JsonConverter;
-import eu.m6r.kicker.utils.ZookeeperClient;
+import eu.m6r.kicker.store.ZookeeperClient;
 
 @ClientEndpoint
 public class Bot implements Watcher {
@@ -90,7 +90,7 @@ public class Bot implements Watcher {
         client.property(ClientProperties.READ_TIMEOUT, 30000);
 
         this.token = token;
-        this.controller = Controller.getInstance();
+        this.controller = new Controller();
         this.zookeeperClient = zookeeperClient;
         this.messageWriter = new MessageWriter(token);
 

@@ -20,10 +20,11 @@ package eu.m6r.kicker;
 import java.io.IOException;
 
 import eu.m6r.kicker.models.Tournament;
+import eu.m6r.kicker.store.ZookeeperClient;
 import eu.m6r.kicker.utils.JsonConverter;
-import eu.m6r.kicker.utils.ZookeeperClient;
 
-public class RunningTournaments {
+public class RunningTournaments implements AutoCloseable {
+
     private static final String TOURNAMENT_PATH = "/kicker/tournament";
 
     private final ZookeeperClient zookeeperClient;
@@ -40,14 +41,17 @@ public class RunningTournaments {
     }
 
     public Tournament get(final String channelId)
-            throws IOException, Controller.TournamentNotRunningException {
+            throws IOException, TournamentNotRunningException {
+        try {
+            final String value = new String(zookeeperClient.readNode(path(channelId)));
+            if (value.isEmpty()) {
+                throw new TournamentNotRunningException();
+            }
 
-        final String value = zookeeperClient.readNode(path(channelId));
-        if (value == null || value.isEmpty()) {
-            throw new Controller.TournamentNotRunningException();
+            return jsonConverter.fromString(value, Tournament.class);
+        } catch (ZookeeperClient.ZNodeDoesNotExistException e) {
+            throw new TournamentNotRunningException();
         }
-
-        return jsonConverter.fromString(value, Tournament.class);
     }
 
     public void clear(final String channelId) throws IOException {
@@ -56,6 +60,18 @@ public class RunningTournaments {
 
     public void save(final Tournament tournament) throws IOException {
         final String tournamentPath = path(tournament.channel.id);
-        zookeeperClient.writeNode(tournamentPath, jsonConverter.toString(tournament));
+        zookeeperClient.writeNode(tournamentPath, jsonConverter.toString(tournament).getBytes());
+    }
+
+    @Override
+    public void close() throws Exception {
+        zookeeperClient.close();
+    }
+
+    public static class TournamentNotRunningException extends Exception {
+
+        TournamentNotRunningException() {
+            super("No tournament is running!");
+        }
     }
 }

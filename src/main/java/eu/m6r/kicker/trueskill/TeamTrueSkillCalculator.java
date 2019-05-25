@@ -27,13 +27,13 @@ import de.gesundkrank.jskills.Rating;
 import de.gesundkrank.jskills.Team;
 
 import eu.m6r.kicker.models.Tournament;
-import eu.m6r.kicker.store.Store;
+import eu.m6r.kicker.store.SqlStore;
 
 public class TeamTrueSkillCalculator extends TrueSkillCalculator {
 
     @Override
     public Tournament updateRatings(Tournament tournament) {
-        try (final var store = new Store()) {
+        try (final var store = new SqlStore()) {
             final var teamA = store.getTeam(tournament.teamA.player1, tournament.teamA.player2);
             final var teamB = store.getTeam(tournament.teamB.player1, tournament.teamB.player2);
 

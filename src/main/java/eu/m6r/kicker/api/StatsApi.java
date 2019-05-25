@@ -19,6 +19,7 @@ package eu.m6r.kicker.api;
 
 import java.io.IOException;
 import java.util.List;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -29,24 +30,25 @@ import javax.ws.rs.core.MediaType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import eu.m6r.kicker.Controller;
+import eu.m6r.kicker.controller.Controller;
 import eu.m6r.kicker.Stats;
 import eu.m6r.kicker.api.annotations.CheckChannelId;
 import eu.m6r.kicker.models.PlayerSkill;
 import eu.m6r.kicker.models.TeamStat;
 
-@Path("api/stats/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}}")
+@Path("api/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}}/stats")
 @CheckChannelId
 public class StatsApi {
 
+    @Inject
+    private Controller controller;
+
     private final Logger logger;
     private final Stats stats;
-    private final Controller controller;
 
     public StatsApi() throws IOException {
         this.logger = LogManager.getLogger();
         this.stats = new Stats();
-        this.controller = Controller.getInstance();
     }
 
     @GET

@@ -90,6 +90,9 @@ dependencies {
     implementation group: 'org.glassfish', name: 'javax.json', version: '1.1.4'
     // https://mvnrepository.com/artifact/commons-io/commons-io
     implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+    // https://mvnrepository.com/artifact/org.testng/testng
+    testImplementation group: 'org.testng', name: 'testng', version: '6.14.3'
+
 }
 
 node {
@@ -130,15 +133,28 @@ task buildProductionFrontend(type: NpmTask, dependsOn: [cleanNodeModules, cleanF
 }
 
 task copyFrontend(type: Copy) {
-    from 'frontend/www'
-    into 'build/resources/main/www'
+    from 'frontend'
+    into 'build/frontend'
 }
 
 copyFrontend.shouldRunAfter buildFrontend, buildProductionFrontend
 
-task buildApp(dependsOn: [shadowJar, copyFrontend])
+task buildApp(dependsOn: [shadowJar])
 
-task productionDockerFile(type: Dockerfile) {
+task frontendTestDockerFile(type: Dockerfile) {
+    destFile = project.file('build/frontend/Dockerfile')
+    from 'node:lts-slim'
+    workingDir '/kicker-frontend'
+    exposePort 3000
+    entryPoint 'npm', 'start'
+}
+
+task frontendDockerTest(type: DockerBuildImage, dependsOn: frontendTestDockerFile) {
+    inputDir = frontendTestDockerFile.destFile.get().asFile.parentFile
+    tags.add('kicker-frontend-test:latest')
+}
+
+task backendProductionDockerFile(type: Dockerfile) {
     destFile = project.file('build/libs/Dockerfile')
     from "openjdk:$compileJava.targetCompatibility-slim"
     workingDir 'kicker'
@@ -147,7 +163,7 @@ task productionDockerFile(type: Dockerfile) {
     entryPoint 'java', '-jar', 'kicker.jar'
 }
 
-task testDockerFile(type: Dockerfile) {
+task backendTestDockerFile(type: Dockerfile) {
     destFile = project.file('build/libs/Dockerfile')
     from "openjdk:$compileJava.targetCompatibility-slim"
     environmentVariable 'DOCKERIZE_VERSION', 'v0.6.1'
@@ -161,18 +177,17 @@ task testDockerFile(type: Dockerfile) {
                '-Dorg.jboss.logging.provider=log4j2', '-jar', 'kicker.jar'
 }
 
-task buildDocker(type: DockerBuildImage,
-                 dependsOn: [buildProductionFrontend, buildApp, productionDockerFile]) {
-    inputDir = productionDockerFile.destFile.get().asFile.parentFile
-    tags.add("${project.findProperty('imageName') ?: 'kicker'}:" +
+task buildBackendDocker(type: DockerBuildImage,
+                        dependsOn: [buildProductionFrontend, buildApp, backendProductionDockerFile]) {
+    inputDir = backendProductionDockerFile.destFile.get().asFile.parentFile
+    tags.add("${project.findProperty('imageName') ?: 'kicker-backend'}:" +
              "${project.findProperty('tag') ?: 'latest'}")
 }
 
 task dockerTest(type: DockerBuildImage) {
-    Task frontendDep = project.hasProperty('production') ? buildProductionFrontend : buildFrontend
-    dependsOn frontendDep, buildApp, testDockerFile
-    inputDir = testDockerFile.destFile.get().asFile.parentFile
-    tags.add("${project.findProperty('imageName') ?: 'kicker'}:" +
+    dependsOn buildApp, backendTestDockerFile
+    inputDir = backendTestDockerFile.destFile.get().asFile.parentFile
+    tags.add("${project.findProperty('imageName') ?: 'kicker-backend'}:" +
              "${project.findProperty('tag') ?: 'latest'}")
     copy {
         from 'kicker.properties'
@@ -180,4 +195,4 @@ task dockerTest(type: DockerBuildImage) {
     }
 }
 
-composeUp.dependsOn(dockerTest)
+composeUp.dependsOn([dockerTest, frontendDockerTest])

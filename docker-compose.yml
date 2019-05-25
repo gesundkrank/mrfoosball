@@ -1,14 +1,32 @@
-version: '3'
+version: '3.7'
 services:
-  kicker:
-    image: kicker
+  nginx:
+    image: nginx:1.15
+    depends_on:
+      - kicker-frontend-test
+      - kicker-backend
+    expose:
+      - 80
+    ports:
+      - 8080:80
+    volumes:
+      - ./config/nginx:/etc/nginx/conf.d:ro
+
+  kicker-frontend-test:
+    image: kicker-frontend-test
+    volumes:
+      - ./frontend:/kicker-frontend
+    expose:
+      - "3000"
+
+  kicker-backend:
+    image: kicker-backend
     depends_on:
       - zookeeper
       - postgres
+      - kinesis
     expose:
       - "8080"
-    ports:
-      - "8080:8080"
     environment:
       connectionHbm2ddl: update
       connectionUrl: jdbc:postgresql://postgres:5432/postgres
@@ -24,4 +42,7 @@ services:
         - "5432"
       ports:
         - "5432:5432"
+
+volumes:
+  frontend:
 

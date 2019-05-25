@@ -31,7 +31,7 @@ import de.gesundkrank.jskills.Team;
 import de.gesundkrank.jskills.trueskill.TwoTeamTrueSkillCalculator;
 
 import eu.m6r.kicker.models.Tournament;
-import eu.m6r.kicker.store.Store;
+import eu.m6r.kicker.store.SqlStore;
 
 public abstract class TrueSkillCalculator {
 
@@ -102,7 +102,7 @@ public abstract class TrueSkillCalculator {
         final double quality1324;
         final double quality1423;
 
-        try (final var store = new Store()) {
+        try (final var store = new SqlStore()) {
             var teamA = store.getTeam(player1, player2, false);
             var teamB = store.getTeam(player3, player4, false);
             quality1234 = calcMatchQuality(teamA, teamB);

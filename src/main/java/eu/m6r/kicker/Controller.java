@@ -24,18 +24,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import eu.m6r.kicker.models.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import eu.m6r.kicker.models.Channel;
-import eu.m6r.kicker.models.Crawl;
-import eu.m6r.kicker.models.Match;
-import eu.m6r.kicker.models.Player;
-import eu.m6r.kicker.models.PlayerQueue;
-import eu.m6r.kicker.models.PlayerSkill;
-import eu.m6r.kicker.models.State;
-import eu.m6r.kicker.models.Team;
-import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.slack.MessageWriter;
 import eu.m6r.kicker.slack.models.Message;
 import eu.m6r.kicker.store.Store;
@@ -332,6 +324,12 @@ public class Controller {
     public List<PlayerSkill> playerSkills(final String channelId) {
         try (final var store = new Store()) {
             return store.playerSkills(channelId);
+        }
+    }
+
+    public List<TeamStat> teamSkills(final String channelId) {
+        try (final var store = new Store()) {
+            return store.teamSkills(channelId);
         }
     }
 

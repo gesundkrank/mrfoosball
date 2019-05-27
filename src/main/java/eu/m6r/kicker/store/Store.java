@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.persistence.TypedQuery;
 
+import eu.m6r.kicker.models.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,13 +34,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 
-import eu.m6r.kicker.models.Channel;
-import eu.m6r.kicker.models.Player;
-import eu.m6r.kicker.models.PlayerSkill;
-import eu.m6r.kicker.models.State;
-import eu.m6r.kicker.models.Team;
 import eu.m6r.kicker.models.Team.Key;
-import eu.m6r.kicker.models.Tournament;
 import eu.m6r.kicker.utils.Properties;
 
 
@@ -184,6 +179,20 @@ public class Store implements Closeable {
             final var query = IOUtils.toString(queryFile, Charset.forName("UTF-8"));
             return session
                     .createNativeQuery(query, PlayerSkill.class)
+                    .setParameter("channelId", channelId)
+                    .list();
+        } catch (IOException e) {
+            logger.error("Failed to load query", e);
+            return Collections.emptyList();
+        }
+    }
+
+    public List<TeamStat> teamSkills(final String channelId) {
+        final var queryFile = getClass().getResourceAsStream("team_skill.sql");
+        try {
+            final var query = IOUtils.toString(queryFile, Charset.forName("UTF-8"));
+            return session
+                    .createNativeQuery(query, TeamStat.class)
                     .setParameter("channelId", channelId)
                     .list();
         } catch (IOException e) {

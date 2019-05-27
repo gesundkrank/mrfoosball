@@ -66,6 +66,19 @@ public class StatsApi {
     public List<TeamStat> getTeamStats(@PathParam("channelId") final String channelId) {
 
         try {
+            return controller.teamSkills(channelId);
+        } catch (Exception e) {
+            logger.error("Failed to calculate team stats", e);
+            throw new WebApplicationException(e.getMessage());
+        }
+    }
+
+    @GET
+    @Path("teams_calculate")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<TeamStat> calcTeamStats(@PathParam("channelId") final String channelId) {
+
+        try {
             return stats.calcTeamStats(channelId);
         } catch (Exception e) {
             logger.error("Failed to calculate team stats", e);

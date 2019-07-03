@@ -15,7 +15,7 @@ docker-compose-production.yml:
 .PHONY: deploy
 deploy: docker-compose-production.yml
 	ssh root@$(HOST) tmux kill-session -t "kicker" || true
-	ssh root@$(HOST) 'tmux new-session -d -s "kicker" "cd $(DIR); . venv/bin/activate; docker-compose run --service-ports kicker"'
+	ssh root@$(HOST) 'tmux new-session -d -s "kicker" "cd $(DIR); . venv/bin/activate; docker-compose down; docker-compose up kicker"'
 
 .PHONY: build-image
 build-image:

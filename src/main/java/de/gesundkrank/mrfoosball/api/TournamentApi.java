@@ -46,7 +46,7 @@ import de.gesundkrank.mrfoosball.models.Player;
 import de.gesundkrank.mrfoosball.models.PlayerQueue;
 import de.gesundkrank.mrfoosball.models.Tournament;
 
-@Path("/api/tournament/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}}")
+@Path("/api/tournament/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}}")
 @CheckChannelId
 public class TournamentApi {
 

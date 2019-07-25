@@ -35,7 +35,7 @@ import de.gesundkrank.mrfoosball.api.annotations.CheckChannelId;
 import de.gesundkrank.mrfoosball.models.PlayerSkill;
 import de.gesundkrank.mrfoosball.models.TeamStat;
 
-@Path("api/stats/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}}")
+@Path("api/stats/{channelId: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}}")
 @CheckChannelId
 public class StatsApi {
 

@@ -24,11 +24,11 @@
     <property name="show_sql">false</property>
     <property name="format_sql">false</property>
 
-    <mapping class="eu.m6r.kicker.models.Channel"/>
-    <mapping class="eu.m6r.kicker.models.Tournament"/>
-    <mapping class="eu.m6r.kicker.models.Match"/>
-    <mapping class="eu.m6r.kicker.models.Player"/>
-    <mapping class="eu.m6r.kicker.models.Team"/>
-    <mapping class="eu.m6r.kicker.models.PlayerSkill"/>
+    <mapping class="de.gesundkrank.kicker.models.Channel"/>
+    <mapping class="de.gesundkrank.kicker.models.Tournament"/>
+    <mapping class="de.gesundkrank.kicker.models.Match"/>
+    <mapping class="de.gesundkrank.kicker.models.Player"/>
+    <mapping class="de.gesundkrank.kicker.models.Team"/>
+    <mapping class="de.gesundkrank.kicker.models.PlayerSkill"/>
   </session-factory>
 </hibernate-configuration>

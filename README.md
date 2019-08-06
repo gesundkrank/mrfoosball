@@ -1,4 +1,4 @@
-# Kicker [![Build Status](https://travis-ci.org/mbrtargeting/kicker.svg?branch=master)](https://travis-ci.org/mbrtargeting/kicker)
+# Kicker [![Build Status](https://travis-ci.org/gesundkrank/kicker.svg?branch=master)](https://travis-ci.org/gesundkrank/kicker)
 
 ## Configuration
 

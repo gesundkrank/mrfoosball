@@ -17,13 +17,18 @@
 
 package eu.m6r.kicker;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,6 +48,11 @@ import eu.m6r.kicker.trueskill.PlayerTrueSkillCalculator;
 import eu.m6r.kicker.trueskill.TeamTrueSkillCalculator;
 import eu.m6r.kicker.trueskill.TrueSkillCalculator;
 import eu.m6r.kicker.utils.Properties;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import javax.net.ssl.HttpsURLConnection;
 
 public class Controller {
 
@@ -384,6 +394,76 @@ public class Controller {
 
         final var message = new Message(slackId, messageString, null);
         messageWriter.postMessage(message);
+    }
+
+    /**
+     * Fetches a random motivational quote from forismatic
+     * It is also usedonce someone crawls so they don't feel as sad :)
+     * @param slackChannelId - the ID of the slack channel where the result message will be posted
+     */
+    public void motivate(final String slackChannelId) {
+        URL url = null;
+        // Default quote, it will be posted in case an exception is caught (RIP bot)
+        String motivation = "The thought of suicide is a great consolation: " +
+                            "by means of it one gets through many a dark night\n-  Nietzsche";
+
+        try {
+            // Fetch the quote from the api
+            url = new URL("https://api.forismatic.com/api/1.0/");
+
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+
+            connection.setRequestMethod("POST");
+
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+            connection.setRequestProperty("charset", "utf-8");
+
+            String inputString = "method=getQuote&format=json&lang=en";
+
+            connection.setDoOutput(true);
+
+            DataOutputStream stream = new DataOutputStream(connection.getOutputStream());
+
+            stream.write(inputString.getBytes(Charset.forName("UTF-8")));
+
+            stream.flush();
+
+            stream.close();
+
+            // If not 2XX something when different from expected, do not proceed
+            if(connection.getResponseCode() / 100 != 2)
+            {
+                logger.error("Response code was not a 2XX, I don't want to deal with this mess!");
+                return;
+            }
+
+            // Parse JSON
+            // Create reader was having issues reading directly from the input stream (couldn't recognise it's charset)
+            // so I'm converting it now to a string so it can deal with it.
+            String quote = IOUtils.toString(connection.getInputStream(),
+                                            Charset.forName("UTF-8"));
+
+            JsonReader jsonReader = Json.createReader(new StringReader(quote));
+
+            JsonObject object = jsonReader.readObject();
+            jsonReader.close();
+
+            // Generate message from quote
+            String motivational_quote = object.getString("quoteText");
+            String author = object.getString("quoteAuthor");
+
+            motivation = motivational_quote + "\n- " + author;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            // Always show something :D
+            // Even if it is a suicide quote from Nietzsche :DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+            final var motivational_message = new Message(slackChannelId, motivation, null);
+            messageWriter.postMessage(motivational_message);
+        }
+
     }
 
     public static class NoLastCrawlException extends Exception {}

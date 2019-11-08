@@ -290,8 +290,12 @@ public class Bot implements Watcher {
                     case "help":
                         sendHelpMessage(slackChannelId, sender);
                         break;
+                    case "motivate":
+                        controller.motivate(slackChannelId);
+                        break;
                     default:
-                        sendMessage(String.format("I'm sorry <@%s>, I didn't understand that. "
+                        sendMessage(String.format("I'm sorry <@%s>, I don't know what " + action
+                                                  + "means. "
                                                   + "If you need help just ask for it.", sender),
                                     slackChannelId);
                 }

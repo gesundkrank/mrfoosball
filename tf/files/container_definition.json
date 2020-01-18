@@ -1,0 +1,56 @@
+[
+  {
+    "name": "${CONTAINER_NAME}",
+    "image": "${IMAGE_NAME}:${IMAGE_TAG}",
+    "essential": true,
+    "cpu": 256,
+    "memory": 400,
+    "portMappings": [
+      {
+        "containerPort": ${PORT}
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${LOG_GROUP}",
+        "awslogs-stream-prefix": "prefix-name/container-name/ecs-task-id",
+        "awslogs-region": "${AWS_REGION}"
+      }
+    },
+    "environment": [
+      {
+        "name": "port",
+        "value": "${PORT}"
+      },
+      {
+        "name": "zookeeperHosts",
+        "value": "${ZOOKEEPER_HOSTS}"
+      },
+      {
+        "name": "slackToken",
+        "value": "${SLACK_TOKEN}"
+      },
+      {
+        "name": "connectionUrl",
+        "value": "jdbc:postgresql://${DB_HOST}/${DB_NAME}"
+      },
+      {
+        "name": "connectionUsername",
+        "value": "${DB_USER}"
+      },
+      {
+        "name": "connectionPassword",
+        "value": "${DB_PASSWORD}"
+      },
+      {
+        "name": "appUrl",
+        "value": "https://mrfoosball.com"
+      },
+      {
+        "name": "connectionHbm2ddl",
+        "value": "${HIBERNATE_HBM2DDL}"
+      }
+    ]
+  }
+]

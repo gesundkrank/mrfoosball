@@ -156,7 +156,8 @@ task testDockerFile(type: Dockerfile) {
     addFile 'https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz',
             'dockerize.tar.gz'
     runCommand 'tar -C /usr/local/bin -xvzf dockerize.tar.gz'
-    copyFile '.', '.'
+    copyFile 'mrfoosball.jar', '.'
+    copyFile 'mrfoosball.properties', '.'
     entryPoint 'dockerize', '-wait', 'tcp://postgres:5432', 'java',
                '-Dorg.jboss.logging.provider=log4j2', '-jar', 'mrfoosball.jar'
 }

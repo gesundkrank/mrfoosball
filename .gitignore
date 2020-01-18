@@ -5,3 +5,4 @@ mrfoosball.properties
 out/
 container-definition.yml
 appspec.yaml
+.terraform/

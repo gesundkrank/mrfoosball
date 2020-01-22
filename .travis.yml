@@ -3,6 +3,8 @@ services:
   - docker
 jdk:
   - openjdk11
+node_js:
+  - 11.6.0
 jobs:
   include:
     - stage: checkstyle

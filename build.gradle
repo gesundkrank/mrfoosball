@@ -125,7 +125,7 @@ task buildFrontend(type: NpmTask, dependsOn: cleanFrontend) {
     args = ['--prefix', 'frontend', 'run', 'build']
 }
 
-task buildProductionFrontend(type: NpmTask, dependsOn: [cleanNodeModules, cleanFrontend, tslint]) {
+task buildProductionFrontend(type: NpmTask, dependsOn: [cleanFrontend, tslint]) {
     args = ['--prefix', 'frontend', 'run', 'buildProduction']
 }
 

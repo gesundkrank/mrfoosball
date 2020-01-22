@@ -28,3 +28,4 @@ cache:
   directories:
     - "$HOME/.gradle/caches/"
     - "$HOME/.gradle/wrapper/"
+    - "frontend/node_modules/"

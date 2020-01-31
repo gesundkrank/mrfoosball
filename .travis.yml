@@ -14,12 +14,8 @@ jobs:
 stages:
   - checkstyle
   - build
-  - name: deploy
-    if: branch = master
 notifications:
   email: false
-  slack:
-    secure: PNgsa5FLyFjFguewiYyfvzZxy+hzmvIS64a19pQbrzsxWXX+4S8w7/QDqqyK0RilU+EpPQIhOpJ8/NPS7Aql4ny7MvXb7HsB6B3RT40avTGozjiLXG5yCaYLEkvohwRqRxFSwx/ZE2AU61xvhgipeA4qpdiRTnQI8iiYOdkCxNonmNBEP4P9rBJUwFVyf+HZw8jLsNS4O4EQbCo+5vfy0a4rS9sGbiJIqX9VyYJtjR7EGeWiPkJe047LQY5OcHP/j5Z4J7l/axwWnfGwCj6pia2NS+55p+/vksc5AoLMeMCuw2nLBT/2EPUp7BXIdrGTuzNNk4STEu2LH7hDgDpx8AA1QirNrngvJ+C9pjIAe0GaSEECYt1JJmDJlurtQ6i0emQjvrDTmSOPn4/deZmnbocmSSjpIyq/zk7stKNTJZayxHeZSgkgBzyVP74BAXME5AXUo6/tTEBs9w8YQ9pqIcvbA3bbV/+2AFZiuvxUNRAIC/wO9/PkZmUjZbPr30YlyfjCALB4Nbq4VONCVzoZO079Hs4wxzr243Kmh1xzV3CwkN4snqHsQN5WH/pcyGK/GNB46GE3rNqri1rGuQT6b5yvVsR8v23dd2CCRjnyL6bGG9g8H44z/VQPWm61gRcWWpJJCGNtE4FkRVpY9Da4/Oa6GfufK8p657JpTiKagCU=
 env:
   global:
     - VERSION_TAG=$(echo $TRAVIS_COMMIT | head -c 8)

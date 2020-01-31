@@ -1,7 +1,7 @@
 target
 build
 .gradle
-kicker.properties
+mrfoosball.properties
 out/
 container-definition.yml
 appspec.yaml

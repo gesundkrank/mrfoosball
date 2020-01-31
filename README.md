@@ -1,9 +1,9 @@
-# Kicker [![Build Status](https://travis-ci.org/gesundkrank/kicker.svg?branch=master)](https://travis-ci.org/gesundkrank/kicker)
+# Mr Foosball [![Build Status](https://travis-ci.com/gesundkrank/mrfoosball.svg?branch=master)](https://travis-ci.com/gesundkrank/mrfoosball)
 
 ## Configuration
 
 Create your test configuration in your project folder as
-`./kicker.properties`.
+`./mrfoosball.properties`.
 
 Example configuration file:
 ```
@@ -15,13 +15,13 @@ connectionHbm2ddl=create-drop
 ## Run App Locally
 
 ```bash
-./gradlew [-Pproduction] prcomposeUp
+./gradlew [-Pproduction] composeUp
 ```
 
 To see the logs of the container do 
 
 ```bash
-docker logs `docker ps --filter 'name=kicker__kicker' --format '{{.ID}}'`
+docker logs `docker ps --filter 'name=mrfoosball_mrfoosball' --format '{{.ID}}'`
 ``` 
 
 To shut down all containers exec

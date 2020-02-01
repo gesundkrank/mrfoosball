@@ -28,8 +28,8 @@ import org.apache.logging.log4j.Logger;
 public class Properties {
 
     private static final Path GLOBAL_PROPERTIES_PATH =
-            Paths.get("/opt/mrfoosball/conf/kicker.properties");
-    private static final Path PROJECT_PROPERTIES_PATH = Paths.get("./kicker.properties");
+            Paths.get("/opt/mrfoosball/conf/mrfoosball.properties");
+    private static final Path PROJECT_PROPERTIES_PATH = Paths.get("./mrfoosball.properties");
 
     private static Properties INSTANCE;
 

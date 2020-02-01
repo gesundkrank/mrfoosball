@@ -1,0 +1,8 @@
+#!/bin/bash -eux
+
+curl -sLo /tmp/terraform.zip https://releases.hashicorp.com/terraform/0.12.19/terraform_0.12.19_linux_amd64.zip
+mkdir -p "$HOME/bin"
+unzip /tmp/terraform.zip -d bin
+export PATH="$HOME/bin:$PATH"
+
+

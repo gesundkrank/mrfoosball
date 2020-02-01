@@ -5,38 +5,28 @@ jdk:
   - openjdk11
 node_js:
   - 11.6.0
-before_install:
-  - bin/install-terraform
 jobs:
   include:
-  - stage: checkstyle
-    script:
-    - "./gradlew check"
-  - stage: build
-    script:
-    - pip install --user awscli
-    - export PATH=$PATH:$HOME/.local/bin
-    - "./gradlew -PimageName=$IMAGE_NAME -Ptag=$VERSION_TAG buildDocker"
-    - eval $(aws ecr get-login --no-include-email)
-    - docker push $IMAGE_NAME:$VERSION_TAG
-  - stage: plan-terraform
-    language: generic
-    script:
-      - bin/terraform fmt -diff -check -recursive tf
-      - bin/terraform init tf
-      - bin/terraform validate tf
-      - if [[ "$TRAVIS_PULL_REQUEST" == false ]]; then bin/terraform plan -lock=false -var db_password=$DB_PASSWORD -var slack_token=$SLACK_TOKEN -var image_tag=$VERSION_TAG tf; fi
-  - stage: deploy
-    language: generic
-    script:
-      - bin/terraform apply -auto-approve -var db_password=$DB_PASSWORD -var slack_token=$SLACK_TOKEN -var image_tag=$VERSION_TAG tf
+    - stage: checkstyle
+      script:
+        - "./gradlew check"
+    - stage: build
+      script:
+        - pip install --user awscli
+        - export PATH=$PATH:$HOME/.local/bin
+        - "./gradlew -PimageName=$IMAGE_NAME -Ptag=$VERSION_TAG buildDocker"
+        - eval $(aws ecr get-login --no-include-email)
+        - docker push $IMAGE_NAME:$VERSION_TAG
+    - stage: terraform
+      language: generic
+      before_install:
+        - bin/install-terraform
+      script:
+        - bin/run-terraform
 stages:
-- checkstyle
-- build
-- name: plan-terraform
-  if: branch != master
-- name: deploy
-  if: branch = master
+  - checkstyle
+  - build
+  - terraform
 notifications:
   email: false
   slack:

@@ -27,10 +27,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.glassfish.hk2.utilities.Stub;
 
 public class ZookeeperClient {
 
@@ -41,7 +43,8 @@ public class ZookeeperClient {
 
     public ZookeeperClient(final String zookeeperHosts) throws IOException {
         this.logger = LogManager.getLogger();
-        this.zooKeeper = new ZooKeeper(zookeeperHosts, 30000, null);
+        final var watcher = new StubWatcher();
+        this.zooKeeper = new ZooKeeper(zookeeperHosts, 30000, watcher);
     }
 
     public void createPath(final String path) throws IOException {
@@ -125,6 +128,20 @@ public class ZookeeperClient {
             return new String(zooKeeper.getData(path, null, null));
         } catch (InterruptedException | KeeperException e) {
             throw new IOException(e);
+        }
+    }
+
+    public static class StubWatcher implements Watcher {
+
+        private final Logger logger;
+
+        public StubWatcher() {
+            logger = LogManager.getLogger();
+        }
+
+        @Override
+        public void process(WatchedEvent event) {
+            logger.debug(event);
         }
     }
 }

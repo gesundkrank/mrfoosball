@@ -1,10 +1,11 @@
 #!/bin/bash -eu
 
 bin/terraform fmt -diff -check -recursive tf
-bin/terraform init tf
-bin/terraform validate tf
 
 if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
+  bin/terraform init tf
+  bin/terraform validate tf
+
   if [[ "$TRAVIS_BRANCH" == "master" ]]; then
     bin/terraform apply -auto-approve -var db_password="$DB_PASSWORD" -var slack_token="$SLACK_TOKEN" -var image_tag="$VERSION_TAG" tf
   else

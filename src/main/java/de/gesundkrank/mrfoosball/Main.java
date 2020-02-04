@@ -91,10 +91,9 @@ public class Main {
                 createTestChannel(properties);
             }
 
-            new Bot(properties.getSlackToken(), properties.zookeeperHosts());
+            Bot.run();
 
             final int port = properties.getPort();
-
             startServer(port);
 
             //Keeps process running

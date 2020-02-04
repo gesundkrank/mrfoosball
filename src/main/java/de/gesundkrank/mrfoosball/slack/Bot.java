@@ -48,12 +48,16 @@ import de.gesundkrank.mrfoosball.slack.models.RtmInitResponse;
 import de.gesundkrank.mrfoosball.slack.models.SlackUser;
 import de.gesundkrank.mrfoosball.store.zookeeper.Lock;
 import de.gesundkrank.mrfoosball.utils.JsonConverter;
+import de.gesundkrank.mrfoosball.utils.Properties;
 
 @ClientEndpoint
 public class Bot {
 
+
     private static final Pattern COMMAND_PATTERN = Pattern.compile("\\w+");
     private static final Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
+
+    private static Bot instance;
 
     private final Logger logger;
     private final String token;
@@ -61,12 +65,23 @@ public class Bot {
     private final Controller controller;
     private final Client client;
     private final MessageWriter messageWriter;
+    private final String zookeeperHosts;
 
     private Session socketSession;
     private String botUserId;
     private Pattern botUserIdPattern;
 
+    public static void run() throws IOException {
+        final var properties = Properties.getInstance();
+        final var token = properties.getSlackToken();
+        final var zookeeperHosts = properties.zookeeperHosts();
+
+        final var bot = new Bot(token, zookeeperHosts);
+        bot.start();
+    }
+
     public Bot(final String token, final String zookeeperHosts) throws IOException {
+        this.zookeeperHosts = zookeeperHosts;
         this.logger = LogManager.getLogger();
 
         if (token == null) {
@@ -84,7 +99,9 @@ public class Bot {
 
         this.jsonConverter = new JsonConverter(Message.class, ChannelJoined.class,
                                                SlackUser.class);
+    }
 
+    public void start() throws IOException {
         final var zookeeperLock = new Lock(zookeeperHosts, "slack_bot");
         zookeeperLock.lock((e) -> {
             try {
@@ -92,7 +109,7 @@ public class Bot {
                     throw e;
                 }
 
-                startNewSession();
+                openNewSession();
             } catch (Exception ex) {
                 logger.error("Failed to start Slack client. Exiting!", ex);
                 System.exit(1);
@@ -100,7 +117,7 @@ public class Bot {
         });
     }
 
-    private void startNewSession()
+    private void openNewSession()
             throws IOException, DeploymentException, StartSocketSessionException {
         final var target = client.target("https://slack.com").path("/api/rtm.connect")
                 .queryParam("token", token);

@@ -31,9 +31,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import de.gesundkrank.mrfoosball.models.Channel;
 import de.gesundkrank.mrfoosball.slack.Bot;
-import de.gesundkrank.mrfoosball.store.Store;
+import de.gesundkrank.mrfoosball.store.hibernate.Store;
 import de.gesundkrank.mrfoosball.utils.Properties;
-import de.gesundkrank.mrfoosball.utils.ZookeeperClient;
 
 /**
  * Main class.
@@ -92,13 +91,9 @@ public class Main {
                 createTestChannel(properties);
             }
 
-            final ZookeeperClient zookeeperClient =
-                    new ZookeeperClient(properties.zookeeperHosts());
-
-            new Bot(properties.getSlackToken(), zookeeperClient);
+            Bot.run();
 
             final int port = properties.getPort();
-
             startServer(port);
 
             //Keeps process running

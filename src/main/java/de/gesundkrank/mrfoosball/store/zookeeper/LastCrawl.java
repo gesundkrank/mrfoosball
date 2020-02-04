@@ -15,24 +15,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.gesundkrank.mrfoosball;
+package de.gesundkrank.mrfoosball.store.zookeeper;
 
 import java.io.IOException;
 
+import de.gesundkrank.mrfoosball.Controller;
 import de.gesundkrank.mrfoosball.models.Crawl;
 import de.gesundkrank.mrfoosball.utils.JsonConverter;
-import de.gesundkrank.mrfoosball.utils.ZookeeperClient;
 
-public class LastCrawl {
+public class LastCrawl extends ZookeeperClient {
 
     private static final String CRAWL_PATH = "/mrfoosball/lastCrawl";
 
-    private final ZookeeperClient zookeeperClient;
     private final JsonConverter jsonConverter;
 
     public LastCrawl(final String zookeeperHosts) throws IOException {
-        this.zookeeperClient = new ZookeeperClient(zookeeperHosts);
-        zookeeperClient.createPath(CRAWL_PATH);
+        super(zookeeperHosts, "lastCrawl");
         this.jsonConverter = new JsonConverter(Crawl.class);
     }
 
@@ -42,7 +40,7 @@ public class LastCrawl {
 
     public Crawl get(final String channelId)
             throws IOException, Controller.NoLastCrawlException {
-        final String value = zookeeperClient.readNode(path(channelId));
+        final String value = readNode(path(channelId));
         if (value == null || value.isEmpty()) {
             throw new Controller.NoLastCrawlException();
         }
@@ -52,6 +50,6 @@ public class LastCrawl {
 
     public void save(final Crawl crawl) throws IOException {
         final String crawlPath = path(crawl.channelId);
-        zookeeperClient.writeNode(crawlPath, jsonConverter.toString(crawl));
+        writeNode(crawlPath, jsonConverter.toString(crawl));
     }
 }

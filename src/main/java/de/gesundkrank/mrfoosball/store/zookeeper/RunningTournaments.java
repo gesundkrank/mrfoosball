@@ -15,35 +15,31 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.gesundkrank.mrfoosball;
+package de.gesundkrank.mrfoosball.store.zookeeper;
 
 import java.io.IOException;
 
+import de.gesundkrank.mrfoosball.Controller;
 import de.gesundkrank.mrfoosball.models.Tournament;
 import de.gesundkrank.mrfoosball.utils.JsonConverter;
-import de.gesundkrank.mrfoosball.utils.ZookeeperClient;
 
-public class RunningTournaments {
+public class RunningTournaments extends ZookeeperClient {
 
-    private static final String TOURNAMENT_PATH = "/kicker/tournament";
-
-    private final ZookeeperClient zookeeperClient;
     private final JsonConverter jsonConverter;
 
     public RunningTournaments(final String zookeeperHosts) throws IOException {
-        this.zookeeperClient = new ZookeeperClient(zookeeperHosts);
-        zookeeperClient.createPath(TOURNAMENT_PATH);
+        super(zookeeperHosts, "tournament");
         this.jsonConverter = new JsonConverter(Tournament.class);
     }
 
     private String path(final String channelId) {
-        return String.format("%s/%s", TOURNAMENT_PATH, channelId);
+        return String.format("%s/%s", subDir, channelId);
     }
 
     public Tournament get(final String channelId)
             throws IOException, Controller.TournamentNotRunningException {
 
-        final String value = zookeeperClient.readNode(path(channelId));
+        final String value = readNode(path(channelId));
         if (value == null || value.isEmpty()) {
             throw new Controller.TournamentNotRunningException();
         }
@@ -52,11 +48,11 @@ public class RunningTournaments {
     }
 
     public void clear(final String channelId) throws IOException {
-        zookeeperClient.deleteNode(path(channelId));
+        deleteNode(path(channelId));
     }
 
     public void save(final Tournament tournament) throws IOException {
         final String tournamentPath = path(tournament.channel.id);
-        zookeeperClient.writeNode(tournamentPath, jsonConverter.toString(tournament));
+        writeNode(tournamentPath, jsonConverter.toString(tournament));
     }
 }

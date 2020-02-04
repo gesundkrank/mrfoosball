@@ -15,7 +15,8 @@
       "options": {
         "awslogs-group": "${LOG_GROUP}",
         "awslogs-stream-prefix": "prefix-name/container-name/ecs-task-id",
-        "awslogs-region": "${AWS_REGION}"
+        "awslogs-region": "${AWS_REGION}",
+        "awslogs-datetime-format": "%Y-%m-%d %H:%M:%S"
       }
     },
     "environment": [

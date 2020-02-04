@@ -26,7 +26,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
 import de.gesundkrank.mrfoosball.api.annotations.CheckChannelId;
-import de.gesundkrank.mrfoosball.store.Store;
+import de.gesundkrank.mrfoosball.store.hibernate.Store;
 
 @Provider
 @CheckChannelId

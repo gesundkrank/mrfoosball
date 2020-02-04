@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Pattern;
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
@@ -38,9 +37,6 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.glassfish.jersey.client.ClientProperties;
 
 import de.gesundkrank.mrfoosball.Controller;
@@ -50,34 +46,27 @@ import de.gesundkrank.mrfoosball.slack.models.ChannelJoined;
 import de.gesundkrank.mrfoosball.slack.models.Message;
 import de.gesundkrank.mrfoosball.slack.models.RtmInitResponse;
 import de.gesundkrank.mrfoosball.slack.models.SlackUser;
+import de.gesundkrank.mrfoosball.store.zookeeper.Lock;
 import de.gesundkrank.mrfoosball.utils.JsonConverter;
-import de.gesundkrank.mrfoosball.utils.ZookeeperClient;
 
 @ClientEndpoint
-public class Bot implements Watcher {
+public class Bot {
 
     private static final Pattern COMMAND_PATTERN = Pattern.compile("\\w+");
     private static final Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
-    private static final String ZOO_KEEPER_PARENT_PATH =
-            ZookeeperClient.ZOOKEEPER_ROOT_PATH + "/bot";
-    private static final String ZOO_KEEPER_PATH = ZOO_KEEPER_PARENT_PATH + "/slack_";
-    private static final String BOT_ID = UUID.randomUUID().toString();
 
     private final Logger logger;
     private final String token;
     private final JsonConverter jsonConverter;
     private final Controller controller;
     private final Client client;
-    private final ZookeeperClient zookeeperClient;
-    private final String lockNode;
     private final MessageWriter messageWriter;
 
     private Session socketSession;
     private String botUserId;
     private Pattern botUserIdPattern;
 
-    public Bot(final String token, final ZookeeperClient zookeeperClient)
-            throws KeeperException, InterruptedException, StartSocketSessionException, IOException {
+    public Bot(final String token, final String zookeeperHosts) throws IOException {
         this.logger = LogManager.getLogger();
 
         if (token == null) {
@@ -91,24 +80,28 @@ public class Bot implements Watcher {
 
         this.token = token;
         this.controller = Controller.getInstance();
-        this.zookeeperClient = zookeeperClient;
         this.messageWriter = new MessageWriter(token);
 
         this.jsonConverter = new JsonConverter(Message.class, ChannelJoined.class,
                                                SlackUser.class);
 
-        zookeeperClient.createPath(ZOO_KEEPER_PARENT_PATH);
-        this.lockNode = zookeeperClient.createEphemeralSequential(ZOO_KEEPER_PATH, BOT_ID);
+        final var zookeeperLock = new Lock(zookeeperHosts, "slack_bot");
+        zookeeperLock.lock((e) -> {
+            try {
+                if (e != null) {
+                    throw e;
+                }
 
-        logger.info("Creating lock {} for ID {}", lockNode, BOT_ID);
-
-        if (zookeeperClient.checkLock(lockNode, this)) {
-            logger.info("Obtained lock {} and starting new slack session.", lockNode);
-            startNewSession();
-        }
+                startNewSession();
+            } catch (Exception ex) {
+                logger.error("Failed to start Slack client. Exiting!", ex);
+                System.exit(1);
+            }
+        });
     }
 
-    private void startNewSession() throws StartSocketSessionException {
+    private void startNewSession()
+            throws IOException, DeploymentException, StartSocketSessionException {
         final var target = client.target("https://slack.com").path("/api/rtm.connect")
                 .queryParam("token", token);
 
@@ -131,26 +124,8 @@ public class Bot implements Watcher {
         this.botUserId = response.self.id;
 
         final var socketClient = ContainerProvider.getWebSocketContainer();
-        try {
-            logger.info("Starting new web socket session with {}", response.url);
-            this.socketSession = socketClient.connectToServer(this, URI.create(response.url));
-        } catch (final DeploymentException | IOException e) {
-            throw new StartSocketSessionException(e);
-        }
-    }
-
-    @Override
-    public void process(WatchedEvent event) {
-        logger.info("Zookeeper event: {}", event);
-
-        try {
-            if (this.socketSession == null && zookeeperClient.checkLock(lockNode, this)) {
-                logger.info("Obtained lock {} and starting new slack session.", lockNode);
-                startNewSession();
-            }
-        } catch (KeeperException | InterruptedException | StartSocketSessionException e) {
-            logger.error("Failed to process zookeeper event.", e);
-        }
+        logger.info("Starting new web socket session with {}", response.url);
+        this.socketSession = socketClient.connectToServer(this, URI.create(response.url));
     }
 
     @OnMessage
@@ -422,10 +397,6 @@ public class Bot implements Watcher {
     }
 
     public static class StartSocketSessionException extends Exception {
-
-        StartSocketSessionException(final Throwable cause) {
-            super("Failed to establish web socket connection.", cause);
-        }
 
         StartSocketSessionException(final String error) {
             super(String.format("Failed to establish web socket connection. Cause: %s", error));

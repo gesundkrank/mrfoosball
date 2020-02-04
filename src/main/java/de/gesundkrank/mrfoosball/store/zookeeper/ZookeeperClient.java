@@ -15,10 +15,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.gesundkrank.mrfoosball.utils;
+package de.gesundkrank.mrfoosball.store.zookeeper;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,68 +31,51 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.glassfish.hk2.utilities.Stub;
+
+import de.gesundkrank.mrfoosball.utils.Properties;
 
 public class ZookeeperClient {
 
-    public static String ZOOKEEPER_ROOT_PATH = "/kicker";
+    protected final Logger logger;
+    protected final ZooKeeper zooKeeper;
+    protected final String subDir;
 
-    private final Logger logger;
-    private final ZooKeeper zooKeeper;
-
-    public ZookeeperClient(final String zookeeperHosts) throws IOException {
+    protected ZookeeperClient(final String zookeeperHosts, final String subDir) throws IOException {
         this.logger = LogManager.getLogger();
         final var watcher = new StubWatcher();
         this.zooKeeper = new ZooKeeper(zookeeperHosts, 30000, watcher);
+        final var rootPath = Properties.getInstance().getZookeeperRootPath();
+        this.subDir = String.format("%s/%s", rootPath, subDir);
+
+        createPath(this.subDir);
     }
 
-    public void createPath(final String path) throws IOException {
-        StringBuilder currentPath = new StringBuilder();
+    protected void createPath(final String path) throws IOException {
+        System.out.println(path);
+        try {
+            StringBuilder currentPath = new StringBuilder();
 
-        final List<String> paths =
-                Arrays.stream(path.split("/")).filter(p -> !p.isEmpty())
-                        .collect(Collectors.toList());
+            final List<String> paths =
+                    Arrays.stream(path.split("/")).filter(p -> !p.isEmpty())
+                            .collect(Collectors.toList());
 
-        for (String subPath : paths) {
-            currentPath.append("/").append(subPath);
+            for (String subPath : paths) {
+                System.out.println(subPath);
+                currentPath.append("/").append(subPath);
+                System.out.println(currentPath);
 
-            try {
                 if (zooKeeper.exists(currentPath.toString(), false) == null) {
+                    logger.debug("Creating path {}", currentPath.toString());
                     zooKeeper.create(currentPath.toString(), null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
                                      CreateMode.PERSISTENT);
                 }
-            } catch (InterruptedException | KeeperException e) {
-                throw new IOException(e);
             }
-        }
-    }
-
-    public String createEphemeralSequential(final String path, final String value)
-            throws IOException {
-        try {
-            return zooKeeper.create(path, value.getBytes(),
-                                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                                    CreateMode.EPHEMERAL_SEQUENTIAL);
-        } catch (KeeperException | InterruptedException e) {
+        } catch (InterruptedException | KeeperException e) {
             throw new IOException(e);
         }
     }
 
-    public boolean checkLock(final String lockPath, final Watcher watcher)
-            throws KeeperException, InterruptedException {
-        final String parentPath = Paths.get(lockPath).getParent().toString();
-
-        final List<String> children = zooKeeper.getChildren(parentPath, watcher);
-        return children.stream()
-                .min(String::compareTo)
-                .map(string -> {
-                    logger.info("Current min lock node: {}", string);
-                    return String.format("%s/%s", parentPath, string).equals(lockPath);
-                })
-                .orElse(false);
-    }
-
-    public void writeNode(final String path, final String value) throws IOException {
+    protected void writeNode(final String path, final String value) throws IOException {
         try {
             final Stat stat = zooKeeper.exists(path, false);
 
@@ -108,7 +90,7 @@ public class ZookeeperClient {
         }
     }
 
-    public void deleteNode(final String path) throws IOException {
+    protected void deleteNode(final String path) throws IOException {
         try {
             final Stat stat = zooKeeper.exists(path, false);
             if (stat != null) {
@@ -119,7 +101,7 @@ public class ZookeeperClient {
         }
     }
 
-    public String readNode(final String path) throws IOException {
+    protected String readNode(final String path) throws IOException {
         try {
             if (zooKeeper.exists(path, false) == null) {
                 return null;

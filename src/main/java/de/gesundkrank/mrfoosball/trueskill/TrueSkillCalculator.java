@@ -31,7 +31,7 @@ import de.gesundkrank.jskills.Team;
 import de.gesundkrank.jskills.trueskill.TwoTeamTrueSkillCalculator;
 
 import de.gesundkrank.mrfoosball.models.Tournament;
-import de.gesundkrank.mrfoosball.store.Store;
+import de.gesundkrank.mrfoosball.store.hibernate.Store;
 
 public abstract class TrueSkillCalculator {
 

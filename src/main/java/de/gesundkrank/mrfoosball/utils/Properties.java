@@ -98,6 +98,10 @@ public class Properties {
         return properties.getProperty("zookeeperHosts");
     }
 
+    public String getZookeeperRootPath() {
+        return properties.getProperty("zookeeperRootPath", "/mrfoosball");
+    }
+
     public String getAppUrl() {
         return properties.getProperty("appUrl", "http://localhost:8080");
     }

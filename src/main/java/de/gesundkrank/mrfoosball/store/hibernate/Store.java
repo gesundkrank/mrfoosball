@@ -15,7 +15,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.gesundkrank.mrfoosball.store;
+package de.gesundkrank.mrfoosball.store.hibernate;
 
 import java.io.Closeable;
 import java.io.IOException;

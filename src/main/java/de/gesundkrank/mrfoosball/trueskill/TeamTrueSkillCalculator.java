@@ -27,7 +27,7 @@ import de.gesundkrank.jskills.Rating;
 import de.gesundkrank.jskills.Team;
 
 import de.gesundkrank.mrfoosball.models.Tournament;
-import de.gesundkrank.mrfoosball.store.Store;
+import de.gesundkrank.mrfoosball.store.hibernate.Store;
 
 public class TeamTrueSkillCalculator extends TrueSkillCalculator {
 

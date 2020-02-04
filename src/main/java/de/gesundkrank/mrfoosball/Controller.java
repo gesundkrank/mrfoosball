@@ -37,7 +37,10 @@ import de.gesundkrank.mrfoosball.models.Team;
 import de.gesundkrank.mrfoosball.models.Tournament;
 import de.gesundkrank.mrfoosball.slack.MessageWriter;
 import de.gesundkrank.mrfoosball.slack.models.Message;
-import de.gesundkrank.mrfoosball.store.Store;
+import de.gesundkrank.mrfoosball.store.hibernate.Store;
+import de.gesundkrank.mrfoosball.store.zookeeper.LastCrawl;
+import de.gesundkrank.mrfoosball.store.zookeeper.PlayerQueues;
+import de.gesundkrank.mrfoosball.store.zookeeper.RunningTournaments;
 import de.gesundkrank.mrfoosball.trueskill.PlayerTrueSkillCalculator;
 import de.gesundkrank.mrfoosball.trueskill.TeamTrueSkillCalculator;
 import de.gesundkrank.mrfoosball.trueskill.TrueSkillCalculator;
@@ -398,7 +401,7 @@ public class Controller {
 
     public static class TournamentNotRunningException extends Exception {
 
-        TournamentNotRunningException() {
+        public TournamentNotRunningException() {
             super("No tournament is running!");
         }
     }

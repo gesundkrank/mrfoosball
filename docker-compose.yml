@@ -17,6 +17,10 @@ services:
 
   zookeeper:
     image: zookeeper:3.4.11
+    expose:
+      - "2181"
+    ports:
+      - "2181:2181"
 
   postgres:
     image: postgres:9.6.5

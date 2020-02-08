@@ -51,7 +51,6 @@ public class ZookeeperClient {
     }
 
     protected void createPath(final String path) throws IOException {
-        System.out.println(path);
         try {
             StringBuilder currentPath = new StringBuilder();
 
@@ -60,9 +59,7 @@ public class ZookeeperClient {
                             .collect(Collectors.toList());
 
             for (String subPath : paths) {
-                System.out.println(subPath);
                 currentPath.append("/").append(subPath);
-                System.out.println(currentPath);
 
                 if (zooKeeper.exists(currentPath.toString(), false) == null) {
                     logger.debug("Creating path {}", currentPath.toString());

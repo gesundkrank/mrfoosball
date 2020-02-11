@@ -17,7 +17,6 @@
 
 package de.gesundkrank.mrfoosball.trueskill;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,7 +30,6 @@ import de.gesundkrank.jskills.Team;
 import de.gesundkrank.jskills.trueskill.TwoTeamTrueSkillCalculator;
 
 import de.gesundkrank.mrfoosball.models.Tournament;
-import de.gesundkrank.mrfoosball.store.hibernate.Store;
 
 public abstract class TrueSkillCalculator {
 
@@ -65,14 +63,6 @@ public abstract class TrueSkillCalculator {
         return team;
     }
 
-    private static ITeam toTeam(final IPlayer trueSkillTeam,
-                                final de.gesundkrank.mrfoosball.models.Team team) {
-        final var team1 = new Team();
-        team1.addPlayer(trueSkillTeam,
-                        new Rating(team.trueSkillMean, team.trueSkillStandardDeviation));
-        return team1;
-    }
-
     private boolean teamAWins(final Tournament tournament) {
         int winsTeamA = 0;
         for (final var match : tournament.matches) {
@@ -99,23 +89,9 @@ public abstract class TrueSkillCalculator {
         final var player2 = playerList.get(1);
         final var player3 = playerList.get(2);
         final var player4 = playerList.get(3);
-        final double quality1234;
-        final double quality1324;
-        final double quality1423;
-
-        try (final var store = new Store()) {
-            var teamA = store.getTeam(player1, player2, false);
-            var teamB = store.getTeam(player3, player4, false);
-            quality1234 = calcMatchQuality(teamA, teamB);
-
-            teamA = store.getTeam(player1, player3, false);
-            teamB = store.getTeam(player2, player4, false);
-            quality1324 = calcMatchQuality(teamA, teamB);
-
-            teamA = store.getTeam(player1, player4, false);
-            teamB = store.getTeam(player2, player3, false);
-            quality1423 = calcMatchQuality(teamA, teamB);
-        }
+        final double quality1234 = calcMatchQuality(player1, player2, player3, player4);
+        final double quality1324 = calcMatchQuality(player1, player3, player2, player4);
+        final double quality1423 = calcMatchQuality(player1, player4, player2, player3);
 
         final List<de.gesundkrank.mrfoosball.models.Player> bestMatch = new LinkedList<>();
         if (quality1234 >= Math.max(quality1324, quality1423)) {
@@ -138,16 +114,18 @@ public abstract class TrueSkillCalculator {
         return bestMatch;
     }
 
-    private static double calcMatchQuality(final de.gesundkrank.mrfoosball.models.Team teamA,
-                                           final de.gesundkrank.mrfoosball.models.Team teamB) {
-        final List<ITeam> teams = new ArrayList<>();
+    private static double calcMatchQuality(final de.gesundkrank.mrfoosball.models.Player player1,
+                                           final de.gesundkrank.mrfoosball.models.Player player2,
+                                           final de.gesundkrank.mrfoosball.models.Player player3,
+                                           final de.gesundkrank.mrfoosball.models.Player player4) {
+        final IPlayer iPlayer1 = new Player<>(player1.id);
+        final IPlayer iPlayer2 = new Player<>(player2.id);
+        final IPlayer iPlayer3 = new Player<>(player3.id);
+        final IPlayer iPlayer4 = new Player<>(player4.id);
 
-        final IPlayer iTeamA = new Player<>(teamA.toString());
-        final IPlayer iTeamB = new Player<>(teamB.toString());
-
-        teams.add(toTeam(iTeamA, teamA));
-        teams.add(toTeam(iTeamB, teamB));
-
+        final List<ITeam> teams = new LinkedList<>();
+        teams.add(toTeam(iPlayer1, player1, iPlayer2, player2));
+        teams.add(toTeam(iPlayer3, player3, iPlayer4, player4));
         return skillCalculator.calculateMatchQuality(gameInfo, teams);
     }
 }

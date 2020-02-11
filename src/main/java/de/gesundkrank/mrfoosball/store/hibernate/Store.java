@@ -124,10 +124,6 @@ public class Store implements Closeable {
     }
 
     public Team getTeam(final Player player1, final Player player2) {
-        return getTeam(player1, player2, true);
-    }
-
-    public Team getTeam(final Player player1, final Player player2, boolean persist) {
         Transaction tx = session.beginTransaction();
 
         session.saveOrUpdate(player1);
@@ -148,9 +144,7 @@ public class Store implements Closeable {
             team = new Team();
             team.player1 = key.player1;
             team.player2 = key.player2;
-            if (persist) {
-                session.save(team);
-            }
+            session.save(team);
         }
 
         tx.commit();

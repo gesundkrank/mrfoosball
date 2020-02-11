@@ -56,10 +56,6 @@ public class Message {
         public Attachment() {
         }
 
-        public Attachment(final String title) {
-            this.title = title;
-        }
-
         public Attachment(final String title, final String text) {
             this.title = title;
             this.text = text;

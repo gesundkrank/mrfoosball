@@ -57,8 +57,6 @@ public class Bot {
     private static final Pattern COMMAND_PATTERN = Pattern.compile("\\w+");
     private static final Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
 
-    private static Bot instance;
-
     private final Logger logger;
     private final String token;
     private final JsonConverter jsonConverter;
@@ -112,7 +110,7 @@ public class Bot {
                 openNewSession();
             } catch (Exception ex) {
                 logger.error("Failed to start Slack client. Exiting!", ex);
-                System.exit(1);
+                throw new RuntimeException(ex);
             }
         });
     }
@@ -178,13 +176,13 @@ public class Bot {
     @OnClose
     public void onClose(final Session session, final CloseReason closeReason) {
         logger.error("Session closed: {}", closeReason);
-        System.exit(1);
+        throw new RuntimeException("Session closed");
     }
 
     @OnError
     public void onError(final Session session, final Throwable throwable) {
         logger.error("Websocket error.", throwable);
-        System.exit(1);
+        throw new RuntimeException("Session closed");
     }
 
     private void onCommand(final String command, final String slackChannelId, final String sender)

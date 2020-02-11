@@ -17,6 +17,7 @@
 
 package de.gesundkrank.mrfoosball.models;
 
+import java.io.Serializable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
@@ -31,7 +32,7 @@ import javax.persistence.Table;
 })
 @Entity
 @Table
-public class Player extends TrueSkillColumns implements Comparable<Player> {
+public class Player extends TrueSkillColumns implements Comparable<Player>, Serializable {
 
     @Id
     public String id;

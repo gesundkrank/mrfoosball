@@ -48,7 +48,7 @@ import de.gesundkrank.mrfoosball.utils.Properties;
 
 public class Controller {
 
-    private static Controller INSTANCE;
+    private static volatile Controller INSTANCE;
 
     private final Logger logger;
     private final TrueSkillCalculator playerTrueSkillCalculator;

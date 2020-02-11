@@ -1,28 +1,3 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath "com.avast.gradle:gradle-docker-compose-plugin:0.8.12"
-    }
-}
-
-plugins {
-    id 'java'
-    id 'checkstyle'
-    id 'application'
-    id 'com.github.johnrengelman.shadow' version '4.0.3'
-    id 'com.bmuschko.docker-remote-api' version '6.1.3'
-    id 'com.github.node-gradle.node' version '2.2.0'
-}
-
-apply plugin: 'docker-compose'
-
-repositories {
-    jcenter()
-    mavenCentral()
-}
-
 /*
  * This file is part of MrFoosball (https://github.com/gesundkrank/mrfoosball).
  * Copyright (c) 2020 Jan Graßegger.
@@ -42,6 +17,33 @@ repositories {
 
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+import com.github.spotbugs.SpotBugsTask
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "com.avast.gradle:gradle-docker-compose-plugin:0.8.12"
+    }
+}
+
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id "com.github.spotbugs" version "3.0.0"
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '4.0.3'
+    id 'com.bmuschko.docker-remote-api' version '6.1.3'
+    id 'com.github.node-gradle.node' version '2.2.0'
+}
+
+apply plugin: 'docker-compose'
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
 
 group = "de.gesundkrank.mrfoosball"
 mainClassName = 'de.gesundkrank.mrfoosball.Main'
@@ -54,6 +56,10 @@ compileJava {
 checkstyle {
     ignoreFailures = false
     maxWarnings = 0
+}
+
+spotbugs {
+    excludeFilter = file("$rootProject.projectDir/config/findbugs/excludeFilter.xml")
 }
 
 dependencies {
@@ -101,6 +107,13 @@ node {
 shadowJar {
     baseName = 'mrfoosball'
     classifier = null
+}
+
+tasks.withType(SpotBugsTask) {
+    reports {
+        xml.enabled false
+        html.enabled true
+    }
 }
 
 task tslint(type: NpmTask) {

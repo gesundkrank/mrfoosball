@@ -17,6 +17,7 @@
 
 package de.gesundkrank.mrfoosball.slack.models;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAttribute;
 
 public class SlackUser {
@@ -45,5 +46,10 @@ public class SlackUser {
     @Override
     public boolean equals(Object obj) {
         return obj instanceof SlackUser && user.id.equals(((SlackUser) obj).user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ok, error, warning, user);
     }
 }

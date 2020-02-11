@@ -17,6 +17,7 @@
 
 package de.gesundkrank.mrfoosball.models;
 
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAttribute;
 
 public class TeamStat implements Comparable<TeamStat> {
@@ -46,6 +47,17 @@ public class TeamStat implements Comparable<TeamStat> {
 
     @Override
     public int compareTo(TeamStat otherTeam) {
-        return -Float.compare(getWinRate(), otherTeam.getWinRate());
+        return Float.compare(otherTeam.getWinRate(), getWinRate());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof TeamStat && compareTo((TeamStat) obj) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(team, tournamentsWon, tournamentsLost, tournamentsPlayed, matchesWon,
+                            matchesLost, matchesPlayed, goalsScored, goalsReceived);
     }
 }

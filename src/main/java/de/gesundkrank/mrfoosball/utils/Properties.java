@@ -18,6 +18,7 @@
 package de.gesundkrank.mrfoosball.utils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +32,7 @@ public class Properties {
             Paths.get("/opt/mrfoosball/conf/mrfoosball.properties");
     private static final Path PROJECT_PROPERTIES_PATH = Paths.get("./mrfoosball.properties");
 
-    private static Properties INSTANCE;
+    private static volatile Properties INSTANCE;
 
     public static Properties getInstance() {
         if (INSTANCE == null) {
@@ -48,9 +49,13 @@ public class Properties {
 
         try {
             if (Files.exists(GLOBAL_PROPERTIES_PATH)) {
-                properties.load(Files.newInputStream(GLOBAL_PROPERTIES_PATH));
+                try (final var is = Files.newInputStream(GLOBAL_PROPERTIES_PATH)) {
+                    properties.load(is);
+                }
             } else if (Files.exists(PROJECT_PROPERTIES_PATH)) {
-                properties.load(Files.newInputStream(PROJECT_PROPERTIES_PATH));
+                try (final var is = Files.newInputStream(PROJECT_PROPERTIES_PATH)) {
+                    properties.load(is);
+                }
             }
         } catch (IOException e) {
             logger.error("Failed to load configuration.", e);

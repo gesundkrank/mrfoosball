@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.persistence.NoResultException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,6 +34,7 @@ import de.gesundkrank.mrfoosball.models.Match;
 import de.gesundkrank.mrfoosball.models.Player;
 import de.gesundkrank.mrfoosball.models.PlayerQueue;
 import de.gesundkrank.mrfoosball.models.PlayerSkill;
+import de.gesundkrank.mrfoosball.models.SlackWorkspace;
 import de.gesundkrank.mrfoosball.models.State;
 import de.gesundkrank.mrfoosball.models.Team;
 import de.gesundkrank.mrfoosball.models.Tournament;
@@ -57,7 +60,6 @@ public class Controller {
     private final RunningTournaments runningTournaments;
     private final LastCrawl lastCrawl;
     private final String baseUrl;
-    private final MessageWriter messageWriter;
 
     public static Controller getInstance() throws IOException {
         if (INSTANCE == null) {
@@ -78,15 +80,14 @@ public class Controller {
         this.runningTournaments = new RunningTournaments(zookeeperHosts);
         this.lastCrawl = new LastCrawl(zookeeperHosts);
         this.baseUrl = properties.getAppUrl();
-        this.messageWriter = new MessageWriter(properties.getSlackToken());
     }
 
-    public String joinChannel(final String slackId, final String slackName) {
+    public String joinChannel(final String slackId, final SlackWorkspace slackWorkspace) {
         final var id = UUID.randomUUID().toString();
         final var channel = new Channel();
         channel.id = id;
-        channel.name = slackName;
         channel.slackId = slackId;
+        channel.slackWorkspace = slackWorkspace;
 
         try (final var store = new Store()) {
             store.saveChannel(channel);
@@ -138,8 +139,8 @@ public class Controller {
                                               tournament.teamA.player2.id,
                                               tournament.teamB.player1.id,
                                               tournament.teamB.player2.id);
-            messageWriter.postMessage(tournament.channel.slackId, message);
-
+            final var messageWriter = new MessageWriter(channel.slackWorkspace.accessToken);
+            messageWriter.postMessage(channel.slackId, message, channel.slackWorkspace.botUserId);
         }
 
 
@@ -172,7 +173,9 @@ public class Controller {
         final var message = String.format("The game is over. Congratulations to <@%s> and <@%s>!",
                                           winner.player1.id,
                                           winner.player2.id);
-        messageWriter.postMessage(runningTournament.channel.slackId, message);
+        final var channel = runningTournament.channel;
+        final var messageWriter = new MessageWriter(channel.slackWorkspace.accessToken);
+        messageWriter.postMessage(channel.slackId, message, channel.slackWorkspace.botUserId);
 
         try {
             if (rematch) {
@@ -335,9 +338,11 @@ public class Controller {
         }
     }
 
-    public String getChannelId(String slackChannelId) {
+    public String getChannelId(final String slackChannelId) throws ChannelNotFoundException {
         try (final var store = new Store()) {
             return store.getChannelBySlackId(slackChannelId).id;
+        } catch (final NoResultException e) {
+            throw new ChannelNotFoundException(slackChannelId, e);
         }
     }
 
@@ -347,6 +352,19 @@ public class Controller {
 
     public String getBaseUrl() {
         return baseUrl;
+    }
+
+    public SlackWorkspace getSlackWorkspace(final String id)
+            throws SlackWorkspaceNotFoundException {
+        try (final var store = new Store()) {
+            final var workspace = store.getSlackWorkSpace(id);
+            if (workspace == null) {
+                throw new SlackWorkspaceNotFoundException(id);
+            }
+            return workspace;
+        } catch (final NoResultException e) {
+            throw new SlackWorkspaceNotFoundException(id, e);
+        }
     }
 
     public Crawl getLastCrawl(String channelId)
@@ -360,7 +378,7 @@ public class Controller {
             return;
         }
 
-        final var slackId = tournament.channel.slackId;
+        final var channel = tournament.channel;
         final var lastMatch = tournament.matches.get(tournament.matches.size() - 1);
 
         final Team losers;
@@ -378,12 +396,11 @@ public class Controller {
         final Crawl crawl = new Crawl(channelId, winners, losers);
         lastCrawl.save(crawl);
 
-        var messageString = String.format("<@%s> and <@%s> have to crawl. How embarrassing!!",
-                                          losers.player1.id, losers.player2.id
-        );
+        var message = String.format("<@%s> and <@%s> have to crawl. How embarrassing!!",
+                                    losers.player1.id, losers.player2.id);
 
-        final var message = new Message(slackId, messageString, null);
-        messageWriter.postMessage(message);
+        final var messageWriter = new MessageWriter(channel.slackWorkspace.accessToken);
+        messageWriter.postMessage(channel.slackId, message, channel.slackWorkspace.botUserId);
     }
 
     public static class NoLastCrawlException extends Exception {
@@ -410,4 +427,23 @@ public class Controller {
             super(message);
         }
     }
+
+    public static class SlackWorkspaceNotFoundException extends Exception {
+
+        SlackWorkspaceNotFoundException(final String id) {
+            super("Could not find Slack workspace with " + id);
+        }
+
+        SlackWorkspaceNotFoundException(final String id, final Throwable throwable) {
+            super("Could not find Slack workspace with " + id, throwable);
+        }
+    }
+
+    public static class ChannelNotFoundException extends Exception {
+
+        ChannelNotFoundException(final String slackChannelId, final Throwable throwable) {
+            super("Could not find Channel workspace with slack id " + slackChannelId, throwable);
+        }
+    }
+
 }

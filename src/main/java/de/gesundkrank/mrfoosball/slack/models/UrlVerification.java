@@ -17,21 +17,9 @@
 
 package de.gesundkrank.mrfoosball.slack.models;
 
-public class RtmInitResponse {
+public class UrlVerification {
 
-    public boolean ok;
-    public String url;
-
-    public String error = null;
-    public String warning = null;
-
-    public Self self;
-
-    public static class Self {
-
-        public String id;
-    }
+    public String type;
+    public String challenge;
 
 }
-
-

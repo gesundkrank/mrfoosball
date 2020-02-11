@@ -29,10 +29,6 @@
         "value": "${ZOOKEEPER_HOSTS}"
       },
       {
-        "name": "slackToken",
-        "value": "${SLACK_TOKEN}"
-      },
-      {
         "name": "connectionUrl",
         "value": "jdbc:postgresql://${DB_HOST}/${DB_NAME}"
       },
@@ -51,6 +47,18 @@
       {
         "name": "connectionHbm2ddl",
         "value": "${HIBERNATE_HBM2DDL}"
+      },
+      {
+        "name": "slackClientId",
+        "value": "${SLACK_CLIENT_ID}"
+      },
+      {
+        "name": "slackClientSecret",
+        "value": "${SLACK_CLIENT_SECRET}"
+      },
+      {
+        "name": "slackSigningSecret",
+        "value": "${SLACK_SIGNING_SECRET}"
       }
     ]
   }

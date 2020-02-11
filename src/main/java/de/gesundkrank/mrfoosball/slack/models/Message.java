@@ -41,6 +41,18 @@ public class Message {
         this.user = user;
     }
 
+    @Override
+    public String toString() {
+        return "Message{"
+               + "channel='" + channel + '\''
+               + ", type='" + type + '\''
+               + ", text='" + text + '\''
+               + ", user='" + user + '\''
+               + ", asUser=" + asUser
+               + ", attachments=" + attachments
+               + '}';
+    }
+
     public static class Attachment {
 
         public String title;

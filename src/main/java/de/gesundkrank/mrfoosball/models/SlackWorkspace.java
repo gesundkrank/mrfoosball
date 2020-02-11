@@ -19,38 +19,35 @@ package de.gesundkrank.mrfoosball.models;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 @NamedQueries({
         @NamedQuery(
-                name = "get_channel",
-                query = "FROM Channel WHERE id = :id"
-        ),
-        @NamedQuery(
-                name = "get_channel_by_slack_id",
-                query = "FROM Channel WHERE slackId = :slackId"
-        )
-})
+                name = "get_slack_workspace",
+                query = "FROM SlackWorkspace WHERE teamId = :teamId"
+        )})
 @Entity
 @Table
-public class Channel {
+public class SlackWorkspace {
 
     @Id
-    public String id;
-    public String slackId;
+    public String teamId;
+    public String accessToken;
+    public String scope;
+    public String teamName;
+    public String botUserId;
 
-    @ManyToOne
-    public SlackWorkspace slackWorkspace;
-
-    public Channel() {
-
+    public SlackWorkspace() {
     }
 
-    public Channel(final String id, final String slackId) {
-        this.id = id;
-        this.slackId = slackId;
+    public SlackWorkspace(final String teamId, final String accessToken, final String scope,
+                          final String teamName, final String botUserId) {
+        this.teamId = teamId;
+        this.accessToken = accessToken;
+        this.scope = scope;
+        this.teamName = teamName;
+        this.botUserId = botUserId;
     }
 }

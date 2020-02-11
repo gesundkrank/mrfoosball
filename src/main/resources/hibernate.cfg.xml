@@ -30,5 +30,6 @@
     <mapping class="de.gesundkrank.mrfoosball.models.Player"/>
     <mapping class="de.gesundkrank.mrfoosball.models.Team"/>
     <mapping class="de.gesundkrank.mrfoosball.models.PlayerSkill"/>
+    <mapping class="de.gesundkrank.mrfoosball.models.SlackWorkspace"/>
   </session-factory>
 </hibernate-configuration>

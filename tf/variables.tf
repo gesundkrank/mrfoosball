@@ -11,8 +11,16 @@ variable "image_tag" {
   default = "latest"
 }
 
-variable "slack_token" {
-  description = "Slack Bot OAuth Token"
+variable "slack_client_id" {
+  description = "Slack App Client Id"
+}
+
+variable "slack_client_secret" {
+  description = "Slack App Client Secret"
+}
+
+variable "slack_signing_secret" {
+  description = "Slack App Signing Secret"
 }
 
 variable "db_name" {

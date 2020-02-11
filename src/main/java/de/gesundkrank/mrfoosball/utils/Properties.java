@@ -18,7 +18,6 @@
 package de.gesundkrank.mrfoosball.utils;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -70,10 +69,6 @@ public class Properties {
         return Integer.parseInt(properties.getProperty("port", "8080"));
     }
 
-    public String getSlackToken() {
-        return properties.getProperty("slackToken");
-    }
-
     public String getConnectionUrl() {
         return properties.getProperty("connectionUrl");
     }
@@ -111,24 +106,19 @@ public class Properties {
         return properties.getProperty("appUrl", "http://localhost:8080");
     }
 
-    public boolean hasTestChannel() {
-        return properties.containsKey("testTeamId") && properties.containsKey("testTeamSlackId")
-               && properties.containsKey("testTeamName");
-    }
-
     public int getQRCodeSize() {
         return Integer.parseInt(properties.getProperty("qrCodeSize", "400"));
     }
 
-    public String getTestChannelId() {
-        return properties.getProperty("testTeamId");
+    public String getSlackClientId() {
+        return properties.getProperty("slackClientId");
     }
 
-    public String getTestChannelSlackId() {
-        return properties.getProperty("testTeamSlackId");
+    public String getSlackClientSecret() {
+        return properties.getProperty("slackClientSecret");
     }
 
-    public String getTestChannelName() {
-        return properties.getProperty("testTeamName");
+    public String getSlackSigningSecret() {
+        return properties.getProperty("slackSigningSecret");
     }
 }

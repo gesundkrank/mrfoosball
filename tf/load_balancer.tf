@@ -17,7 +17,6 @@ resource "aws_lb_target_group" "target_group" {
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = aws_vpc.main.id
-  slow_start  = 60
 
   health_check {
     protocol = "HTTP"

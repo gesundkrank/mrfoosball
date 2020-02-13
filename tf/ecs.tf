@@ -1,5 +1,5 @@
 resource "aws_ecs_cluster" "mrfoosball" {
-  name = "MrFoosballCluster"
+  name               = "MrFoosballCluster"
   capacity_providers = [
     "FARGATE"
   ]
@@ -26,13 +26,13 @@ data "template_file" "container_definition" {
 }
 
 resource "aws_ecs_task_definition" "mrfoosball" {
-  family                = "mrfoosball"
-  network_mode          = "awsvpc"
-  container_definitions = data.template_file.container_definition.rendered
-  execution_role_arn    = aws_iam_role.task_execution.arn
-  task_role_arn         = aws_iam_role.task.arn
-  cpu                   = "256"
-  memory                = "512"
+  family                   = "mrfoosball"
+  network_mode             = "awsvpc"
+  container_definitions    = data.template_file.container_definition.rendered
+  execution_role_arn       = aws_iam_role.task_execution.arn
+  task_role_arn            = aws_iam_role.task.arn
+  cpu                      = "256"
+  memory                   = "512"
   requires_compatibilities = [
     "FARGATE"
   ]
@@ -55,9 +55,11 @@ resource "aws_ecs_service" "service" {
   }
 
   network_configuration {
-    subnets = aws_subnet.private.*.id
-    security_groups = [
+    subnets          = aws_subnet.public.*.id
+    assign_public_ip = true
+    security_groups  = [
       aws_security_group.ecs.id
     ]
+
   }
 }

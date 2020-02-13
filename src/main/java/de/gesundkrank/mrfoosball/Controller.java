@@ -316,10 +316,8 @@ public class Controller {
     }
 
     public void removePlayer(final String channelId, final String playerId) throws IOException {
-        try (final var store = new Store()) {
-            final var storedPlayer = store.getPlayer(playerId);
-            removePlayer(channelId, storedPlayer);
-        }
+        final var player = new Player(playerId);
+        removePlayer(channelId, player);
     }
 
     public void removePlayer(final String channelId, final Player player) throws IOException {

@@ -39,6 +39,13 @@ public class Player extends TrueSkillColumns implements Comparable<Player>, Seri
     public String name;
     public String avatarImage;
 
+    public Player() {
+    }
+
+    public Player(final String id) {
+        this.id = id;
+    }
+
     @Override
     public int hashCode() {
         return id.hashCode();

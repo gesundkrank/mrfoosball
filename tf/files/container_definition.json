@@ -14,7 +14,7 @@
       "logDriver": "awslogs",
       "options": {
         "awslogs-group": "${LOG_GROUP}",
-        "awslogs-stream-prefix": "prefix-name/container-name/ecs-task-id",
+        "awslogs-stream-prefix": "mrfoosball-app",
         "awslogs-region": "${AWS_REGION}",
         "awslogs-datetime-format": "%Y-%m-%d %H:%M:%S"
       }

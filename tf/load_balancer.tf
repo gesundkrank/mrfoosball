@@ -22,8 +22,8 @@ resource "aws_lb_target_group" "target_group" {
     protocol = "HTTP"
     path     = "/api/health"
     matcher  = "200"
-    timeout  = 5
-    interval = 10
+    timeout  = 30
+    interval = 45
   }
 }
 

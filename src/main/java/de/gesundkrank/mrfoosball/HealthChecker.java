@@ -15,26 +15,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.gesundkrank.mrfoosball.api;
+package de.gesundkrank.mrfoosball;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import de.gesundkrank.mrfoosball.store.hibernate.Store;
 
-import de.gesundkrank.mrfoosball.Controller;
-import de.gesundkrank.mrfoosball.HealthChecker;
-import de.gesundkrank.mrfoosball.models.HealthStatus;
+public class HealthChecker {
 
-@Path("api/health")
-public class HealthApi {
-
-    @GET
-    public HealthStatus checkHealth() {
-        if (HealthChecker.isHealthy()) {
-            return new HealthStatus();
+    public static boolean isHealthy() {
+        try (final var store = new Store()) {
+            return store.checkDatabase();
         }
-
-        throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
     }
 }

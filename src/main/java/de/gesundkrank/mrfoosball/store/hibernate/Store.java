@@ -80,6 +80,10 @@ public class Store implements Closeable {
         }
     }
 
+    public boolean checkDatabase() {
+        return session.isConnected() && session.isOpen();
+    }
+    
     public Channel getChannel(final String id) {
         final TypedQuery<Channel> query = session
                 .createNamedQuery("get_channel", Channel.class)

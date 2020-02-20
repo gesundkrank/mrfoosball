@@ -15,26 +15,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.gesundkrank.mrfoosball.api;
+package de.gesundkrank.mrfoosball.slack.models;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+public class AppMention {
 
-import de.gesundkrank.mrfoosball.Controller;
-import de.gesundkrank.mrfoosball.HealthChecker;
-import de.gesundkrank.mrfoosball.models.HealthStatus;
-
-@Path("api/health")
-public class HealthApi {
-
-    @GET
-    public HealthStatus checkHealth() {
-        if (HealthChecker.isHealthy()) {
-            return new HealthStatus();
-        }
-
-        throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-    }
 }

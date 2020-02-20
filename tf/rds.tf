@@ -1,6 +1,6 @@
 resource "aws_db_subnet_group" "postgres" {
   name       = "postgres_subnets"
-  subnet_ids = aws_subnet.private.*.id
+  subnet_ids = aws_subnet.public.*.id
 }
 
 resource "aws_db_instance" "postgres" {
@@ -18,4 +18,5 @@ resource "aws_db_instance" "postgres" {
   ]
   multi_az            = false
   skip_final_snapshot = true
+  publicly_accessible = true
 }

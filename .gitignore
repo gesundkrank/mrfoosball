@@ -6,3 +6,4 @@ out/
 container-definition.yml
 appspec.yaml
 .terraform/
+.gradletasknamecache

@@ -14,7 +14,7 @@
       "logDriver": "awslogs",
       "options": {
         "awslogs-group": "${LOG_GROUP}",
-        "awslogs-stream-prefix": "prefix-name/container-name/ecs-task-id",
+        "awslogs-stream-prefix": "mrfoosball-app",
         "awslogs-region": "${AWS_REGION}",
         "awslogs-datetime-format": "%Y-%m-%d %H:%M:%S"
       }
@@ -27,10 +27,6 @@
       {
         "name": "zookeeperHosts",
         "value": "${ZOOKEEPER_HOSTS}"
-      },
-      {
-        "name": "slackToken",
-        "value": "${SLACK_TOKEN}"
       },
       {
         "name": "connectionUrl",
@@ -51,6 +47,18 @@
       {
         "name": "connectionHbm2ddl",
         "value": "${HIBERNATE_HBM2DDL}"
+      },
+      {
+        "name": "slackClientId",
+        "value": "${SLACK_CLIENT_ID}"
+      },
+      {
+        "name": "slackClientSecret",
+        "value": "${SLACK_CLIENT_SECRET}"
+      },
+      {
+        "name": "slackSigningSecret",
+        "value": "${SLACK_SIGNING_SECRET}"
       }
     ]
   }

@@ -41,6 +41,18 @@ public class Message {
         this.user = user;
     }
 
+    @Override
+    public String toString() {
+        return "Message{"
+               + "channel='" + channel + '\''
+               + ", type='" + type + '\''
+               + ", text='" + text + '\''
+               + ", user='" + user + '\''
+               + ", asUser=" + asUser
+               + ", attachments=" + attachments
+               + '}';
+    }
+
     public static class Attachment {
 
         public String title;
@@ -54,10 +66,6 @@ public class Message {
         public List<Field> fields = new ArrayList<>();
 
         public Attachment() {
-        }
-
-        public Attachment(final String title) {
-            this.title = title;
         }
 
         public Attachment(final String title, final String text) {

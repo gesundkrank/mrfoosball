@@ -31,7 +31,7 @@ public class Properties {
             Paths.get("/opt/mrfoosball/conf/mrfoosball.properties");
     private static final Path PROJECT_PROPERTIES_PATH = Paths.get("./mrfoosball.properties");
 
-    private static Properties INSTANCE;
+    private static volatile Properties INSTANCE;
 
     public static Properties getInstance() {
         if (INSTANCE == null) {
@@ -48,9 +48,13 @@ public class Properties {
 
         try {
             if (Files.exists(GLOBAL_PROPERTIES_PATH)) {
-                properties.load(Files.newInputStream(GLOBAL_PROPERTIES_PATH));
+                try (final var is = Files.newInputStream(GLOBAL_PROPERTIES_PATH)) {
+                    properties.load(is);
+                }
             } else if (Files.exists(PROJECT_PROPERTIES_PATH)) {
-                properties.load(Files.newInputStream(PROJECT_PROPERTIES_PATH));
+                try (final var is = Files.newInputStream(PROJECT_PROPERTIES_PATH)) {
+                    properties.load(is);
+                }
             }
         } catch (IOException e) {
             logger.error("Failed to load configuration.", e);
@@ -63,10 +67,6 @@ public class Properties {
 
     public int getPort() {
         return Integer.parseInt(properties.getProperty("port", "8080"));
-    }
-
-    public String getSlackToken() {
-        return properties.getProperty("slackToken");
     }
 
     public String getConnectionUrl() {
@@ -106,24 +106,19 @@ public class Properties {
         return properties.getProperty("appUrl", "http://localhost:8080");
     }
 
-    public boolean hasTestChannel() {
-        return properties.containsKey("testTeamId") && properties.containsKey("testTeamSlackId")
-               && properties.containsKey("testTeamName");
-    }
-
     public int getQRCodeSize() {
         return Integer.parseInt(properties.getProperty("qrCodeSize", "400"));
     }
 
-    public String getTestChannelId() {
-        return properties.getProperty("testTeamId");
+    public String getSlackClientId() {
+        return properties.getProperty("slackClientId");
     }
 
-    public String getTestChannelSlackId() {
-        return properties.getProperty("testTeamSlackId");
+    public String getSlackClientSecret() {
+        return properties.getProperty("slackClientSecret");
     }
 
-    public String getTestChannelName() {
-        return properties.getProperty("testTeamName");
+    public String getSlackSigningSecret() {
+        return properties.getProperty("slackSigningSecret");
     }
 }

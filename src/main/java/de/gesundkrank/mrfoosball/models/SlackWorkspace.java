@@ -17,7 +17,6 @@
 
 package de.gesundkrank.mrfoosball.models;
 
-import java.io.Serializable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
@@ -26,38 +25,29 @@ import javax.persistence.Table;
 
 @NamedQueries({
         @NamedQuery(
-                name = "get_players_ordered_by_skill",
-                query = "from Player order by (trueSkillMean - 3 * trueSkillStandardDeviation) desc"
-        )
-})
+                name = "get_slack_workspace",
+                query = "FROM SlackWorkspace WHERE teamId = :teamId"
+        )})
 @Entity
 @Table
-public class Player extends TrueSkillColumns implements Comparable<Player>, Serializable {
+public class SlackWorkspace {
 
     @Id
-    public String id;
-    public String name;
-    public String avatarImage;
+    public String teamId;
+    public String accessToken;
+    public String scope;
+    public String teamName;
+    public String botUserId;
 
-    public Player() {
+    public SlackWorkspace() {
     }
 
-    public Player(final String id) {
-        this.id = id;
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Player && ((Player) obj).id.equals(id);
-    }
-
-    @Override
-    public int compareTo(Player o) {
-        return id.compareTo(o.id);
+    public SlackWorkspace(final String teamId, final String accessToken, final String scope,
+                          final String teamName, final String botUserId) {
+        this.teamId = teamId;
+        this.accessToken = accessToken;
+        this.scope = scope;
+        this.teamName = teamName;
+        this.botUserId = botUserId;
     }
 }

@@ -18,6 +18,7 @@
 package de.gesundkrank.mrfoosball.store.zookeeper;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,7 +52,6 @@ public class ZookeeperClient {
     }
 
     protected void createPath(final String path) throws IOException {
-        System.out.println(path);
         try {
             StringBuilder currentPath = new StringBuilder();
 
@@ -60,9 +60,7 @@ public class ZookeeperClient {
                             .collect(Collectors.toList());
 
             for (String subPath : paths) {
-                System.out.println(subPath);
                 currentPath.append("/").append(subPath);
-                System.out.println(currentPath);
 
                 if (zooKeeper.exists(currentPath.toString(), false) == null) {
                     logger.debug("Creating path {}", currentPath.toString());
@@ -80,10 +78,10 @@ public class ZookeeperClient {
             final Stat stat = zooKeeper.exists(path, false);
 
             if (stat == null) {
-                zooKeeper.create(path, value.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                                 CreateMode.PERSISTENT);
+                zooKeeper.create(path, value.getBytes(StandardCharsets.UTF_8),
+                                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             } else {
-                zooKeeper.setData(path, value.getBytes(), stat.getVersion());
+                zooKeeper.setData(path, value.getBytes(StandardCharsets.UTF_8), stat.getVersion());
             }
         } catch (InterruptedException | KeeperException e) {
             throw new IOException(e);
@@ -107,7 +105,7 @@ public class ZookeeperClient {
                 return null;
             }
 
-            return new String(zooKeeper.getData(path, null, null));
+            return new String(zooKeeper.getData(path, null, null), StandardCharsets.UTF_8);
         } catch (InterruptedException | KeeperException e) {
             throw new IOException(e);
         }

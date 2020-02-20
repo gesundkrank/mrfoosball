@@ -15,26 +15,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.gesundkrank.mrfoosball.api;
+package de.gesundkrank.mrfoosball.api.annotations;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import javax.ws.rs.NameBinding;
 
-import de.gesundkrank.mrfoosball.Controller;
-import de.gesundkrank.mrfoosball.HealthChecker;
-import de.gesundkrank.mrfoosball.models.HealthStatus;
+@NameBinding
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(value = RetentionPolicy.RUNTIME)
+public @interface VerifySlackRequest {
 
-@Path("api/health")
-public class HealthApi {
-
-    @GET
-    public HealthStatus checkHealth() {
-        if (HealthChecker.isHealthy()) {
-            return new HealthStatus();
-        }
-
-        throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-    }
 }

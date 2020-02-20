@@ -17,14 +17,13 @@ resource "aws_lb_target_group" "target_group" {
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = aws_vpc.main.id
-  slow_start  = 60
 
   health_check {
     protocol = "HTTP"
     path     = "/api/health"
     matcher  = "200"
-    timeout  = 5
-    interval = 10
+    timeout  = 30
+    interval = 45
   }
 }
 

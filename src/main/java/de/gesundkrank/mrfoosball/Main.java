@@ -17,21 +17,16 @@
 
 package de.gesundkrank.mrfoosball;
 
-import java.io.IOException;
 import java.net.URI;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.zookeeper.KeeperException;
 import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
-import de.gesundkrank.mrfoosball.models.Channel;
-import de.gesundkrank.mrfoosball.slack.Bot;
-import de.gesundkrank.mrfoosball.store.hibernate.Store;
 import de.gesundkrank.mrfoosball.utils.Properties;
 
 /**
@@ -67,33 +62,13 @@ public class Main {
         return httpServer;
     }
 
-    private static void createTestChannel(final Properties properties) {
-        try (final Store store = new Store()) {
-            final Channel channel = new Channel(properties.getTestChannelId(),
-                                                properties.getTestChannelSlackId(),
-                                                properties.getTestChannelName());
-
-            store.saveChannel(channel);
-        }
-    }
-
     /**
      * Main method.
      */
-    public static void main(String[] args)
-            throws Bot.StartSocketSessionException, InterruptedException, IOException,
-                   KeeperException {
+    public static void main(String[] args) throws InterruptedException {
         LOGGER.info("Starting MrFoosball app.");
         try {
-            final Properties properties = Properties.getInstance();
-
-            if (properties.hasTestChannel()) {
-                createTestChannel(properties);
-            }
-
-            Bot.run();
-
-            final int port = properties.getPort();
+            final int port = Properties.getInstance().getPort();
             startServer(port);
 
             //Keeps process running

@@ -47,8 +47,9 @@ public class MessageWriter {
         sendMessageToApi(message, "chat.postEphemeral");
     }
 
-    public void postMessage(final String channelId, final String messageString) {
-        final var message = new Message(channelId, messageString, null);
+    public void postMessage(final String channelId, final String messageString,
+                            final String botId) {
+        final var message = new Message(channelId, messageString, botId);
         postMessage(message);
     }
 
@@ -60,7 +61,8 @@ public class MessageWriter {
         final ApiResponse apiResponse = client.target("https://slack.com")
                 .path("/api/" + method)
                 .request(MediaType.APPLICATION_JSON_TYPE)
-                .header("Authorization", "Bearer " + token).post(Entity.json(message))
+                .header("Authorization", "Bearer " + token)
+                .post(Entity.json(message))
                 .readEntity(ApiResponse.class);
         if (!apiResponse.ok) {
             logger.error("Sending message {} failed. Error: {}", message, apiResponse.error);

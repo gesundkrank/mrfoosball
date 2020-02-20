@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
+<?xml version="1.0"?><!--
   ~ This file is part of MrFoosball (https://github.com/gesundkrank/mrfoosball).
   ~ Copyright (c) 2020 Jan Graßegger.
   ~
@@ -16,23 +15,8 @@
   ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<Configuration status="DEBUG">
-  <Appenders>
-    <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d %p %C{1.} [%t] %m%n"/>
-    </Console>
-  </Appenders>
-  <Loggers>
-    <Logger name="org.hibernate" level="info" additivity="false">
-      <AppenderRef ref="Console" />
-    </Logger>
-
-    <!-- Log SQL statements -->
-    <Logger name="org.hibernate.SQL" level="info" additivity="false">
-      <AppenderRef ref="Console" />
-    </Logger>
-    <Root level="info">
-      <AppenderRef ref="Console"/>
-    </Root>
-  </Loggers>
-</Configuration>
+<FindBugsFilter>
+    <Match>
+        <Bug code="DMI,UrF,UwF,UuF,NP" />
+    </Match>
+</FindBugsFilter>

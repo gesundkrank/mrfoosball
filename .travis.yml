@@ -1,52 +1,56 @@
 language: java
 services:
-  - docker
+- docker
 jdk:
-  - openjdk11
+- openjdk11
 node_js:
-  - 11.6.0
+- 11.6.0
 jobs:
   include:
-    - stage: checkstyle
-      script:
-        - "./gradlew check"
-    - stage: build
-      script:
-        - pip install --user awscli
-        - export PATH=$PATH:$HOME/.local/bin
-        - "./gradlew -PimageName=$IMAGE_NAME -Ptag=$VERSION_TAG buildDocker"
-        - eval $(aws ecr get-login --no-include-email)
-        - docker push $IMAGE_NAME:$VERSION_TAG
-    - stage: terraform
-      language: generic
-      before_install:
-        - bin/install-terraform
-      script:
-        - bin/run-terraform
+  - stage: checkstyle
+    script:
+    - "./gradlew check"
+  - stage: build
+    script:
+    - pip install --user awscli
+    - export PATH=$PATH:$HOME/.local/bin
+    - "./gradlew -PimageName=$IMAGE_NAME -Ptag=$VERSION_TAG buildDocker"
+    - eval $(aws ecr get-login --no-include-email)
+    - docker push $IMAGE_NAME:$VERSION_TAG
+  - stage: terraform
+    language: generic
+    before_install:
+    - bin/install-terraform
+    script:
+    - bin/run-terraform
 stages:
-  - checkstyle
-  - build
-  - terraform
+- checkstyle
+- build
+- terraform
 notifications:
   email: false
   slack:
     secure: bqfB5gpRC5aYA2EXvJDtuOY+MVnufd6Q8eafUlkgOaaoz80cwGcKDtvU3juwFfakyhLIHr3OBHL5kMTR53hKrJqNa3gZEInXF++bC2Aq4zL4fK0oNrmX7WzFkW5GsnhswY6RsIJTys/1kQ6vSam7VoLW7aq5Bn3FF+dMYGZbsT0aqIjLET6Ew7Rh/8xWo25uiWFSiNuft5y4rrny2QICdnl/ahvdh+ihB+ERQ8iCqbVWWA5lM6gFkPrjY5HtuueIbKsBPHrv3+TbSY8RbI985+8LsB3HI+h10qNBhDk+Zb8Z7qbcnqe7yNhTZlYS5ALkldC1LJapphUcbRxCkym+tA+jfMyZg9cTgFXYRHXcIB7j053Cx0bjrIrSvpQhnRFejug2rNfihwqsstpDEtibRlanR0Q1fGQX2b2PEJL22JdHKYe5IczM54DxsSX+x1Wwa4Nwz64F+Fx/bP6Obv8T0Z+PWETD1lU0U7iGQzjr2OA6K3ce3qvFjdns7zh/S25U+y7x5bxllGPA6dyQoYak1Ffz5DJdr3s7bXo7ZfZZ7cyoe0a8MF/yuWEG4A8LT4I/6C5Stm70jCfdbPphgawnJXc1pBoWOWQ+G6KnIHJLkyoQygQPVc12/lx+OeFYzvlBHoLt+1/oZ6HjG9L0wlJ9FwjA/3sCQxrtdYPQG+1fi1E=
 env:
   global:
-    - VERSION_TAG=$(echo $TRAVIS_COMMIT | head -c 8)
-    - AWS_DEFAULT_REGION=eu-central-1
-    - secure: B27N4adtKL0OeXTsSh+sB/OsxAHFGucpe3+oGcOvmfpZrrEfl7TmL2nx4BC8VFy6gLHv9tfqm/CUbHGNKHApMOKIoj01kf/2Wmsph+Pht+hRG+GY8ho9wX9VVPDz9vt2U6Iu0El3//wuq8MA9Urqv0wh1idbpRdYGJ1RfytJhNV9dKuPvBxJhnLrGqe42tvbNpWo+p4UPREyd8tcY1ycVz2gFI6aR0WzSVZjc2YneXHhy4QtYWZY2ZAK9wPGzAZKdoL/JpA5u0BcddXJZi/a/i/pkJdRqQg19dCazrPPz+s5P4YVEiOtCjmhcZNsMd30D+RRbWSTQunR0l6e8OCYnziHQDBuifu5Mz8nJJ/KLE1T3PU+iohMXVDK65MNgis0tLkYduCwtsZQg+pEtG3yZarNKcl+c4lHHNMijv12ePphJ5kVPwzQvSOGQ8IruqMxa1HDcu2qQbBDeOSRJGAwjzoDcUIJkosznmkJDbnwA2hzeJQLLSkhEMP43klnd9rKOQ5HlF8ptPH01ZsRZtqyKtEqB49b7EUmE0V8naWqzDf10LRNz3m7wPmEowrEF/L5gGpXBCBY9uHUXrfU9lJvpICfjHlaW226YfV8vuj4LQPcxzeE6hIRCEc+97ArxC3+3tO2Xss7b//nVR4of0MbVhC7/P5VsL8KWw4ItHxkHZM=
-    - secure: G1cFl5h9Myfs0Qy/EAVphoA8meW1MNjR/dqZEwvj7UDGcBdgSWVWdVbe3HzzM7x8NJXNdnVbJgEl3gBCYnpzyyiTFywxvwxvFR+Cl/qnQsMDzD9OQJus8RO3yebiYDnCgnYfKEeZlFiAU/6nXtf/6zGcxZ8tZ5IqnurbRvhDFEPCVyjWIGXiPkIkC2pzqDLsW7fojWxS7ygw7ovelEcdTSs1rzNRMzfeIjtyB40/a9wUn3hGlvHtMfE221ytY7yV3oAm1F4cfIcD8Dmrt43U+1sqNJ0cnm764f4wwuvjTbP4wBGgMYEsnivcfP25dihq2akSyfjTnF7RFFHwsQAeB1OHiE2SII+OHWiv8XBfHWxmsD2CZ3xlodTc4vuWpQ0xTR4epGUEIOWQz5Mn9HpJkwcdwfJORtOyDKYcJCH+B+Oj3OsxRMxG2i+YPDOS7RVMCfx+yko5DVZtroe3Cij5Hb+JTtVuOxVtq6LEzNOPCSEqLAJG2dXuns5Dr11BLPpSda+K16KxmSkt8cDmyeoO/X/NpJof0lyg6sSjUflbQRRV1VkAbqMnA0nBXp+VIFid4PBQJWTYvgcMdeg49WISvVbnq8mlrQNvIHdY4p9WFL92jcfgUPGNLwfI7bQE67v/AQpnBSTLZWoZrOJWK+F6+QaHTakEuyHBmffCxKGRolU=
-    - secure: Kk25nte4vHJNjwYYU6pQLlS8+GtI/XMUMP5zCVVx4FhweYfF/xXzMDAkP7qEuwf7QHQhPEjmvkNpfzce0Tz8ple9F3O2bdTPg9aWnTg7F7uAuCrA7Lx+Q3N4z75OAWZ7N5W95Z/ep1RkFThqjw54ntZD68hc85hs588TkXpcroS7QeQfF/aNUIwoCDcmHDhkG4fKX9jMzngHPp4ae/M5vx9hjaz6XgL/X9B5bHBSahT6pEbUoULjByfi90bFSTOipDo/t/TXvfvTPHt+tl8rXQWaleiePhL3BhllgBeb+e4IZha2ksZk2zMle4ZLd9i0nuC0vfq6v5Xw6bCYh+4p4h2ZegyR0CWdIr+hnJh+Jb1hScSnwVHa1LK8Nn1iOlgZnZuuF3f1dJo6GeJNTyGW5KfVLg0PzM5r/hzJ1/nFDgPBG+w/R7Vw0B043PP8oXlKBaDKGZPSwuJnvluwOlq/6vvrAlDbk1pUoriy/x7vghz7ZVDDlUFdKN5I+0NjCr8rdAxaQUFhFjis5/dM9ZMs0vdwUd8rSa8ZDT0tm5gctlkPnLio6bn7up4azwDq2w84U34xR3MkZbBBZntaPC3G0CBxAL07U3sZEyw75KpRFl+CFa7gXmIWJnH+KSA9+0iqHbo+mVPgmykUB/h4gf9fCCA7YUMll+WKuJw7tc22o+8=
-    - secure: e7J38dC0LvYpS6zWOUJBjZlS0AjP783q5g4eAzH9Bl9xnmVX/9FG/778xqEYWEbFj11XrWtNkEpwJJjCbSHAYgIThdv/jSLQsyY5W2arRI+gujkTe7wgFhiFUyObQVz8EGcZhR9S5fgLaMmjmcnN/0e6UI7mGB8v1hZRz+7NFAwXEffD+DdU7FFChkYVZh2pxk5wBNgbuG31G5Et4+VwimzEsswfMQyIAXMqcD1hd4oclgj/kvhthMmbmOyH0xgnoN8B8tvGd9eP+a6E/3Jfw6Q4P/YGiIAyN70gJg0mRCX2h5WZU7MKNGLRg24vNRZ545pn8u7cUa8V9J5gJRKCvm4OMTV5ZijGrAyQlG+jde2MEB64gsluSMiMyRrwgarJGxe6myHPQnJUepLOoO9ox8wCrvvzfIhGllGO+ABnQw/beewm+5XjPin+oG1A0MO5knaRHvLo95Y4uypdirMVO5Y9t8bCNHWuVjXJwhCUv/qndQ59H23ZwKIugKfu7pP9brb50R+YjKL5tz/uCbWvleXJJk5TNaHy3SqS7eLX5kMKfGo1JsGotpaIYE+pCcVbm5vH7mkUoIcTohsmoah9zK5PxxWJ+Og4CxNlQCpaZvCy489fhBDVzyn53ZIj1Ks/v+VtJbKDDQAswWk5wyuu/vUv1bKxx8dmZbCI3Er8xLM=
-    - secure: Hd3EkJHrB6RgyXI+eR6zGAyX6ZQ2rdYI0c0BLWOFzRiqPfhq/QrwlAhUWgdSH9soni/4h0X6isYBw0W+WCHHsw2goaaqlfQ58oxs/sDiTHdqtCYWVixdQqBDSeijyWp6hvio9bxL5WXq6qyljgIXKVShQgd8gwOYzb1xSKCzjAAs2xYOE6vnQabJtM1IWGtmCK/FXxTxhA+orTnsNHAxMBYw0mnqrJSA1Ahg9zuoKKW5OoagTX3VyVGAKEV0HhT9/Cl86aR0CUoXNla7YjfNtVoa1rPfI4mi8trQIZHyxnfKP/lyC9kqjjd9nips64/IMnE9bT1XW3ryS99nuRXWnC5Mgrdq8ZCwOl4/CV03FCXybvRbJBHVoJxHhsAAUw2gUwidtM1eyrxtiV2lWgQl5qQUZcbKbDMQli/zxUgpUxeq2dnID2dIxC1H7O9r33cApRzqObA9f9Graa+4q6uCcf7kz6f5YJtxvMV4Oj4eTLE1WWfkwANSXvLuZpacRl+g6yFL6YeLaDJMWZi20bGyWM6naUI3xjBkexEDjVV7FDvBgYbWiyBb3S6TM20nRkB8kZePOZipXH+l5MVirThF05O7zI1b6Zph0BI1nPjT8hEjPvSOqE1TNw+qpuZRHLnktIAz8k5me7l+bzaFpOUtrRRm0FilIevyURXQTI/Ek0M=
+  - VERSION_TAG=$(echo $TRAVIS_COMMIT | head -c 8)
+  - TERRAFORM_VERSION=0.12.20
+  - AWS_DEFAULT_REGION=eu-central-1
+  - secure: B27N4adtKL0OeXTsSh+sB/OsxAHFGucpe3+oGcOvmfpZrrEfl7TmL2nx4BC8VFy6gLHv9tfqm/CUbHGNKHApMOKIoj01kf/2Wmsph+Pht+hRG+GY8ho9wX9VVPDz9vt2U6Iu0El3//wuq8MA9Urqv0wh1idbpRdYGJ1RfytJhNV9dKuPvBxJhnLrGqe42tvbNpWo+p4UPREyd8tcY1ycVz2gFI6aR0WzSVZjc2YneXHhy4QtYWZY2ZAK9wPGzAZKdoL/JpA5u0BcddXJZi/a/i/pkJdRqQg19dCazrPPz+s5P4YVEiOtCjmhcZNsMd30D+RRbWSTQunR0l6e8OCYnziHQDBuifu5Mz8nJJ/KLE1T3PU+iohMXVDK65MNgis0tLkYduCwtsZQg+pEtG3yZarNKcl+c4lHHNMijv12ePphJ5kVPwzQvSOGQ8IruqMxa1HDcu2qQbBDeOSRJGAwjzoDcUIJkosznmkJDbnwA2hzeJQLLSkhEMP43klnd9rKOQ5HlF8ptPH01ZsRZtqyKtEqB49b7EUmE0V8naWqzDf10LRNz3m7wPmEowrEF/L5gGpXBCBY9uHUXrfU9lJvpICfjHlaW226YfV8vuj4LQPcxzeE6hIRCEc+97ArxC3+3tO2Xss7b//nVR4of0MbVhC7/P5VsL8KWw4ItHxkHZM=
+  - secure: G1cFl5h9Myfs0Qy/EAVphoA8meW1MNjR/dqZEwvj7UDGcBdgSWVWdVbe3HzzM7x8NJXNdnVbJgEl3gBCYnpzyyiTFywxvwxvFR+Cl/qnQsMDzD9OQJus8RO3yebiYDnCgnYfKEeZlFiAU/6nXtf/6zGcxZ8tZ5IqnurbRvhDFEPCVyjWIGXiPkIkC2pzqDLsW7fojWxS7ygw7ovelEcdTSs1rzNRMzfeIjtyB40/a9wUn3hGlvHtMfE221ytY7yV3oAm1F4cfIcD8Dmrt43U+1sqNJ0cnm764f4wwuvjTbP4wBGgMYEsnivcfP25dihq2akSyfjTnF7RFFHwsQAeB1OHiE2SII+OHWiv8XBfHWxmsD2CZ3xlodTc4vuWpQ0xTR4epGUEIOWQz5Mn9HpJkwcdwfJORtOyDKYcJCH+B+Oj3OsxRMxG2i+YPDOS7RVMCfx+yko5DVZtroe3Cij5Hb+JTtVuOxVtq6LEzNOPCSEqLAJG2dXuns5Dr11BLPpSda+K16KxmSkt8cDmyeoO/X/NpJof0lyg6sSjUflbQRRV1VkAbqMnA0nBXp+VIFid4PBQJWTYvgcMdeg49WISvVbnq8mlrQNvIHdY4p9WFL92jcfgUPGNLwfI7bQE67v/AQpnBSTLZWoZrOJWK+F6+QaHTakEuyHBmffCxKGRolU=
+  - secure: Kk25nte4vHJNjwYYU6pQLlS8+GtI/XMUMP5zCVVx4FhweYfF/xXzMDAkP7qEuwf7QHQhPEjmvkNpfzce0Tz8ple9F3O2bdTPg9aWnTg7F7uAuCrA7Lx+Q3N4z75OAWZ7N5W95Z/ep1RkFThqjw54ntZD68hc85hs588TkXpcroS7QeQfF/aNUIwoCDcmHDhkG4fKX9jMzngHPp4ae/M5vx9hjaz6XgL/X9B5bHBSahT6pEbUoULjByfi90bFSTOipDo/t/TXvfvTPHt+tl8rXQWaleiePhL3BhllgBeb+e4IZha2ksZk2zMle4ZLd9i0nuC0vfq6v5Xw6bCYh+4p4h2ZegyR0CWdIr+hnJh+Jb1hScSnwVHa1LK8Nn1iOlgZnZuuF3f1dJo6GeJNTyGW5KfVLg0PzM5r/hzJ1/nFDgPBG+w/R7Vw0B043PP8oXlKBaDKGZPSwuJnvluwOlq/6vvrAlDbk1pUoriy/x7vghz7ZVDDlUFdKN5I+0NjCr8rdAxaQUFhFjis5/dM9ZMs0vdwUd8rSa8ZDT0tm5gctlkPnLio6bn7up4azwDq2w84U34xR3MkZbBBZntaPC3G0CBxAL07U3sZEyw75KpRFl+CFa7gXmIWJnH+KSA9+0iqHbo+mVPgmykUB/h4gf9fCCA7YUMll+WKuJw7tc22o+8=
+  - secure: e7J38dC0LvYpS6zWOUJBjZlS0AjP783q5g4eAzH9Bl9xnmVX/9FG/778xqEYWEbFj11XrWtNkEpwJJjCbSHAYgIThdv/jSLQsyY5W2arRI+gujkTe7wgFhiFUyObQVz8EGcZhR9S5fgLaMmjmcnN/0e6UI7mGB8v1hZRz+7NFAwXEffD+DdU7FFChkYVZh2pxk5wBNgbuG31G5Et4+VwimzEsswfMQyIAXMqcD1hd4oclgj/kvhthMmbmOyH0xgnoN8B8tvGd9eP+a6E/3Jfw6Q4P/YGiIAyN70gJg0mRCX2h5WZU7MKNGLRg24vNRZ545pn8u7cUa8V9J5gJRKCvm4OMTV5ZijGrAyQlG+jde2MEB64gsluSMiMyRrwgarJGxe6myHPQnJUepLOoO9ox8wCrvvzfIhGllGO+ABnQw/beewm+5XjPin+oG1A0MO5knaRHvLo95Y4uypdirMVO5Y9t8bCNHWuVjXJwhCUv/qndQ59H23ZwKIugKfu7pP9brb50R+YjKL5tz/uCbWvleXJJk5TNaHy3SqS7eLX5kMKfGo1JsGotpaIYE+pCcVbm5vH7mkUoIcTohsmoah9zK5PxxWJ+Og4CxNlQCpaZvCy489fhBDVzyn53ZIj1Ks/v+VtJbKDDQAswWk5wyuu/vUv1bKxx8dmZbCI3Er8xLM=
+  - secure: Hd3EkJHrB6RgyXI+eR6zGAyX6ZQ2rdYI0c0BLWOFzRiqPfhq/QrwlAhUWgdSH9soni/4h0X6isYBw0W+WCHHsw2goaaqlfQ58oxs/sDiTHdqtCYWVixdQqBDSeijyWp6hvio9bxL5WXq6qyljgIXKVShQgd8gwOYzb1xSKCzjAAs2xYOE6vnQabJtM1IWGtmCK/FXxTxhA+orTnsNHAxMBYw0mnqrJSA1Ahg9zuoKKW5OoagTX3VyVGAKEV0HhT9/Cl86aR0CUoXNla7YjfNtVoa1rPfI4mi8trQIZHyxnfKP/lyC9kqjjd9nips64/IMnE9bT1XW3ryS99nuRXWnC5Mgrdq8ZCwOl4/CV03FCXybvRbJBHVoJxHhsAAUw2gUwidtM1eyrxtiV2lWgQl5qQUZcbKbDMQli/zxUgpUxeq2dnID2dIxC1H7O9r33cApRzqObA9f9Graa+4q6uCcf7kz6f5YJtxvMV4Oj4eTLE1WWfkwANSXvLuZpacRl+g6yFL6YeLaDJMWZi20bGyWM6naUI3xjBkexEDjVV7FDvBgYbWiyBb3S6TM20nRkB8kZePOZipXH+l5MVirThF05O7zI1b6Zph0BI1nPjT8hEjPvSOqE1TNw+qpuZRHLnktIAz8k5me7l+bzaFpOUtrRRm0FilIevyURXQTI/Ek0M=
+  - secure: Px1JR4sHIoOmE9bwE8meF+xE3owlURGWamDotXmZ8wAADsrY9XvZTIMO3M7yt5IdXACEWm8UdiXcCmYG9Cnc18hW0liyOrqvP1lPNrZSotMjd3xaIlLoJGabB+aVD1z0qo2WloSk3oSBXvl3cILS1a0c86Ext6sa/OHSeEAu54lopYyrgqvPDbf4tSVQQZl9X6NSN2ZOdGPH+e2R4nOFhOyVaQRlciMV9+SaRwssZtAUJmquc8iW+zPBPrhI6WGz5kGdfhpTcBxeXmkbvSilC54lNujTr6CxzUEYJNJBto1b/1eYSuAr3vXhAKmLRkFt5D6SeE8RSRvzYka4aWu4Ac0TT3eEIMx8WOHHMs8jnDTSvg/dNqGUVUDQh7XfZscUkniSKnaKrIsbiPHR2jiX0cuQBFzUl7IViYVTJgWbKIjr6cBvbdjSP5EtqTRVHK1n2FsyCG/woDmQu00HDqY/g7oiNJqpXG9XYS2e0TKJSkXSjqH8focSgfK1Ba7pN/yGhGmTxke/V/s0SuY5rO7EZYu0ZYiMBTdPlf1d8zzPrZa0OI/zXGk/kksaltPA3YxG609ro5nCAOiSpBp+W9NRHMPgFnzwFQJqf+4gWBJ53SPtCq9nth96ApP6swOaa+YHpuI+Rmz/Aj5umdgFfG7CAEjCxgTJlkYA1HrE9T/r+Do=
+  - secure: DuRLultBvdiJTkh6AX2OIK25uE1w6oGqlISmI2KMu7Vl7WdJudiwvVNg0DjxVJy2Bj5lCsi/qFIR58yCz/5fCtfC9h4zBs3wE3UeiKNpCHfpNChqEOjVWMhCYS+plqP6AmnbJ69mfVOXFj8PI3fbBBRM2udUxCC/+QR4GhPZPCxb+pIlAAR6J3Xpwtd6sESgULwTNaR8RrtBAPQZPjCfa3y9z5i3T0ZuatVNQCe8SHdvM71WqMqPgvKVxcySt5WqrDHjsf8ofb6NaZTioEDWtfjGhyN6CcHlEkUBwnG6sReRcjdxCqPKQJLmYZSFVbAznPtzr09ufv3c1fqW3oL5Cx8ivG+L+sVQFsAqabP9+QmcZAkti32XcXVXKo+cirDQZ/0leLhXH1dwVT9El/breJRzP71z2tIAgAwlvzyJVyrgH17CVd4eSDrG0Po3Z4RgbFM9PdtmGI8XqPfHJ/FnYpfz0Un5WuDkGjEVnYAACQoOlTp6WIyccU0IMCapbm/g4z0AWehCJj+6Bdc3TfuUdPcNfzOX4tDCS9apn8XNO8UEbit0oh5BwU6NRyc/kFDbTtgDh9pNnUz1m/N8EMqXYPEAWvdWWmBXfCCj6W+Fd5eb7ALCPAMmzqBjmGIlFg7BYVkzIBapa1+dFm2oPe6tMWDmLSUpWk2nuf+NA6am8U4=
+  - secure: CLJryXMbuBAdSe5t0EL9zotFlexJ297H1I9s+KR7w8rV5kmHiNdnoWOsru1Iv+fm2HRQu7F0lQ3P2gR8fZQierdpefCI13RC6dGyaFryBmktxgF/qwLg75+sS8+FBZKX0rFHNmOu6kVC0pdFqYzKWxgqJQqPj37n/SOpwnVKraLa68ZvZF+vzK4Pt5YVcAgBfJbzzuGp7bA1cVVt6Gou/rjxmSIyQm/kaYyZUafYk4AkXdVFl2ej3IuQZxUWRAoI2ukZVLnDrssKFaYOe8G5X+hMEN6mA8CRD6GztGjE4bf/2WL07eF/CqX/bDQxSHjyHyV31alj77JIsYhNXdbhf1f13wcYaQk0ayhLLSE3L0ls1iJyMkvJRTxEamEcj0GnzHmHFb/wozwjFnCgRoGWWVcMBBY+ismYxeejvgl5HwLow5OkWuvXqu2DrygwNJIJuLZ31z4Fl7je8N+BUvUmjo0BRzISfuAd4qXlWfOJz5kKit+2Ic9Mv4OXAmdwXmMCgOfmg36E9JUw+tyoYbbn2hYz4t1WoxpeMHYekJmPWiQSQTy4QHJiGSO8DggbGfdeiq1Ojt0rRdeWZE4QHfin7ete4UfSFktrO3174wh34JlFd7fBgxH/Dg+GU3MFnkuj6aTF2+VEM3Z9ebqa4NIt0Xnv3GdWHNPhwfEPIVdBMMQ=
 before_cache:
-  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   npm: true
   pip: true
   directories:
-    - "$HOME/.gradle/caches/"
-    - "$HOME/.gradle/wrapper/"
-    - "frontend/node_modules/"
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
+  - frontend/node_modules/

@@ -15,26 +15,24 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.gesundkrank.mrfoosball.api;
+package de.gesundkrank.mrfoosball.api.binders;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import java.io.IOException;
+import javax.ws.rs.ext.Provider;
 
-import de.gesundkrank.mrfoosball.Controller;
-import de.gesundkrank.mrfoosball.HealthChecker;
-import de.gesundkrank.mrfoosball.models.HealthStatus;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
-@Path("api/health")
-public class HealthApi {
+import de.gesundkrank.mrfoosball.slack.Bot;
 
-    @GET
-    public HealthStatus checkHealth() {
-        if (HealthChecker.isHealthy()) {
-            return new HealthStatus();
+@Provider
+public class BotBinder extends AbstractBinder {
+
+    @Override
+    protected void configure() {
+        try {
+            bind(new Bot()).to(Bot.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create Bot", e);
         }
-
-        throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
     }
 }

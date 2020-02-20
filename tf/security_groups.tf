@@ -34,14 +34,14 @@ resource "aws_security_group" "zookeeper" {
     from_port   = 2181
     to_port     = 2181
     protocol    = "tcp"
-    cidr_blocks = aws_subnet.private.*.cidr_block
+    cidr_blocks = aws_subnet.public.*.cidr_block
   }
 
   ingress {
     from_port   = 2888
     to_port     = 3888
     protocol    = "tcp"
-    cidr_blocks = aws_subnet.private.*.cidr_block
+    cidr_blocks = aws_subnet.public.*.cidr_block
   }
 
   egress {
@@ -61,7 +61,7 @@ resource "aws_security_group" "postgres" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = aws_subnet.private.*.cidr_block
+    cidr_blocks = aws_subnet.public.*.cidr_block
   }
 
   egress {

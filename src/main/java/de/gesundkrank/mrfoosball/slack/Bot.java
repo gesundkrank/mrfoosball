@@ -18,18 +18,9 @@
 package de.gesundkrank.mrfoosball.slack;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import javax.websocket.ClientEndpoint;
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.DeploymentException;
-import javax.websocket.OnClose;
-import javax.websocket.OnError;
-import javax.websocket.OnMessage;
-import javax.websocket.Session;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ResponseProcessingException;
@@ -38,162 +29,74 @@ import javax.ws.rs.core.MediaType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientProperties;
+import org.postgresql.translation.messages_bg;
 
 import de.gesundkrank.mrfoosball.Controller;
 import de.gesundkrank.mrfoosball.models.Player;
 import de.gesundkrank.mrfoosball.models.PlayerQueue;
 import de.gesundkrank.mrfoosball.slack.models.ChannelJoined;
+import de.gesundkrank.mrfoosball.slack.models.EventWrapper;
 import de.gesundkrank.mrfoosball.slack.models.Message;
-import de.gesundkrank.mrfoosball.slack.models.RtmInitResponse;
 import de.gesundkrank.mrfoosball.slack.models.SlackUser;
-import de.gesundkrank.mrfoosball.store.zookeeper.Lock;
 import de.gesundkrank.mrfoosball.utils.JsonConverter;
-import de.gesundkrank.mrfoosball.utils.Properties;
 
-@ClientEndpoint
 public class Bot {
-
 
     private static final Pattern COMMAND_PATTERN = Pattern.compile("\\w+");
     private static final Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
 
-    private static Bot instance;
-
     private final Logger logger;
-    private final String token;
     private final JsonConverter jsonConverter;
     private final Controller controller;
     private final Client client;
-    private final MessageWriter messageWriter;
-    private final String zookeeperHosts;
 
-    private Session socketSession;
-    private String botUserId;
-    private Pattern botUserIdPattern;
-
-    public static void run() throws IOException {
-        final var properties = Properties.getInstance();
-        final var token = properties.getSlackToken();
-        final var zookeeperHosts = properties.zookeeperHosts();
-
-        final var bot = new Bot(token, zookeeperHosts);
-        bot.start();
-    }
-
-    public Bot(final String token, final String zookeeperHosts) throws IOException {
-        this.zookeeperHosts = zookeeperHosts;
+    public Bot() throws IOException {
         this.logger = LogManager.getLogger();
-
-        if (token == null) {
-            logger.error("Slack token is not set.");
-            throw new RuntimeException("Slack token cannot be null");
-        }
 
         this.client = ClientBuilder.newClient();
         client.property(ClientProperties.CONNECT_TIMEOUT, 30000);
         client.property(ClientProperties.READ_TIMEOUT, 30000);
 
-        this.token = token;
         this.controller = Controller.getInstance();
-        this.messageWriter = new MessageWriter(token);
 
         this.jsonConverter = new JsonConverter(Message.class, ChannelJoined.class,
                                                SlackUser.class);
     }
 
-    public void start() throws IOException {
-        final var zookeeperLock = new Lock(zookeeperHosts, "slack_bot");
-        zookeeperLock.lock((e) -> {
-            try {
-                if (e != null) {
-                    throw e;
-                }
+    public void onAppMention(final EventWrapper wrappedEvent)
+            throws IOException, Controller.SlackWorkspaceNotFoundException {
+        final var text = wrappedEvent.event.text;
+        final var sender = wrappedEvent.event.user;
+        final var slackChannelId = wrappedEvent.event.channel;
+        final var workspace = controller.getSlackWorkspace(wrappedEvent.teamId);
+        final var accessToken = workspace.accessToken;
 
-                openNewSession();
-            } catch (Exception ex) {
-                logger.error("Failed to start Slack client. Exiting!", ex);
-                System.exit(1);
-            }
-        });
-    }
+        final var botUserId = wrappedEvent.authedUsers.get(0);
+        final var matcher = USER_PATTERN.matcher(text);
 
-    private void openNewSession()
-            throws IOException, DeploymentException, StartSocketSessionException {
-        final var target = client.target("https://slack.com").path("/api/rtm.connect")
-                .queryParam("token", token);
 
-        final var response = target.request(MediaType.APPLICATION_JSON).get(RtmInitResponse.class);
-
-        if (response == null) {
-            throw new StartSocketSessionException("Failed to parse response object");
+        if (!matcher.find()) {
+            logger.warn("Couldn't remove bot user from message \"{}\"", text);
+            return;
         }
 
-        if (!response.ok) {
-            throw new StartSocketSessionException(response.error);
-        }
+        final var message = text.substring(matcher.end()).trim();
+        final var commandMatcher = COMMAND_PATTERN.matcher(message);
 
-        if (response.warning != null) {
-            logger.warn(response.warning);
-        }
-
-        final var botMention = String.format("<@%s>", response.self.id);
-        this.botUserIdPattern = Pattern.compile(botMention);
-        this.botUserId = response.self.id;
-
-        final var socketClient = ContainerProvider.getWebSocketContainer();
-        logger.info("Starting new web socket session with {}", response.url);
-        this.socketSession = socketClient.connectToServer(this, URI.create(response.url));
-    }
-
-    @OnMessage
-    public void onMessage(final String messageString, final Session session) throws IOException {
-        logger.info(messageString);
-
-        if (messageString.contains("\"type\":\"channel_joined\"")
-            || messageString.contains("\"type\":\"group_joined\"")) {
-
-            final var channelJoined =
-                    jsonConverter.fromString(messageString, ChannelJoined.class);
-
-            final var id = controller
-                    .joinChannel(channelJoined.channel.id, channelJoined.channel.name);
-            sendChannelJoinedMessage(channelJoined.channel.id, id);
-
-
-        } else if (messageString.contains("\"type\":\"message\"")) {
-            final var message = jsonConverter.fromString(messageString, Message.class);
-
-            if (message.text == null) {
-                return;
-            }
-            final var matcher = botUserIdPattern.matcher(message.text);
-
-            if (message.type != null && message.type.equals("message") && matcher.find()) {
-                final var command = message.text.substring(matcher.end()).trim();
-                onCommand(command, message.channel, message.user);
-            }
-        }
-    }
-
-    @OnClose
-    public void onClose(final Session session, final CloseReason closeReason) {
-        logger.error("Session closed: {}", closeReason);
-        System.exit(1);
-    }
-
-    @OnError
-    public void onError(final Session session, final Throwable throwable) {
-        logger.error("Websocket error.", throwable);
-        System.exit(1);
-    }
-
-    private void onCommand(final String command, final String slackChannelId, final String sender)
-            throws IOException {
-        final var commandMatcher = COMMAND_PATTERN.matcher(command);
         if (commandMatcher.find()) {
             final var action = commandMatcher.group();
-            final var userMatcher = USER_PATTERN.matcher(command);
-            final var channelId = controller.getChannelId(slackChannelId);
+            logger.info("Received command {}", action);
+            final var userMatcher = USER_PATTERN.matcher(message);
+            final String channelId;
+            try {
+                channelId = controller.getChannelId(slackChannelId);
+            } catch (Controller.ChannelNotFoundException e) {
+                logger.warn(e, e);
+                sendMessage("I didn't know that I'm part of this channel. Please remove me "
+                            + "from this channel and invite me again!",
+                            slackChannelId, botUserId, accessToken);
+                return;
+            }
 
             List<String> userIds = new ArrayList<>();
 
@@ -211,12 +114,12 @@ public class Bot {
                     case "play":
                         for (final String userId : userIds) {
                             try {
-                                final var player = getUser(userId);
+                                final var player = getUser(userId, accessToken);
                                 controller.addPlayer(channelId, player);
                             } catch (PlayerQueue.PlayerAlreadyInQueueException e) {
-                                sendMessage(e.getMessage(), slackChannelId);
+                                sendMessage(e.getMessage(), slackChannelId, botUserId, accessToken);
                             } catch (final PlayerQueue.TooManyUsersException e) {
-                                sendMessage(e.getMessage(), slackChannelId);
+                                sendMessage(e.getMessage(), slackChannelId, botUserId, accessToken);
                                 break;
                             }
                         }
@@ -224,19 +127,20 @@ public class Bot {
                         final var playersInQueue = controller.getPlayersString(channelId);
                         if (!playersInQueue.isEmpty()) {
                             sendMessage(String.format("Current queue: %s", playersInQueue),
-                                        slackChannelId);
+                                        slackChannelId, botUserId, accessToken);
                         }
                         break;
                     case "reset":
                         controller.resetPlayers(channelId);
-                        sendMessage("Cleared queue.", slackChannelId);
+                        sendMessage("Cleared queue.", slackChannelId, botUserId, accessToken);
                         break;
                     case "remove":
                         for (final var userId : userIds) {
-                            final var playerToRemove = getUser(userId);
+                            final var playerToRemove = getUser(userId, accessToken);
                             controller.removePlayer(channelId, playerToRemove);
                             sendMessage(String.format("Removed <@%s> from the queue",
-                                                      playerToRemove.id), slackChannelId);
+                                                      playerToRemove.id),
+                                        slackChannelId, botUserId, accessToken);
                         }
                         break;
                     case "queue":
@@ -248,55 +152,143 @@ public class Bot {
                                            + controller.getPlayersString(channelId);
                         }
 
-                        sendMessage(queueMessage, slackChannelId);
+                        sendMessage(queueMessage, slackChannelId, botUserId, accessToken);
                         break;
                     case "cancel":
                         if (controller.cancelRunningTournament(channelId)) {
-                            sendMessage("Canceled the running match!", slackChannelId);
+                            sendMessage("Canceled the running match!", slackChannelId, botUserId,
+                                        accessToken);
                         } else {
-                            sendMessage("No match running!", slackChannelId);
+                            sendMessage("No match running!", slackChannelId, botUserId,
+                                        accessToken);
                         }
                         break;
                     case "fixedMatch":
                         if (userIds.size() != 4) {
-                            sendMessage("To start a game I need 4 players :(", slackChannelId);
+                            sendMessage("To start a game I need 4 players :(", slackChannelId,
+                                        botUserId, accessToken);
                         } else {
                             try {
                                 controller.resetPlayers(channelId);
                                 for (final var userId : userIds) {
-                                    final var player = getUser(userId);
+                                    final var player = getUser(userId, accessToken);
                                     controller.addPlayer(channelId, player);
                                 }
 
                                 controller.startTournament(channelId, false, 3);
                             } catch (PlayerQueue.PlayerAlreadyInQueueException
                                     | Controller.TournamentRunningException e) {
-                                sendMessage(e.getMessage(), slackChannelId);
+                                sendMessage(e.getMessage(), slackChannelId, botUserId, accessToken);
                             }
 
                         }
                         break;
                     case "url":
-                        sendChannelUrlMessage(channelId, slackChannelId, sender);
+                        sendChannelUrlMessage(channelId, slackChannelId, sender, accessToken);
                         break;
                     case "help":
-                        sendHelpMessage(slackChannelId, sender);
+                        sendHelpMessage(slackChannelId, sender, botUserId, accessToken);
                         break;
                     default:
                         sendMessage(String.format("I'm sorry <@%s>, I didn't understand that. "
                                                   + "If you need help just ask for it.", sender),
-                                    slackChannelId);
+                                    slackChannelId, botUserId, accessToken);
                 }
             } catch (final PlayerQueue.TooManyUsersException
                     | UserExtractionFailedException e) {
-                sendMessage(e.getMessage(), sender);
+                sendMessage(e.getMessage(), sender, botUserId, accessToken);
             }
         } else {
-            sendMessage("That doesn't make any sense at all.", slackChannelId);
+            sendMessage("That doesn't make any sense at all.", slackChannelId, botUserId,
+                        accessToken);
         }
     }
 
-    private void sendHelpMessage(final String channel, final String sender) {
+    private Message.Attachment getQRCodeAttachment(final String channelId) {
+        final var attachment = new Message.Attachment("Your Channel QR-Code",
+                                                      "You can scan this code on "
+                                                      + controller.getBaseUrl());
+        attachment.imageUrl = controller.getChannelQRCodeUrl(channelId);
+        return attachment;
+    }
+
+    private Player getUser(final String userId, final String accessToken)
+            throws UserExtractionFailedException {
+        final var target = client.target("https://slack.com")
+                .path("/api/users.info")
+                .queryParam("token", accessToken)
+                .queryParam("user", userId);
+        try {
+            final var userString = target.request(MediaType.APPLICATION_JSON).get(String.class);
+            final var slackUser = jsonConverter.fromString(userString, SlackUser.class);
+
+            final var player = new Player();
+            player.id = slackUser.user.id;
+            player.name = slackUser.user.name;
+            player.avatarImage = slackUser.user.profile.image192;
+            return player;
+        } catch (final ResponseProcessingException | IOException e) {
+            throw new UserExtractionFailedException(userId, e);
+        }
+    }
+
+    private void sendChannelUrlMessage(final String channel, final String id, final String userId,
+                                       final String accessToken) {
+        final var messageWriter = new MessageWriter(accessToken);
+        final var url = controller.getChannelUrl(channel);
+        final var message = new Message(id, url, userId);
+        message.attachments.add(getQRCodeAttachment(channel));
+        messageWriter.postEphemeral(message);
+    }
+
+    public void onChannelJoined(final EventWrapper eventWrapper)
+            throws Controller.SlackWorkspaceNotFoundException {
+        final var teamId = eventWrapper.teamId;
+        final var slackWorkspace = controller.getSlackWorkspace(teamId);
+        final var botUserId = slackWorkspace.botUserId;
+        final var accessToken = slackWorkspace.accessToken;
+        final var joinedUserId = eventWrapper.event.user;
+
+        if (botUserId.equals(joinedUserId)) {
+
+
+            final var channelId = eventWrapper.event.channel;
+            String newChannel;
+            try {
+                newChannel = controller.getChannelId(channelId);
+            } catch (Controller.ChannelNotFoundException e) {
+                newChannel = controller.joinChannel(channelId, slackWorkspace);
+            }
+            sendChannelJoinedMessage(channelId, newChannel, botUserId, accessToken);
+            logger.info("Joined channel \"{}\" in workspace \"{}\"", channelId, teamId);
+        }
+    }
+
+    private void sendMessage(final String text, final String channel, final String botUserId,
+                             final String accessToken) {
+        final var message = new Message(channel, text, botUserId);
+        sendMessage(message, accessToken);
+    }
+
+    private void sendMessage(final Message message, final String accessToken) {
+        final var messageWriter = new MessageWriter(accessToken);
+        messageWriter.postMessage(message);
+    }
+
+    private void sendChannelJoinedMessage(final String slackId, final String id,
+                                          final String botUserId, final String accessToken) {
+        final var url = controller.getChannelUrl(id);
+        final var messageText =
+                String.format("Nice to meet you! I'm your new favourite kicker-bot. Go to %s to "
+                              + "find your team stats and to enter your results.", url);
+        final var message = new Message(slackId, messageText, botUserId);
+        message.attachments.add(getQRCodeAttachment(slackId));
+        final var messageWriter = new MessageWriter(accessToken);
+        messageWriter.postMessage(message);
+    }
+
+    private void sendHelpMessage(final String channel, final String sender,
+                                 final String botUserId, final String accessToken) {
         final var text = "Supported slack commands:";
         final var message = new Message(channel, text, sender);
 
@@ -355,71 +347,8 @@ public class Bot {
         cancelCommand.fields = cancelFields;
 
         message.attachments.add(cancelCommand);
+        final var messageWriter = new MessageWriter(accessToken);
         messageWriter.postEphemeral(message);
-    }
-
-    private Message.Attachment getQRCodeAttachment(final String channelId) {
-        final var attachment = new Message.Attachment("Your Channel QR-Code",
-                                                      "You can scan this code from on "
-                                                      + controller.getBaseUrl());
-        attachment.imageUrl = controller.getChannelQRCodeUrl(channelId);
-        return attachment;
-    }
-
-    private void sendMessage(final String text, final String channel) {
-        final var message = new Message(channel, text, botUserId);
-        sendMessage(message);
-    }
-
-    private void sendMessage(final Message message) {
-        try {
-            socketSession.getAsyncRemote().sendText(jsonConverter.toString(message));
-        } catch (final IOException e) {
-            logger.error("Failed to process message json.", e);
-        }
-    }
-
-    private Player getUser(final String userId) throws UserExtractionFailedException {
-        final var target = client.target("https://slack.com")
-                .path("/api/users.info")
-                .queryParam("token", token)
-                .queryParam("user", userId);
-        try {
-            final var userString = target.request(MediaType.APPLICATION_JSON).get(String.class);
-            final var slackUser = jsonConverter.fromString(userString, SlackUser.class);
-
-            final var player = new Player();
-            player.id = slackUser.user.id;
-            player.name = slackUser.user.name;
-            player.avatarImage = slackUser.user.profile.image192;
-            return player;
-        } catch (final ResponseProcessingException | IOException e) {
-            throw new UserExtractionFailedException(userId, e);
-        }
-    }
-
-    private void sendChannelJoinedMessage(final String channel, final String id) {
-        final var url = controller.getChannelUrl(id);
-        final var messageText =
-                String.format("Nice to meet you! I'm your new favourite kicker-bot. Go to %s to "
-                              + "find your team stats and to enter your results.", url);
-        final var message = new Message(channel, messageText, botUserId);
-        message.attachments.add(getQRCodeAttachment(channel));
-        messageWriter.postMessage(message);
-    }
-
-    private void sendChannelUrlMessage(final String channel, final String id, final String userId) {
-        final var url = controller.getChannelUrl(channel);
-        final var message = new Message(id, url, userId);
-        message.attachments.add(getQRCodeAttachment(channel));
-        messageWriter.postEphemeral(message);
-    }
-
-    public static class StartSocketSessionException extends Exception {
-
-        StartSocketSessionException(final String error) {
-            super(String.format("Failed to establish web socket connection. Cause: %s", error));
-        }
     }
 
     public static class UserExtractionFailedException extends Exception {

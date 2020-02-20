@@ -19,6 +19,7 @@ package de.gesundkrank.mrfoosball.models;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
@@ -40,15 +41,16 @@ public class Channel {
     @Id
     public String id;
     public String slackId;
-    public String name;
+
+    @ManyToOne
+    public SlackWorkspace slackWorkspace;
 
     public Channel() {
 
     }
 
-    public Channel(final String id, final String slackId, final String name) {
+    public Channel(final String id, final String slackId) {
         this.id = id;
         this.slackId = slackId;
-        this.name = name;
     }
 }

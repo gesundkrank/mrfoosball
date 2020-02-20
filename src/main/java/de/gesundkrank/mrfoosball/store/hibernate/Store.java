@@ -20,8 +20,10 @@ package de.gesundkrank.mrfoosball.store.hibernate;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.io.IOUtils;
@@ -36,6 +38,7 @@ import org.hibernate.cfg.Configuration;
 import de.gesundkrank.mrfoosball.models.Channel;
 import de.gesundkrank.mrfoosball.models.Player;
 import de.gesundkrank.mrfoosball.models.PlayerSkill;
+import de.gesundkrank.mrfoosball.models.SlackWorkspace;
 import de.gesundkrank.mrfoosball.models.State;
 import de.gesundkrank.mrfoosball.models.Team;
 import de.gesundkrank.mrfoosball.models.Team.Key;
@@ -80,6 +83,23 @@ public class Store implements Closeable {
         }
     }
 
+    public boolean checkDatabase() {
+        return session.isConnected() && session.isOpen();
+    }
+    
+    public SlackWorkspace getSlackWorkSpace(final String teamId) throws NoResultException {
+        final var query = session
+                .createNamedQuery("get_slack_workspace", SlackWorkspace.class)
+                .setParameter("teamId", teamId);
+        return query.getSingleResult();
+    }
+
+    public void saveSlackWorkSpace(final SlackWorkspace workspace) {
+        final Transaction tx = session.beginTransaction();
+        session.saveOrUpdate(workspace);
+        tx.commit();
+    }
+
     public Channel getChannel(final String id) {
         final TypedQuery<Channel> query = session
                 .createNamedQuery("get_channel", Channel.class)
@@ -94,7 +114,7 @@ public class Store implements Closeable {
         return !query.getResultList().isEmpty();
     }
 
-    public Channel getChannelBySlackId(final String slackId) {
+    public Channel getChannelBySlackId(final String slackId) throws NoResultException {
         final TypedQuery<Channel> query = session
                 .createNamedQuery("get_channel_by_slack_id", Channel.class)
                 .setParameter("slackId", slackId);
@@ -175,7 +195,7 @@ public class Store implements Closeable {
     public List<PlayerSkill> playerSkills(final String channelId) {
         final var queryFile = getClass().getResourceAsStream("player_skill.sql");
         try {
-            final var query = IOUtils.toString(queryFile, Charset.forName("UTF-8"));
+            final var query = IOUtils.toString(queryFile, StandardCharsets.UTF_8);
             return session
                     .createNativeQuery(query, PlayerSkill.class)
                     .setParameter("channelId", channelId)

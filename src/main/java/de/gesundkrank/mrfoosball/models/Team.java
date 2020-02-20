@@ -18,6 +18,7 @@
 package de.gesundkrank.mrfoosball.models;
 
 import java.io.Serializable;
+import java.util.Objects;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -51,6 +52,11 @@ public class Team extends TrueSkillColumns implements Serializable {
             return oTeam.player1.equals(player1) && oTeam.player2.equals(player2);
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(player1, player2);
     }
 
     public static class Key implements Serializable {

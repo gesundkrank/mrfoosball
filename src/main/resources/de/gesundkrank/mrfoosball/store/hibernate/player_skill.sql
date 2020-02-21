@@ -19,7 +19,7 @@ SELECT player.id                                        AS id,
        name,
        avatarImage,
        SUM(games.games)                                 AS games,
-       SUM(wins.wins)                                   AS wins,
+       COALESCE(SUM(wins.wins), 0)                      AS wins,
        (trueSkillMean - 3 * trueSkillStandardDeviation) AS skill
 FROM player
        INNER JOIN (
@@ -44,7 +44,7 @@ FROM player
        LEFT JOIN (
   SELECT player.id AS player_id, COUNT(*) AS wins
   FROM player
-         LEFT JOIN (
+         INNER JOIN (
     SELECT (CASE
               WHEN COALESCE(wins_a, 0) > COALESCE(wins_b, 0) THEN teama_player1_id
               ELSE teamb_player1_id END) AS winner_1,

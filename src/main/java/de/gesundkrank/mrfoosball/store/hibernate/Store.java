@@ -128,19 +128,17 @@ public class Store implements Closeable {
     }
 
     public Player getPlayer(final Player player) {
-        final Player storedPlayer = session.get(Player.class, player.id);
-        if (storedPlayer != null) {
-            player.trueSkillMean = storedPlayer.trueSkillMean;
-            player.trueSkillStandardDeviation = storedPlayer.trueSkillStandardDeviation;
-        } else {
-            session.save(player);
-            return getPlayer(player);
-        }
-        return player;
+        return getPlayer(player.id);
     }
 
     public Player getPlayer(final String id) {
         return session.get(Player.class, id);
+    }
+
+    public void savePlayer(final Player player) {
+        final Transaction tx = session.beginTransaction();
+        session.saveOrUpdate(player);
+        tx.commit();
     }
 
     public Team getTeam(final Player player1, final Player player2) {

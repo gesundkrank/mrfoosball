@@ -38,6 +38,7 @@ import de.gesundkrank.mrfoosball.models.State;
 import de.gesundkrank.mrfoosball.models.Team;
 import de.gesundkrank.mrfoosball.models.Tournament;
 import de.gesundkrank.mrfoosball.slack.MessageWriter;
+import de.gesundkrank.mrfoosball.slack.UserFetcher;
 import de.gesundkrank.mrfoosball.store.hibernate.Store;
 import de.gesundkrank.mrfoosball.store.zookeeper.LastCrawl;
 import de.gesundkrank.mrfoosball.store.zookeeper.PlayerQueues;
@@ -60,6 +61,7 @@ public class Controller {
     private final RunningTournaments runningTournaments;
     private final LastCrawl lastCrawl;
     private final String baseUrl;
+    private final UserFetcher userFetcher;
 
     public static Controller getInstance() throws IOException {
         if (INSTANCE == null) {
@@ -80,6 +82,7 @@ public class Controller {
         this.runningTournaments = new RunningTournaments(zookeeperHosts);
         this.lastCrawl = new LastCrawl(zookeeperHosts);
         this.baseUrl = properties.getAppUrl();
+        this.userFetcher = new UserFetcher();
     }
 
     public String joinChannel(final String slackId, final SlackWorkspace slackWorkspace) {
@@ -116,7 +119,7 @@ public class Controller {
     }
 
     public synchronized void startTournament(final String channelId, final boolean shuffle,
-                                              final int bestOfN, List<Player> playerList)
+                                             final int bestOfN, List<Player> playerList)
             throws TournamentRunningException, IOException {
         if (hasRunningTournament(channelId)) {
             throw new TournamentRunningException();
@@ -291,17 +294,29 @@ public class Controller {
                 .collect(Collectors.joining(", "));
     }
 
-    public void addPlayer(final String channelId, final Player player)
-            throws PlayerQueue.PlayerAlreadyInQueueException, PlayerQueue.TooManyUsersException,
-                   IOException {
-
+    public void addPlayer(final String channelId, final String playerId)
+            throws UserFetcher.FetchUserFailedException, IOException,
+                   PlayerQueue.TooManyUsersException, PlayerQueue.PlayerAlreadyInQueueException {
         try (final var store = new Store()) {
-            final var storedPlayer = store.getPlayer(player);
+            final var workspace = store.getChannel(channelId).slackWorkspace;
+            final var fetchedPlayer = userFetcher.getUser(playerId, workspace);
+            final var storedPlayer = store.getPlayer(playerId);
+
             if (storedPlayer != null) {
-                player.trueSkillMean = storedPlayer.trueSkillMean;
-                player.trueSkillStandardDeviation = storedPlayer.trueSkillStandardDeviation;
+                storedPlayer.avatarImage = fetchedPlayer.avatarImage;
+                storedPlayer.name = fetchedPlayer.name;
+                store.savePlayer(storedPlayer);
+            } else {
+                store.savePlayer(fetchedPlayer);
             }
+
+            addPlayer(channelId, fetchedPlayer);
         }
+    }
+
+    public void addPlayer(final String channelId, final Player player)
+            throws IOException, PlayerQueue.TooManyUsersException,
+                   PlayerQueue.PlayerAlreadyInQueueException {
 
         queues.add(channelId, player);
 

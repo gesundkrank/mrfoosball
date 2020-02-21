@@ -22,23 +22,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.ResponseProcessingException;
-import javax.ws.rs.core.MediaType;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.glassfish.jersey.client.ClientProperties;
 
 import de.gesundkrank.mrfoosball.Controller;
 import de.gesundkrank.mrfoosball.models.Player;
 import de.gesundkrank.mrfoosball.models.PlayerQueue;
-import de.gesundkrank.mrfoosball.slack.models.ChannelJoined;
 import de.gesundkrank.mrfoosball.slack.models.EventWrapper;
 import de.gesundkrank.mrfoosball.slack.models.Message;
-import de.gesundkrank.mrfoosball.slack.models.SlackUser;
-import de.gesundkrank.mrfoosball.utils.JsonConverter;
 
 public class Bot {
 
@@ -46,21 +38,13 @@ public class Bot {
     private static final Pattern USER_PATTERN = Pattern.compile("<@([^>]*)>");
 
     private final Logger logger;
-    private final JsonConverter jsonConverter;
     private final Controller controller;
-    private final Client client;
+
 
     public Bot() throws IOException {
         this.logger = LogManager.getLogger();
 
-        this.client = ClientBuilder.newClient();
-        client.property(ClientProperties.CONNECT_TIMEOUT, 30000);
-        client.property(ClientProperties.READ_TIMEOUT, 30000);
-
         this.controller = Controller.getInstance();
-
-        this.jsonConverter = new JsonConverter(Message.class, ChannelJoined.class,
-                                               SlackUser.class);
     }
 
     public void onAppMention(final EventWrapper wrappedEvent)
@@ -113,8 +97,7 @@ public class Bot {
                     case "play":
                         for (final String userId : userIds) {
                             try {
-                                final var player = getUser(userId, accessToken);
-                                controller.addPlayer(channelId, player);
+                                controller.addPlayer(channelId, userId);
                             } catch (PlayerQueue.PlayerAlreadyInQueueException e) {
                                 sendMessage(e.getMessage(), slackChannelId, botUserId, accessToken);
                             } catch (final PlayerQueue.TooManyUsersException e) {
@@ -135,10 +118,9 @@ public class Bot {
                         break;
                     case "remove":
                         for (final var userId : userIds) {
-                            final var playerToRemove = getUser(userId, accessToken);
-                            controller.removePlayer(channelId, playerToRemove);
+                            controller.removePlayer(channelId, userId);
                             sendMessage(String.format("Removed <@%s> from the queue",
-                                                      playerToRemove.id),
+                                                      userId),
                                         slackChannelId, botUserId, accessToken);
                         }
                         break;
@@ -191,7 +173,7 @@ public class Bot {
                                                   + "If you need help just ask for it.", sender),
                                     slackChannelId, botUserId, accessToken);
                 }
-            } catch (final UserExtractionFailedException e) {
+            } catch (final UserFetcher.FetchUserFailedException e) {
                 sendMessage(e.getMessage(), sender, botUserId, accessToken);
             }
         } else {
@@ -206,26 +188,6 @@ public class Bot {
                                                       + controller.getBaseUrl());
         attachment.imageUrl = controller.getChannelQRCodeUrl(channelId);
         return attachment;
-    }
-
-    private Player getUser(final String userId, final String accessToken)
-            throws UserExtractionFailedException {
-        final var target = client.target("https://slack.com")
-                .path("/api/users.info")
-                .queryParam("token", accessToken)
-                .queryParam("user", userId);
-        try {
-            final var userString = target.request(MediaType.APPLICATION_JSON).get(String.class);
-            final var slackUser = jsonConverter.fromString(userString, SlackUser.class);
-
-            final var player = new Player();
-            player.id = slackUser.user.id;
-            player.name = slackUser.user.name;
-            player.avatarImage = slackUser.user.profile.image192;
-            return player;
-        } catch (final ResponseProcessingException | IOException e) {
-            throw new UserExtractionFailedException(userId, e);
-        }
     }
 
     private void sendChannelUrlMessage(final String channel, final String id, final String userId,
@@ -344,13 +306,5 @@ public class Bot {
         message.attachments.add(cancelCommand);
         final var messageWriter = new MessageWriter(accessToken);
         messageWriter.postEphemeral(message);
-    }
-
-    public static class UserExtractionFailedException extends Exception {
-
-        UserExtractionFailedException(final String userId, final Throwable cause) {
-            super(String.format("Failed to get user informations for '%s' from slack API.", userId),
-                  cause);
-        }
     }
 }

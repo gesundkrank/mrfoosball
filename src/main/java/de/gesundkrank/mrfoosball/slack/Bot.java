@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ResponseProcessingException;
@@ -29,7 +30,6 @@ import javax.ws.rs.core.MediaType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.ClientProperties;
-import org.postgresql.translation.messages_bg;
 
 import de.gesundkrank.mrfoosball.Controller;
 import de.gesundkrank.mrfoosball.models.Player;
@@ -73,7 +73,6 @@ public class Bot {
 
         final var botUserId = wrappedEvent.authedUsers.get(0);
         final var matcher = USER_PATTERN.matcher(text);
-
 
         if (!matcher.find()) {
             logger.warn("Couldn't remove bot user from message \"{}\"", text);
@@ -167,21 +166,19 @@ public class Bot {
                         if (userIds.size() != 4) {
                             sendMessage("To start a game I need 4 players :(", slackChannelId,
                                         botUserId, accessToken);
-                        } else {
-                            try {
-                                controller.resetPlayers(channelId);
-                                for (final var userId : userIds) {
-                                    final var player = getUser(userId, accessToken);
-                                    controller.addPlayer(channelId, player);
-                                }
-
-                                controller.startTournament(channelId, false, 3);
-                            } catch (PlayerQueue.PlayerAlreadyInQueueException
-                                    | Controller.TournamentRunningException e) {
-                                sendMessage(e.getMessage(), slackChannelId, botUserId, accessToken);
-                            }
-
+                            break;
                         }
+
+                        try {
+                            final var players = userIds.stream().map(Player::new)
+                                    .collect(Collectors.toList());
+                            controller
+                                    .startTournament(channelId, false, Controller.DEFAULT_BEST_OF_N,
+                                                     players);
+                        } catch (Controller.TournamentRunningException e) {
+                            sendMessage(e.getMessage(), slackChannelId, botUserId, accessToken);
+                        }
+
                         break;
                     case "url":
                         sendChannelUrlMessage(channelId, slackChannelId, sender, accessToken);
@@ -194,8 +191,7 @@ public class Bot {
                                                   + "If you need help just ask for it.", sender),
                                     slackChannelId, botUserId, accessToken);
                 }
-            } catch (final PlayerQueue.TooManyUsersException
-                    | UserExtractionFailedException e) {
+            } catch (final UserExtractionFailedException e) {
                 sendMessage(e.getMessage(), sender, botUserId, accessToken);
             }
         } else {
@@ -250,7 +246,6 @@ public class Bot {
         final var joinedUserId = eventWrapper.event.user;
 
         if (botUserId.equals(joinedUserId)) {
-
 
             final var channelId = eventWrapper.event.channel;
             String newChannel;

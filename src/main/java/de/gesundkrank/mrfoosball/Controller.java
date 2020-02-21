@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import javax.persistence.NoResultException;
 
 import org.apache.logging.log4j.LogManager;
@@ -39,7 +38,6 @@ import de.gesundkrank.mrfoosball.models.State;
 import de.gesundkrank.mrfoosball.models.Team;
 import de.gesundkrank.mrfoosball.models.Tournament;
 import de.gesundkrank.mrfoosball.slack.MessageWriter;
-import de.gesundkrank.mrfoosball.slack.models.Message;
 import de.gesundkrank.mrfoosball.store.hibernate.Store;
 import de.gesundkrank.mrfoosball.store.zookeeper.LastCrawl;
 import de.gesundkrank.mrfoosball.store.zookeeper.PlayerQueues;
@@ -50,6 +48,8 @@ import de.gesundkrank.mrfoosball.trueskill.TrueSkillCalculator;
 import de.gesundkrank.mrfoosball.utils.Properties;
 
 public class Controller {
+
+    public static final int DEFAULT_BEST_OF_N = 3;
 
     private static volatile Controller INSTANCE;
 
@@ -98,7 +98,7 @@ public class Controller {
 
     private void startTournament(final String channelId)
             throws TournamentRunningException, IOException {
-        startTournament(channelId, true, 3);
+        startTournament(channelId, true, DEFAULT_BEST_OF_N);
     }
 
     public void startTournament(final String channelId, final boolean shuffle,
@@ -115,7 +115,7 @@ public class Controller {
         startTournament(channelId, false, bestOfN, list);
     }
 
-    private synchronized void startTournament(final String channelId, final boolean shuffle,
+    public synchronized void startTournament(final String channelId, final boolean shuffle,
                                               final int bestOfN, List<Player> playerList)
             throws TournamentRunningException, IOException {
         if (hasRunningTournament(channelId)) {

@@ -6,10 +6,10 @@ resource "aws_ecs_cluster" "mrfoosball" {
   ]
 }
 
-data "template_file" "container_definition" {
-  template = file("tf/files/container_definition.json")
-
-  vars = {
+resource "aws_ecs_task_definition" "mrfoosball" {
+  family       = "mrfoosball"
+  network_mode = "awsvpc"
+  container_definitions = template_file("tf/files/container_definition.json", {
     CONTAINER_NAME       = var.container_name
     PORT                 = var.app_port
     IMAGE_NAME           = aws_ecr_repository.mrfoosball.repository_url
@@ -25,17 +25,11 @@ data "template_file" "container_definition" {
     DB_USER              = var.db_user
     DB_PASSWORD          = var.db_password
     HIBERNATE_HBM2DDL    = var.hibernate_hbm2ddl
-  }
-}
-
-resource "aws_ecs_task_definition" "mrfoosball" {
-  family                = "mrfoosball"
-  network_mode          = "awsvpc"
-  container_definitions = data.template_file.container_definition.rendered
-  execution_role_arn    = aws_iam_role.task_execution.arn
-  task_role_arn         = aws_iam_role.task.arn
-  cpu                   = "256"
-  memory                = "512"
+  })
+  execution_role_arn = aws_iam_role.task_execution.arn
+  task_role_arn      = aws_iam_role.task.arn
+  cpu                = "256"
+  memory             = "512"
 
   requires_compatibilities = [
     "FARGATE"

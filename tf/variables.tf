@@ -44,3 +44,7 @@ variable "zookeeper_version" {
 variable "hibernate_hbm2ddl" {
   default = "validate"
 }
+
+variable "region" {
+  default = "eu-central-1"
+}

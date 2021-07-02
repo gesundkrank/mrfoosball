@@ -35,8 +35,15 @@ To shut down all containers exec
 ./gradlew buildDocker
 ```
 
+## Terraform
+
+### Run Terraform only for network setup (vpc & dns)
+
+```bash
+terraform apply -target=module.network_setup
+```
+
 Creates the docker package and pushes it to the registry.
 
 To get access to the registry do `aws ecr get-login --no-include-email` and execute the returned 
 docker command.
-
